@@ -12,16 +12,16 @@ Description: This is the main handler for the mppt simulator.
       2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
       3. Display - The outputs of the MPPT and the source are calculated and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
+from source import Source
 
-import Source
-import PandO
-import Display
+# TODO: create a generic container to manage these imports and set `mppt = MPPT(x)?`
+from mppt_algorithms.mppt_perturb_and_observe import PandO
+# from mppt_incremental_conduction import IC
+# from mppt_ripple_correlation_control import RCC
+# from mppt_fuzzy_logic import FL
+# from mppt_fraction_open_circuit_voltage import FOCV
 
-if __name__=="__main__":
-    main()
-else:
-    print("Run main.py as a script.")
-
+from display import Display
 
 def main():
     source = Source()
@@ -29,3 +29,9 @@ def main():
     display = Display()
 
     # for each iteration (or until user cancel, based on the mode), run each of the 3 components in order.
+
+
+if __name__=="__main__":
+    main()
+else:
+    print("Run main.py as a script.")
