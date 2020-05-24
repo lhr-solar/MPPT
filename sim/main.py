@@ -21,12 +21,13 @@ from mppt_algorithms.mppt_perturb_and_observe import PandO
 # from mppt_fuzzy_logic import FL
 # from mppt_fraction_open_circuit_voltage import FOCV
 
-from display import Display
+from gui.display import DisplayApp
 
 def main():
-    source = Source()
-    mppt = PandO()
-    display = Display()
+    # source = Source()
+    # mppt = PandO()
+    display = DisplayApp()
+    display.run()
 
     # for each iteration (or until user cancel, based on the mode), run each of the 3 components in order.
 

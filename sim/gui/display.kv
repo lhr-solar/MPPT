@@ -1,0 +1,64 @@
+#:kivy 1.0.9
+
+ScreenManager:
+    id: screen_manager
+    #transition: FadeTransition()
+
+    MenuScreen:
+        id: menu_screen
+        name: 'MenuScreen'
+        manager: 'screen_manager'
+    SandboxScreen:
+        id: sandbox_screen
+        name: 'SandboxScreen'
+        manager: 'screen_manager'
+    ProfileScreen: 
+        id: profile_screen
+        name: 'ProfileScreen'
+        manager: 'screen_manager'
+
+<MenuScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'MPPT Simulator'
+            font_size: 30
+        BoxLayout:
+            Button:
+                text: 'Sandbox Mode'
+                font_size: 30
+                on_release: app.root.current = 'SandboxScreen'
+            Button:
+                text: 'Profile Mode'
+                font_size: 30
+                on_release: app.root.current = 'ProfileScreen'
+
+<SandboxScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Sandbox Mode'
+            font_size: 30
+        BoxLayout:
+            Button:
+                text: 'End session'
+                font_size: 30
+                on_release: app.root.current = 'MenuScreen'
+<ProfileScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            Label:
+                text: 'Profile Mode'
+                font_size: 30
+            Chart:
+        BoxLayout:
+            TextInput:
+                id:input
+                hint_text: 'Enter in PROFILE path here.'
+                multiline: False
+                on_text_validate: app.process_file_path()
+            Button:
+                text: 'End session'
+                font_size: 30
+                on_release: app.root.current = 'MenuScreen'
