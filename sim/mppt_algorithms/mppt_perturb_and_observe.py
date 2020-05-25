@@ -17,6 +17,10 @@ Last Modified: 5/24/20
 """
 
 class PandO:
+    delta_p = 0
+    v_ref = 0
+    sample_rate = 0
+
     def __init__(self):
         """
         init
@@ -28,7 +32,13 @@ class PandO:
         """
         return
 
-    def iterate():
+    def setup(self, v_ref, stride, sample_rate):
+        self.v_ref = v_ref
+        self.delta_p = stride
+        self.sample_rate = sample_rate
+        return
+
+    def iterate(self, v_in, i_in, cycle):
         """
         iterate
         This function directs the flow of the Perturb and Observe algorithm
@@ -37,4 +47,7 @@ class PandO:
         Outputs: none (changes global variable pulseWidth)
         Errors: none (pulseWidth error checks in pulseWidthErrorHandling subroutine)
         """
-        return
+        if True: # TODO: (cycle % self.sample_rate) is 0:
+            return 1 # TODO: implement PandO here
+        else: 
+            return None

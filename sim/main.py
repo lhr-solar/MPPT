@@ -21,15 +21,100 @@ from mppt_algorithms.mppt_perturb_and_observe import PandO
 # from mppt_fuzzy_logic import FL
 # from mppt_fraction_open_circuit_voltage import FOCV
 
-from gui.display import DisplayApp
+# from gui.display import DisplayApp
 
 def main():
-    # source = Source()
-    # mppt = PandO()
-    display = DisplayApp()
-    display.run()
+    profile_file_path = ""
+    source = None
+    mode_profile = False
+    looping = True
+    waiting = True
 
-    # for each iteration (or until user cancel, based on the mode), run each of the 3 components in order.
+    source = Source()
+
+    # display = DisplayApp()
+    # display.run()
+    mppt = PandO()
+
+    tmp_storage = None
+
+    # simulating from a dataset
+    if mode_profile is True:
+        # read in data and setup settings
+        source.read_data(profile_file_path)
+        # initialize to the start of the simulation
+        time_step = 1
+        source.setup(0, time_step) # TODO: adjust start params
+
+        # setup mppt
+        v_ref = 0
+        stride = 0
+        sample_rate = 0
+        mppt.setup(v_ref, stride, sample_rate)
+
+        while looping:
+            # halt every loop for use input or disable halt
+            if waiting: 
+                # TODO: call setup again when user rewinds/etc
+                source.setup(0, 0)
+                mppt.setup(0, 0, 0)
+
+            # generate value for source, it also generates the current cycle
+            [v_out, i_out, cycle] = source.iterate()
+
+            # pipe source into the mppt
+            v_ref = mppt.iterate(v_out, i_out, cycle)
+
+            if v_ref is None: # MPPT is not sampling this cycle
+                pass
+            else: # MPPT has sampled this cycle
+                p_max = v_out * i_out
+                p_out = v_ref * i_out
+                [irradiance, temperature, load] = source.get_conditions()
+                tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
+                # TODO:value goes into storage
+
+    # simulating from an impulse created by the user
+    else:
+        # setup source
+        irradiance = 0
+        temperature = 0
+        load = 0
+        time_step = 1
+        # initialize nothing into read_data
+        source.read_data(irradiance, temperature, load)
+        # initialize to the start of the simulation
+        source.setup(0, time_step) 
+
+        # setup mppt
+        v_ref = 0
+        stride = 0
+        sample_rate = 0
+        mppt.setup(v_ref, stride, sample_rate)
+
+        while looping:
+            # halt every loop for use input or disable halt
+            if waiting: 
+                # TODO: call setup again when user rewinds/etc
+                source.setup(0, 0)
+                mppt.setup(0, 0, 0)
+
+            # generate value for source, it also generates the current cycle
+            [v_out, i_out, cycle] = source.iterate()
+
+            # pipe source into the mppt
+            v_ref = mppt.iterate(v_out, i_out, cycle)
+
+            if v_ref is None: # MPPT is not sampling this cycle
+                pass
+            else: # MPPT has sampled this cycle
+                p_max = v_out * i_out
+                p_out = v_ref * i_out
+                tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
+                # TODO:value goes into display storage
+
+
+
 
 
 if __name__=="__main__":
