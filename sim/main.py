@@ -43,21 +43,22 @@ def main():
         # read in data and setup settings
         source.read_data(profile_file_path)
         # initialize to the start of the simulation
+        cycle = 0
         time_step = 1
         source.setup(0, time_step) # TODO: adjust start params
 
         # setup mppt
         v_ref = 0
         stride = 0
-        sample_rate = 0
+        sample_rate = 1
         mppt.setup(v_ref, stride, sample_rate)
 
         while looping:
             # halt every loop for use input or disable halt
             if waiting: 
                 # TODO: call setup again when user rewinds/etc
-                source.setup(0, 0)
-                mppt.setup(0, 0, 0)
+                source.setup(cycle, time_step)
+                mppt.setup(v_ref, stride, sample_rate)
 
             # generate value for source, it also generates the current cycle
             [v_out, i_out, cycle] = source.iterate()
@@ -80,38 +81,42 @@ def main():
         irradiance = 0
         temperature = 0
         load = 0
+        cycle = 0
         time_step = 1
         # initialize nothing into read_data
         source.read_data(irradiance, temperature, load)
         # initialize to the start of the simulation
-        source.setup(0, time_step) 
+        source.setup(cycle, time_step) 
 
         # setup mppt
-        v_ref = 0
+        v_ref = .6
         stride = 0
-        sample_rate = 0
+        sample_rate = 1
         mppt.setup(v_ref, stride, sample_rate)
 
         while looping:
             # halt every loop for use input or disable halt
+            input("\nCycle: " + str(cycle))
             if waiting: 
                 # TODO: call setup again when user rewinds/etc
-                source.setup(0, 0)
-                mppt.setup(0, 0, 0)
+                source.setup(cycle, time_step)
+                mppt.setup(v_ref, stride, sample_rate)
 
             # generate value for source, it also generates the current cycle
-            [v_out, i_out, cycle] = source.iterate()
+            [v_out, i_out, cycle] = source.iterate(v_ref)
+
+            print("Source: " + str([v_out, i_out, cycle]))
 
             # pipe source into the mppt
             v_ref = mppt.iterate(v_out, i_out, cycle)
 
-            if v_ref is None: # MPPT is not sampling this cycle
-                pass
-            else: # MPPT has sampled this cycle
-                p_max = v_out * i_out
-                p_out = v_ref * i_out
-                tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
-                # TODO:value goes into display storage
+            p_max = v_out * i_out
+            p_out = v_ref * i_out
+            tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
+            # TODO:value goes into display storage
+            print("cycle [v_out i_out p_max v_ref p_out]")
+            print(tmp_storage[0], tmp_storage[4::])
+
 
 
 
