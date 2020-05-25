@@ -1,28 +1,21 @@
 """
-mppt_perturb_and_observe.py
+mppt_incremental_conduction.py
 
-P&O Algorithm function declarations
-Fall 2017 MPPT using the Nucleo-L432KC (Pholociraptor)
-
-Author: Samantha Guu
-Team: Samuel Chiu, Madeline Drake, Kyle Grier, Rafael Ibanez, Chase Lansdale,
-      Brooks Loper
-Created on: November 12, 2017
-Revised on: November 14, 2017
---------------------------------------------------------------------------------
-
-Adapted by Matthew Yu, Array Lead (2020).
+Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
-Last Modified: 5/24/20
+Created: 5/25/20
+Last Modified: 5/25/20
+Description: Incremental Conduction Algorithm.
 """
 
-class PandO:
+class IC:
     v_ref = 0
     stride = 1
     sample_rate = 1
 
     p_old = 0
     v_old = 0
+    i_old = 0
 
     def __init__(self):
         """
@@ -59,31 +52,36 @@ class PandO:
             - v_ref (float): output voltage (V)
         """
         if (cycle % self.sample_rate) is 0:
-            # compute power
-            p_new = v_in * i_in
             # determine deltas
-            dP = p_new - self.p_old
             dV = v_in - self.v_old
+            dI = i_in - self.i_old
 
-            print("Power: ", p_new)
-            print("Change Power: ", dP)
             print("Change Voltage: ", dV)
+            print("Change Current: ", dI)
 
             dV_ref = .01 #dV # calc_perturb_amt(v_ref, v_in)
-            if dP > 0:
-                if dV > 0:  # increase v_ref
-                    self.v_ref += dV_ref
-                else:       # decrease v_ref
-                    self.v_ref -= dV_ref
-            elif dP < 0:
-                if dV > 0:  # decrease v_ref
-                    self.v_ref -= dV_ref
-                else:       # increase v_Ref
-                    self.v_ref += dV_ref
+            if dV == 0:
+                if dI == 0:
+                    pass
+                else:
+                    if dI > 0:
+                        self.v_ref -= dV_ref
+                    else:
+                        self.v_ref += dV_ref
+            else:
+                dC = (i_in + (dI / dV) * v_in) # instantaneous conductance
+                print("Incremental Conductance: ", dC)
+                if dI/dV == -i_in/v_in:
+                    pass
+                else:
+                    if dI/dV > -i_in/v_in:
+                        self.v_ref += dV_ref
+                    else:
+                        self.v_ref -= dV_ref
 
         # update values
-        self.p_old = p_new
         self.v_old = v_in
+        self.i_old = i_in
 
         return self.v_ref
 

@@ -16,10 +16,10 @@ from source import Source
 
 # TODO: create a generic container to manage these imports and set `mppt = MPPT(x)?`
 from mppt_algorithms.mppt_perturb_and_observe import PandO
-# from mppt_incremental_conduction import IC
-# from mppt_ripple_correlation_control import RCC
-# from mppt_fuzzy_logic import FL
-# from mppt_fraction_open_circuit_voltage import FOCV
+from mppt_algorithms.mppt_incremental_conduction import IC
+# from mppt_algorithms.mppt_ripple_correlation_control import RCC
+# from mppt_algorithms.mppt_fuzzy_logic import FL
+# from mppt_algorithms.mppt_fraction_open_circuit_voltage import FOCV
 
 # from gui.display import DisplayApp
 
@@ -48,7 +48,7 @@ def main():
         source.setup(0, time_step) # TODO: adjust start params
 
         # setup mppt
-        v_ref = 0
+        v_ref = .6 # single cell
         stride = 0
         sample_rate = 1
         mppt.setup(v_ref, stride, sample_rate)
@@ -89,7 +89,7 @@ def main():
         source.setup(cycle, time_step) 
 
         # setup mppt
-        v_ref = .6
+        v_ref = .35
         stride = 0
         sample_rate = 1
         mppt.setup(v_ref, stride, sample_rate)
