@@ -7,40 +7,8 @@ Created: 5/24/20
 Last Modified: 5/24/20
 Description: This file describes the Source class, which generates input values for the Display and MPPT.
 """
-
-lookup_table = [
-    [0.0,   5.8 ],
-    [0.05,  5.8 ],
-    [0.1,   5.8 ],
-    [0.15,  5.8 ],
-    [0.2,   5.8 ],
-    [0.25,  5.8 ],
-    [0.3,   5.8 ],
-    [0.35,  5.8 ],
-    [0.4,   5.8 ],
-    [0.45,  5.8 ],
-    [0.5,   5.8 ],
-    [0.51,  5.8 ],
-    [0.52,  5.8 ],
-    [0.53,  5.8 ],
-    [0.54,  5.7 ],
-    [0.55,  5.6 ],
-    [0.56,  5.5 ],
-    [0.57,  5.3 ],
-    [0.58,  5.05 ],
-    [0.59,  4.8 ],
-    [0.6,   4.6 ],
-    [0.61,  4.0 ],
-    [0.62,  3.0 ],
-    [0.63,  2.1 ],
-    [0.64,  1.2 ],
-    [0.65,  1.0 ],
-    [0.66,  0.3 ],
-    [0.67,  0   ],
-    [0.68,  0   ],
-    [0.7,   0   ],
-    [0.8,   0   ]
-]
+from math import exp
+from numpy import log as ln
 class Source:
     cycle = 0
     time_step = 1
@@ -121,25 +89,9 @@ class Source:
         # print("Looking for closest voltage.")
 
         self.v_out = v_in
-        closest_idx = 0
-        idx = 0
-        best_diff = 1000
-        # basic linear search to find closest voltage. optimize later. swap to equation based model?
-        for slice in lookup_table:
-            # print("Looking at voltage: ", slice[0], " at idx: ", idx)
-            diff = abs(v_in - slice[0])
-            # print("Diff: ", diff)
-            
-            if diff < best_diff:
-                # print("Best idx: ", closest_idx," is now updated to: ", idx)
-                closest_idx = idx
-                best_diff = diff
-            else:
-                break
-            idx += 1
 
-        self.i_out = lookup_table[closest_idx][1]
-        # print("Current at nearest voltage: ", lookup_table[closest_idx][1])
+        self.i_out = self.model(v_in)
+        # print("Current at voltage: ",  model(v_in))
         self.cycle += 1
         return [self.v_out, self.i_out, self.cycle]
 
@@ -155,3 +107,42 @@ class Source:
 
         """
         return [self.irradiance, self.temperature, self.load]
+
+    def model(self, v_in):
+        """
+        model
+        function describing the current output of a single Bin Le1 Sunpower cell given voltage and other factors.
+        Taken from https://www.sciencedirect.com/science/article/pii/S1658365512600120, section 2.1, Explicit Model.
+        Im/Vm constants played with until they matched cell specs for the power point.
+        
+        model(v) = 6.15*( 1 - C_1*( exp( v/(C_2*.721) ) - 1 ) )
+        C_1 = (1 - C_4/.721)*exp( -C_3/(C_2*.721) )
+        C_2 = ((C_3/.721) - 1) / ln(1 - C_4/6.15)
+
+        6.15 - I_SC
+        .721 - V_OC
+
+        C_3 = maximal voltage
+        C_4 = maximal current
+
+        TODO: include inputs for irradiance, temperature, and their transformation on the model
+
+        Args:
+            - v_in (float): voltage input
+        Returns:
+            - (current out) (float)
+        """
+        k = 0.92 # manufacturing efficiency loss (8% according to test data)
+        C_3 = 0.82 # maximal voltage
+        C_4 = -100 # maximal current
+        C_2 = ((C_3/.721) - 1) / ln(1 - C_4/6.15)
+        C_1 = (1 - C_4/.721)*exp( -C_3/(C_2*.721) )
+        # default explicit model
+        model = 6.15*( 1 - C_1*( exp( v_in/(C_2*.721) ) - 1 ) )
+
+        # losses in efficiency as a result of manufacturing (lamination, etc)
+        model2 = model * k
+
+        # TODO: include transformation for irradiance change, temperature
+        return model2
+    
