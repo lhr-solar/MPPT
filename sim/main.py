@@ -13,7 +13,7 @@ Description: This is the main handler for the mppt simulator.
       3. Display - The outputs of the MPPT and the source are calculated and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
 from source import Source
-
+from simulation import Simulation
 # TODO: create a generic container to manage these imports and set `mppt = MPPT(x)?`
 from mppt_algorithms.mppt_perturb_and_observe import PandO
 from mppt_algorithms.mppt_incremental_conduction import IC
@@ -25,98 +25,132 @@ from mppt_algorithms.mppt_incremental_conduction import IC
 
 def main():
     profile_file_path = ""
-    source = None
     mode_profile = False
-    looping = True
-    waiting = True
 
     source = Source()
+    mppt = IC()
+    simulation = Simulation()
 
-    # display = DisplayApp()
-    # display.run()
-    mppt = PandO()
 
-    tmp_storage = None
+    profile_string = input("Profile ['impulse']|'profile': ")
+    if profile_string == "profile":
+        mode_profile = True
 
     # simulating from a dataset
     if mode_profile is True:
+        print("Running in Profile mode.")
+        profile_file_path = input("Enter filepath: ")
+
+
         # read in data and setup settings
-        source.read_data(profile_file_path)
-        # initialize to the start of the simulation
-        cycle = 0
-        time_step = 1
-        source.setup(0, time_step) # TODO: adjust start params
+        if source.read_data(profile_file_path): # this loads the arrays in the source for us
+            # simulation only
+            time_step   = 1
+            cycle_start = 0
+            cycle_end   = 0
+            # for source and simulation
+            cycle = 0
 
-        # setup mppt
-        v_ref = .6 # single cell
-        stride = 0
-        sample_rate = 1
-        mppt.setup(v_ref, stride, sample_rate)
+            # mppt only
+            v_ref = 0 
+            stride = 0
+            sample_rate = 1
+            mppt.setup(v_ref, stride, sample_rate)
 
-        while looping:
-            # halt every loop for use input or disable halt
-            if waiting: 
-                # TODO: call setup again when user rewinds/etc
-                source.setup(cycle, time_step)
-                mppt.setup(v_ref, stride, sample_rate)
+            while True: # simulator main loop
+                
+                print("\nCycle: " + str(cycle))
+                command_string = input("Command ['step']|'change_param': ")
 
-            # generate value for source, it also generates the current cycle
-            [v_out, i_out, cycle] = source.iterate()
+                if command_string == "change_param": 
+                    pass
+                    # TODO: call setup again when user rewinds/etc
+                    # rewind time
 
-            # pipe source into the mppt
-            v_ref = mppt.iterate(v_out, i_out, cycle)
+                # generate outputs for source
+                [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
+                print("Source: " + str([v_src, i_src, irrad, temp, load]))
 
-            if v_ref is None: # MPPT is not sampling this cycle
-                pass
-            else: # MPPT has sampled this cycle
-                p_max = v_out * i_out
-                p_out = v_ref * i_out
-                [irradiance, temperature, load] = source.get_conditions()
-                tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
-                # TODO:value goes into storage
+                # pipe source into the mppt
+                v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+
+                # update Simulation with new values
+                simulation.addDatapoint(cycle, irrad, temp, load, v_src, i_src, v_ref)
+                print(simulation.getDatapoint(cycle))
+
+                # display Simulation windows
+                cycle_end = cycle # TODO: control this later
+                simulation.display(cycle_start, cycle_end, time_step)
+
+                # update cycle
+                cycle += 1
+        else:
+            print("Unsuccessful load. Exiting.")
 
     # simulating from an impulse created by the user
     else:
-        # setup source
-        irradiance = 0
-        temperature = 0
-        load = 0
-        cycle = 0
-        time_step = 1
-        # initialize nothing into read_data
-        source.read_data(irradiance, temperature, load)
-        # initialize to the start of the simulation
-        source.setup(cycle, time_step) 
+        print("Running in Impulse mode.")
+        # simulation only
+        time_step   = 1
+        cycle_start = 0
+        cycle_end   = 0
+        # for source and simulation
+        cycle       = 0
+        irradiance  = 0
+        temperature = 25
+        load        = 0
+        # initialize startup values into the source
+        source.setup(irradiance, temperature, load)
 
-        # setup mppt
-        v_ref = .35
+        # mppt only
+        v_ref = .35 #TODO: mppt doesn't change v_ref if initialized to 0 at the start since dP is 0
         stride = 0
         sample_rate = 1
+        #initialize startup values into the mppt
         mppt.setup(v_ref, stride, sample_rate)
 
-        while looping:
-            # halt every loop for use input or disable halt
-            input("\nCycle: " + str(cycle))
-            if waiting: 
+        test_v = .4
+
+        while True: # simulator main loop
+            
+            print("\nCycle: " + str(cycle))
+            command_string = input("Command ['step']|'change_param': ")
+
+            if command_string == "change_param": 
+                pass
                 # TODO: call setup again when user rewinds/etc
-                source.setup(cycle, time_step)
-                mppt.setup(v_ref, stride, sample_rate)
+                # rewind time
+                # new impulse
+                    # source.setup(irradiance, temperature, load)
+                    # mppt.setup(v_ref, stride, sample_rate)
 
-            # generate value for source, it also generates the current cycle
-            [v_out, i_out, cycle] = source.iterate(v_ref)
+            # generate outputs for source
+            
+            [v_src, i_src] = source.iterate(v_ref)
+            print("Source: " + str([v_src, i_src]))
 
-            print("Source: " + str([v_out, i_out, cycle]))
+
 
             # pipe source into the mppt
-            v_ref = mppt.iterate(v_out, i_out, cycle)
+            v_ref = mppt.iterate(v_src, i_src, temperature, cycle)
+            print(v_ref)
 
-            p_max = v_out * i_out
-            p_out = v_ref * i_out
-            tmp_storage = [cycle, irradiance, temperature, load, v_out, i_out, p_max, v_ref, p_out]
-            # TODO:value goes into display storage
-            print("cycle [v_out i_out p_max v_ref p_out]")
-            print(tmp_storage[0], tmp_storage[4::])
+            # update Simulation with new values
+            simulation.addDatapoint(cycle, irradiance, temperature, load, v_src, i_src, v_ref)
+            print("[cycle, vsrc, isrc, psrc, vref, pref, temp, irrad, load]")
+            print(simulation.getDatapoint(cycle))
 
+            # display Simulation windows
+            cycle_end = cycle # TODO: control this later
+            simulation.display(cycle_start, cycle_end, time_step)
+
+            # update cycle
+            cycle += 1
+            if cycle%20 == 0:
+                temperature += 10
+                # test_v = .4
+                source.setup(irradiance, temperature, load)
+            # test_v += .02
 
 
 
@@ -126,3 +160,4 @@ if __name__=="__main__":
     main()
 else:
     print("Run main.py as a script.")
+

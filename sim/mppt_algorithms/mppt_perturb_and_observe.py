@@ -46,7 +46,7 @@ class PandO:
         self.stride = stride
         self.sample_rate = sample_rate
 
-    def iterate(self, v_in, i_in, cycle):
+    def iterate(self, v_in, i_in, t_in, cycle):
         """
         iterate
         Runs a single iteration of the PandO algorithm.
@@ -54,6 +54,7 @@ class PandO:
         Args:
             - v_in (float): source voltage (V)
             - i_in (float): source current (A)
+            - t_in (float): temperature
             - cycle (int): current simulation cycle
         Returns:
             - v_ref (float): output voltage (V)
@@ -69,7 +70,7 @@ class PandO:
             print("Change Power: ", dP)
             print("Change Voltage: ", dV)
 
-            dV_ref = .01 #dV # calc_perturb_amt(v_ref, v_in)
+            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
             if dP > 0:
                 if dV > 0:  # increase v_ref
                     self.v_ref += dV_ref
@@ -84,19 +85,39 @@ class PandO:
         # update values
         self.p_old = p_new
         self.v_old = v_in
-
         return self.v_ref
 
-    # def calc_perturb_amt(self, v_ref, v_in):
-    #     """
-    #     calc_perturb_amt
-    #     Uses a black box method to determine the change to v_ref
+    def calc_perturb_amt(self, v_ref, v_in, t_in):
+        """
+        calc_perturb_amt
+        Uses a black box method to determine the change to v_ref
 
-    #     Args:
-    #         - v_ref (float): output reference voltage
-    #         - v_in (float): source voltage
-    #     Returns:
-    #         - dV_ref (float): change in new reference voltage for current iteration
-    #     NOTE: BLACK BOX THIS and swap out new methods
-    #     """
-    #     return 
+        Args:
+            - v_ref (float): output reference voltage
+            - v_in  (float): source voltage
+            - t_in  (float): temperature
+        Returns:
+            - dV_ref (float): change in new reference voltage for current iteration
+        NOTE: BLACK BOX THIS and swap out new methods
+        """
+        # function 1: dV = f(V_best-V) + dV_min
+        # Optimized Adaptive Perturb and Observe Maximum Power Point Tracking Control for Photovoltaic Generation
+        # Piegari et al.
+        # f(V_best-V) would optimally be |V_best - V|
+        # but the V_best is unlikely to match physical conditions, so we need to add an error estimation
+        # propose that dV_min > k^2/(2*(1-k))*V
+        # return .005
+
+        k = .05 # 5 percent error
+        v_best = .621 # according to Sunniva
+        # we can optimize v_best based on temp. Plotting the voltage at max power from the source model equation, we can use a primitive best polynomial line fit.
+        v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
+        print("v_best=", v_best, "@T=", t_in)
+        dV_min = .5*(k*k)/(1-k)*v_in + .001
+        x = abs(v_best - v_in)
+        print("f(V_best-V) = ", abs(v_best - v_in))
+        print("dV_min = ", dV_min)
+        if x < dV_min:
+            return x
+        else:
+            return x + dV_min

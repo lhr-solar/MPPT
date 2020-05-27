@@ -10,4 +10,12 @@ Currently used dependencies:
 * kivy
 * kivy-garden
   * graph
+
+
 * matlibplot
+
+
+
+* matplotlib
+* math
+* numpy
