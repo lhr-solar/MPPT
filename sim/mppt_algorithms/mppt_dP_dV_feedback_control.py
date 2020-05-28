@@ -1,18 +1,19 @@
 """
-mppt_incremental_conduction.py
+mppt_dP_dV_feedback_control.py
 
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
-Created: 5/25/20
+Created: 5/28/20
 Last Modified: 5/28/20
-Description: Incremental Conduction Algorithm.
+Description: dP/dV Feedback Control Algorithm.
 """
 from .mppt import MPPT
-class IC(MPPT):
+class FC(MPPT):
+
     # overload iterate method
     def iterate(self, v_in, i_in, t_in, cycle):
         """
-        iterate TODO: Add paper
+        iterate
         Runs a single iteration of the PandO algorithm.
 
         Args:
@@ -23,41 +24,41 @@ class IC(MPPT):
 
         Returns:
             - v_ref (float): output voltage (V)
+
+        Ref:
+            1. Modular Power Conditioning Unit for Photovoltaic Applications (Bhide et Bhat)
+                - Section 3.4, Control Algorithm
+                    - calculate the sign of dP/dV
+                    - increase v_ref if sign is positive
+                    - decrease v_ref if sign is negative
+            2. Application of adaptive algorithm of solar cell battery charger (Hou et al.)
+                - Section B, Implement of the control algorithm
         """
-        if (cycle % self.sample_rate) is 0: # sampling this run
+        if (cycle % self.sample_rate) is 0:
             if v_in is 0: # prevent from getting stuck when v_ref starts at 0
                 v_in = .001
-
-            # determine deltas
+                
+            error = .05
+            p_in = v_in * i_in
+            dP = p_in - self.p_old
             dV = v_in - self.v_old
-            dI = i_in - self.i_old
 
-            print("Change Voltage: ", dV)
-            print("Change Current: ", dI)
+            if dV == 0: # prevent division by 0 exception
+                dV = .001
 
             dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
-            if dV == 0:
-                if dI == 0:
-                    pass
-                else:
-                    if dI > 0:
-                        self.v_ref -= dV_ref
-                    else:
-                        self.v_ref += dV_ref
+            if abs(dP/dV) < error:
+                self.v_ref += dV_ref
             else:
-                dC = (i_in + (dI / dV) * v_in) # instantaneous conductance
-                print("Incremental Conductance: ", dC)
-                if dI/dV == -i_in/v_in:
-                    pass
+                if dP/dV > 0:
+                    self.v_ref += dV_ref
                 else:
-                    if dI/dV > -i_in/v_in:
-                        self.v_ref += dV_ref
-                    else:
-                        self.v_ref -= dV_ref
+                    self.v_ref -= dV_ref
 
             # update values
             self.v_old = v_in
             self.i_old = i_in
+            self.p_old = p_in
 
         return self.v_ref
 
@@ -72,4 +73,4 @@ class IC(MPPT):
         Returns:
             - Name (String)
         """
-        return "Incremental Conductance"
+        return "dP dV Feedback Control"
