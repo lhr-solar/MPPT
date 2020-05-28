@@ -5,17 +5,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 [Repo Structure](https://docs.python-guide.org/writing/structure/)
 
 Currently used dependencies:
-* OS
-* random
-* kivy
-* kivy-garden
-  * graph
-
-
-* matlibplot
-
-
-
 * matplotlib
-* math
 * numpy
+* bisect
+* math
