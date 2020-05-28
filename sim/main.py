@@ -17,8 +17,8 @@ from simulation import Simulation
 
 from mppt_algorithms.mppt_perturb_and_observe import PandO
 from mppt_algorithms.mppt_incremental_conduction import IC
-from mppt_algorithms.mppt_ripple_correlation_control import RCC
-from mppt_algorithms.mppt_fuzzy_logic import FL
+# from mppt_algorithms.mppt_ripple_correlation_control import RCC
+# from mppt_algorithms.mppt_fuzzy_logic import FL
 from mppt_algorithms.mppt_dP_dV_feedback_control import FC
 
 def main():
@@ -26,7 +26,16 @@ def main():
     mode_profile = False
 
     source = Source()
-    mppt = IC()
+
+    mppt = None
+    model_type = input("Model type: ['PandO']|'IC'|'FC': ")
+    if model_type == "IC":
+        mppt = IC()
+    elif model_type == "FC":
+        mppt = FC()
+    else:
+        mppt = PandO()
+
     simulation = Simulation(mppt.get_name())
 
     max_cycle = 250
