@@ -4,24 +4,22 @@ main.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/24/20
-Last Modified: 5/24/20
+Last Modified: 5/28/20
 Description: This is the main handler for the mppt simulator. 
   It uses Kivy for the UI of this application, in particular the graphs and statistics.
   The simulator has three main components:
       1. Source simulator - The program simulates a solar cell or set of solar cells by taking in static parameters or a datafile of input values over time.
       2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
-      3. Display - The outputs of the MPPT and the source are calculated and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
+      3. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
 from source import Source
 from simulation import Simulation
-# TODO: create a generic container to manage these imports and set `mppt = MPPT(x)?`
+
 from mppt_algorithms.mppt_perturb_and_observe import PandO
 from mppt_algorithms.mppt_incremental_conduction import IC
-# from mppt_algorithms.mppt_ripple_correlation_control import RCC
-# from mppt_algorithms.mppt_fuzzy_logic import FL
-# from mppt_algorithms.mppt_fraction_open_circuit_voltage import FOCV
-
-# from gui.display import DisplayApp
+from mppt_algorithms.mppt_ripple_correlation_control import RCC
+from mppt_algorithms.mppt_fuzzy_logic import FL
+from mppt_algorithms.mppt_dP_dV_feedback_control import FC
 
 def main():
     profile_file_path = ""
@@ -29,8 +27,38 @@ def main():
 
     source = Source()
     mppt = IC()
-    simulation = Simulation()
+    simulation = Simulation(mppt.get_name())
 
+    max_cycle = 250
+    temp_regime = [
+        [0, 25],
+        [10, 20],
+        [20, 35],
+        [30, 40],
+        [40, 45],
+        [50, 50],
+        [60, 55],
+        [70, 60],
+        [80, 65],
+        [85, 73.75],
+        [90, 82],
+        [95, 91.25],
+        [100, 100],
+        [110, 97.5],
+        [120, 95],
+        [130, 82.5],
+        [140, 70],
+        [150, 80],
+        [160, 90],
+        [165, 72.5],
+        [170, 55],
+        [175, 37.5],
+        [180, 20],
+        [185, 50],
+        [190, 80],
+        [195, 110],
+        [200, 140]
+    ]
 
     profile_string = input("Profile ['impulse']|'profile': ")
     if profile_string == "profile":
@@ -39,33 +67,63 @@ def main():
     # simulating from a dataset
     if mode_profile is True:
         print("Running in Profile mode.")
-        profile_file_path = input("Enter filepath: ")
+        profile_type = input("Profile type ['array']|'file': ")
 
+        if profile_type == "file":
+            profile_file_path = input("Enter filepath: ")
+            # read in data and setup settings
+            if source.setup_f(profile_file_path): # this loads the arrays in the source for us
+                # simulation only
+                time_step   = 1
+                cycle_start = 0
+                cycle_end   = 0
+                # for source and simulation
+                cycle = 0
 
-        # read in data and setup settings
-        if source.read_data(profile_file_path): # this loads the arrays in the source for us
+                # mppt only
+                v_ref = 0 
+                stride = 0
+                sample_rate = 1
+                mppt.setup(v_ref, stride, sample_rate)
+
+                while cycle <= max_cycle: # simulator main loop
+                    print("\nCycle: " + str(cycle))
+
+                    # generate outputs for source
+                    [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
+                    print("Source: " + str([v_src, i_src, irrad, temp, load]))
+
+                    # pipe source into the mppt
+                    v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+
+                    # update Simulation with new values
+                    simulation.addDatapoint(cycle, irrad, temp, load, v_src, i_src, v_ref)
+                    print(simulation.getDatapoint(cycle))
+
+                    # update cycle
+                    cycle += 1
+            
+                # display Simulation windows
+                simulation.display(cycle_start, max_cycle, time_step)
+                input("Halted at the end of cycle " +  str(max_cycle))
+            else:
+                print("Unsuccessful load. Exiting.")
+        else:
+            source.setup_a(temp_regime)
             # simulation only
             time_step   = 1
             cycle_start = 0
-            cycle_end   = 0
             # for source and simulation
             cycle = 0
 
             # mppt only
             v_ref = 0 
             stride = 0
-            sample_rate = 1
+            sample_rate = 5
             mppt.setup(v_ref, stride, sample_rate)
 
-            while True: # simulator main loop
-                
+            while cycle <= max_cycle: # simulator main loop
                 print("\nCycle: " + str(cycle))
-                command_string = input("Command ['step']|'change_param': ")
-
-                if command_string == "change_param": 
-                    pass
-                    # TODO: call setup again when user rewinds/etc
-                    # rewind time
 
                 # generate outputs for source
                 [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
@@ -78,14 +136,12 @@ def main():
                 simulation.addDatapoint(cycle, irrad, temp, load, v_src, i_src, v_ref)
                 print(simulation.getDatapoint(cycle))
 
-                # display Simulation windows
-                cycle_end = cycle # TODO: control this later
-                simulation.display(cycle_start, cycle_end, time_step)
-
                 # update cycle
                 cycle += 1
-        else:
-            print("Unsuccessful load. Exiting.")
+            
+            # display Simulation windows
+            simulation.display(cycle_start, max_cycle, time_step)
+            input("Halted at the end of cycle " +  str(max_cycle))
 
     # simulating from an impulse created by the user
     else:
@@ -93,17 +149,16 @@ def main():
         # simulation only
         time_step   = 1
         cycle_start = 0
-        cycle_end   = 0
         # for source and simulation
         cycle       = 0
         irradiance  = 0
         temperature = 25
         load        = 0
         # initialize startup values into the source
-        source.setup(irradiance, temperature, load)
+        source.setup_i(irradiance, temperature, load)
 
         # mppt only
-        v_ref = .35 #TODO: mppt doesn't change v_ref if initialized to 0 at the start since dP is 0
+        v_ref = 0 #TODO: mppt doesn't change v_ref if initialized to 0 at the start since dP is 0
         stride = 0
         sample_rate = 1
         #initialize startup values into the mppt
@@ -111,25 +166,11 @@ def main():
 
         test_v = .4
 
-        while True: # simulator main loop
-            
+        while cycle <= max_cycle: # simulator main loop
             print("\nCycle: " + str(cycle))
-            command_string = input("Command ['step']|'change_param': ")
-
-            if command_string == "change_param": 
-                pass
-                # TODO: call setup again when user rewinds/etc
-                # rewind time
-                # new impulse
-                    # source.setup(irradiance, temperature, load)
-                    # mppt.setup(v_ref, stride, sample_rate)
-
-            # generate outputs for source
-            
+    
             [v_src, i_src] = source.iterate(v_ref)
             print("Source: " + str([v_src, i_src]))
-
-
 
             # pipe source into the mppt
             v_ref = mppt.iterate(v_src, i_src, temperature, cycle)
@@ -140,21 +181,16 @@ def main():
             print("[cycle, vsrc, isrc, psrc, vref, pref, temp, irrad, load]")
             print(simulation.getDatapoint(cycle))
 
-            # display Simulation windows
-            cycle_end = cycle # TODO: control this later
-            simulation.display(cycle_start, cycle_end, time_step)
-
             # update cycle
             cycle += 1
+            # impulse update parameters
             if cycle%20 == 0:
                 temperature += 10
-                # test_v = .4
-                source.setup(irradiance, temperature, load)
-            # test_v += .02
-
-
-
-
+                source.setup_i(irradiance, temperature, load)
+        
+        # display Simulation windows
+        simulation.display(cycle_start, max_cycle, time_step)
+        input("Halted at the end of cycle " +  str(max_cycle))
 
 if __name__=="__main__":
     main()
