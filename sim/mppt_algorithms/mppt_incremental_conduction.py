@@ -23,6 +23,10 @@ class IC(MPPT):
 
         Returns:
             - v_ref (float): output voltage (V)
+
+        Ref:
+            1. Incremental Conductance Based Maximum Power Point Tracking (MPPT) for Photovoltaic System (Lokanadham et Bhaskar)
+                - VI. Incremental Conductance MPPT Algorithm
         """
         if (cycle % self.sample_rate) is 0: # sampling this run
             if v_in is 0: # prevent from getting stuck when v_ref starts at 0
