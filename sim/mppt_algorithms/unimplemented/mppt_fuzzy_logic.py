@@ -27,6 +27,10 @@ class FL(MPPT):
 
         Returns:
             - v_ref (float): output voltage (V)
+
+        Ref:
+            1. Fuzzy logic controller based maximum power point tracking for pv system (Narendiran et al)
+                - TODO: figure this out
         """
         if (cycle % self.sample_rate) is 0:
             p_in = v_in * i_in

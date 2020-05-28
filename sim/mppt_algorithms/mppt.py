@@ -15,6 +15,8 @@ Description: Parent class for various MPPT Algorithms.
         - [u] Fuzzy Logic Control
         - [o] Current Sweep (causes loss of power, scanning for the mpp)
         - [x] dP/dV Feedback Control
+    Ref:
+        - Comparison of Photovoltaic Aray Maximum Power Point Tracking Techniques (Esram et al)
 """
 class MPPT:
     v_ref = 0
@@ -88,7 +90,6 @@ class MPPT:
                 - Can also optimize V_best based on temperature
                     - plotting voltage at max power from the source model, we can use a best polynomial fit
                         - 8.93*.000001*(t_in**2) -4.04*.001*t_in + .717
-            2. 
         """
         k = .05 # 5 percent error
         v_best = .621 # according to Sunniva

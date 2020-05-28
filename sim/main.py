@@ -38,7 +38,7 @@ def main():
 
     simulation = Simulation(mppt.get_name())
 
-    max_cycle = 250
+    max_cycle = 350
     temp_regime = [
         [0, 25],
         [10, 20],
@@ -169,7 +169,7 @@ def main():
         # mppt only
         v_ref = 0 #TODO: mppt doesn't change v_ref if initialized to 0 at the start since dP is 0
         stride = 0
-        sample_rate = 1
+        sample_rate = 10
         #initialize startup values into the mppt
         mppt.setup(v_ref, stride, sample_rate)
 
@@ -193,8 +193,8 @@ def main():
             # update cycle
             cycle += 1
             # impulse update parameters
-            if cycle%20 == 0:
-                temperature += 10
+            if cycle%1 == 0:
+                temperature += .5
                 source.setup_i(irradiance, temperature, load)
         
         # display Simulation windows

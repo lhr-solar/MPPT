@@ -23,6 +23,12 @@ class RCC(MPPT):
 
         Returns:
             - v_ref (float): output voltage (V)
+
+        Ref:
+            1. Dynamic maximum power point tracking of photovoltaic arrays using ripple correlation control (Esram et al)
+                - TODO: figure this out
+            2. Discrete-Time Ripple Correlation Control for Maximum Power Point Tracking. (Kimball et Krein)
+                - TODO: figure this out
         """
         if (cycle % self.sample_rate) is 0:
             # switching ripple to optimize a cost function J, function of z
