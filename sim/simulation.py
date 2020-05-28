@@ -4,7 +4,7 @@ simulation.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/27/20
-Last Modified: 5/27/20
+Last Modified: 5/28/20
 Description: This Simulation class contains the state of the simulation. 
     It  1) collects data from the source and mppt
     and 2) displays it using matplotlib.
@@ -37,10 +37,14 @@ class Simulation:
     fig = None
     fig_num = 0
     axs = None
+    twin_ax = None
 
-    def __init__(self):
+    def __init__(self, mppt_name):
         """
         init
+
+        Args:
+            - mppt_name (String): name of MPPT Algorithm to be displayed
         """
         plt.ion()
         self.fig, self.axs = plt.subplots(2, 2)
@@ -48,27 +52,28 @@ class Simulation:
 
         self.axs[0, 0].set_xlabel('Cycle')
         self.axs[0, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[0, 0].set_ylim([-1, 7])
+        self.axs[0, 0].set_ylim([0, 7])
+        self.twin_ax = self.axs[0, 0].twinx()
+        self.twin_ax.set_ylabel('Temperature (C)')
+        self.twin_ax.set_ylim([0, 200])
         self.axs[0, 0].set_title('Source Characteristics Over Time')
-        self.axs[0, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
 
         self.axs[1, 0].set_xlabel('Cycle')
         self.axs[1, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[0, 0].set_ylim([-1, 7])
+        self.axs[1, 0].set_ylim([0, 7])
         self.axs[1, 0].set_title('MPPT Characteristics Over Time')
-        self.axs[1, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
 
         self.axs[0, 1].set_xlabel('Cycle')
         self.axs[0, 1].set_ylabel('Max Pwr (W) and Actual Pwr (W)')
-        self.axs[0, 0].set_ylim([0, 4])
+        self.axs[0, 1].set_ylim([0, 4])
         self.axs[0, 1].set_title('Power Comparison Over Time')
-        self.axs[0, 1].legend(labels=('Max', 'Actual'), loc="upper left")
 
         self.axs[1, 1].set_xlabel('Cycle')
         self.axs[1, 1].set_ylabel('% Diff from Max Pwr and % Ratio Diff')
-        self.axs[0, 0].set_ylim([0, 1])
+        self.axs[1, 1].set_ylim([0, 1])
         self.axs[1, 1].set_title('Power Comparison Over Time')
-        self.axs[1, 1].legend(labels=('% Max Diff', '% Cycles Above Threshold'), loc="upper left")
+
+        self.fig.suptitle(mppt_name)
 
         self.fig_num = plt.gcf().number
         print("Fig num:", self.fig_num)
@@ -95,7 +100,9 @@ class Simulation:
         p_src = v_src * i_src
         p_ref = v_ref * i_src
 
-        p_diff = abs(p_src-p_ref)/((p_src+p_ref)/2)
+        p_diff = 0
+        if (p_src + p_ref) != 0:
+            p_diff = abs(p_src-p_ref)/((p_src+p_ref)/2)
 
         # find index to insert into for all lists
         insert_index = bisect(self.disp_cycle, cycle)
@@ -179,6 +186,7 @@ class Simulation:
         t_disp_pDiff    = self.disp_pDiff[cycle_start:cycle_end]
         t_disp_pDiffA   = self.disp_pDiffA[cycle_start:cycle_end]
 
+        t_disp_temp     = self.disp_temp[cycle_start:cycle_end]
         # check if figure still exists
         if not plt.fignum_exists(self.fig_num):
             self.__init__()
@@ -187,19 +195,25 @@ class Simulation:
         self.axs[0, 0].plot(t_cycle, t_disp_vsrc, color='r', marker='o', markersize=2)
         self.axs[0, 0].plot(t_cycle, t_disp_isrc, color='g', marker='v', markersize=2)
         self.axs[0, 0].plot(t_cycle, t_disp_psrc, color='b', marker='D', markersize=2)
+        self.axs[0, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
+        self.twin_ax.plot(t_cycle, t_disp_temp, color='k', marker='1', markersize=2)
+        self.twin_ax.legend(labels=('Temp'), loc="upper right")
 
         # mppt
         self.axs[1, 0].plot(t_cycle, t_disp_vref, color='r', marker='o', markersize=2)
         self.axs[1, 0].plot(t_cycle, t_disp_isrc, color='g', marker='v', markersize=2)
         self.axs[1, 0].plot(t_cycle, t_disp_pref, color='b', marker='D', markersize=2)
+        self.axs[1, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
 
         # power
         self.axs[0, 1].plot(t_cycle, t_disp_psrc, color='r', marker='o', markersize=2)
         self.axs[0, 1].plot(t_cycle, t_disp_pref, color='b', marker='D', markersize=2)
+        self.axs[0, 1].legend(labels=('Max', 'Actual'), loc="upper left")
 
         # cycle stats
         self.axs[1, 1].plot(t_cycle, t_disp_pDiff, color='r', marker='o', markersize=2)
         self.axs[1, 1].plot(t_cycle, t_disp_pDiffA, color='b', marker='D', markersize=2)
+        self.axs[1, 1].legend(labels=('% Max Diff', '% Cycles Above Threshold'), loc="upper left")
 
         plt.tight_layout()
         plt.draw()
