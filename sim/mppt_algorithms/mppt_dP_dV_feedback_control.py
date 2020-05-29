@@ -48,7 +48,7 @@ class FC(MPPT):
 
             dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
             if abs(dP/dV) < error:
-                self.v_ref += dV_ref
+                pass
             else:
                 if dP/dV > 0:
                     self.v_ref += dV_ref

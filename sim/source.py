@@ -16,11 +16,13 @@ class Source:
     irradiance  = 0
     temperature = 0
     load        = 0
+    idx         = 0
 
     arr_cycle   = []
     arr_irrad   = []
     arr_temp    = []
     arr_load    = []
+
     def __init__(self):
         """
         init
@@ -71,6 +73,9 @@ class Source:
             self.arr_irrad.append(irrad)
             self.arr_temp.append(temp)
             self.arr_load.append(load)
+
+        print(self.arr_cycle)
+        print(self.arr_temp)
 
     def setup_i(self, irradiance=0, temperature=0, load=0):
         """
@@ -133,15 +138,44 @@ class Source:
 
         # try to set new conditions
         try:
+            # if idx exists
+            idx = self.arr_cycle.index(cycle)
+            # load it
             self.v_out = v_in
 
-            idx = self.arr_cycle.index(cycle)
+            self.idx = idx
             self.irradiance = self.arr_irrad[idx]
             self.temperature = self.arr_temp[idx]
             self.load = self.arr_load[idx]
         except ValueError:
-            print("[SOURCE] Error: Cycle does not exist in data.")
-        
+            print("[SOURCE] NOTE: Cycle does not exist in data. Interpolating data.")
+            # if idx doesn't exist, grab two closest points
+            idx_new = self.idx + 1
+            idx_curr = self.idx
+            try:
+                # interpolate slope
+                dCycle = (self.arr_cycle[idx_new] - self.arr_cycle[idx_curr])
+                sIrr   = (self.arr_irrad[idx_new] - self.arr_irrad[idx_curr])/dCycle
+                sTemp  = (self.arr_temp[idx_new] - self.arr_temp[idx_curr])/dCycle
+                sLoad  = (self.arr_load[idx_new] - self.arr_load[idx_curr])/dCycle
+
+                for i in range(0, dCycle - 1): # append entries to relevant arrays
+                    insert_idx = idx_curr + i + 1
+                    self.arr_cycle.insert(insert_idx,   self.arr_cycle[insert_idx - 1] + 1)
+                    self.arr_irrad.insert(insert_idx,   self.arr_irrad[insert_idx - 1] + sIrr)
+                    self.arr_temp.insert(insert_idx,    self.arr_temp[insert_idx - 1] + sTemp)
+                    self.arr_load.insert(insert_idx,    self.arr_load[insert_idx - 1] + sLoad)
+            except IndexError:
+                print("[SOURCE] NOTE: Cycle does not exist in data. Reached end of regime data. Don't interpolate.")
+                insert_idx = idx_curr + 1
+                self.arr_cycle.insert(insert_idx,   self.arr_cycle[insert_idx - 1] + 1)
+                self.arr_irrad.insert(insert_idx,   self.arr_irrad[insert_idx - 1])
+                self.arr_temp.insert(insert_idx,    self.arr_temp[insert_idx - 1])
+                self.arr_load.insert(insert_idx,    self.arr_load[insert_idx - 1])
+                
+            return self.iterate_t(v_in, cycle)
+
+
         # model most recent conditions
         self.i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
         # print("Current at voltage: ",  model(v_in))

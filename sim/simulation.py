@@ -74,6 +74,7 @@ class Simulation:
         self.axs[1, 1].set_title('Power Comparison Over Time')
 
         self.fig.suptitle(mppt_name)
+        plt.tight_layout()
 
         self.fig_num = plt.gcf().number
         print("Fig num:", self.fig_num)

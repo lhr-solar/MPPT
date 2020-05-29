@@ -19,3 +19,4 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 - [ ] fuzzy logic mppt algo
 - [ ] ripple correlation control mppt algo
 - [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
+- [x] input parameters

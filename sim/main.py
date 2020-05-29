@@ -27,18 +27,22 @@ def main():
 
     source = Source()
 
+    # model input dialogue
     mppt = None
-    model_type = input("Model type: ['PandO']|'IC'|'FC': ")
-    if model_type == "IC":
+    string_model_type = input("Model type: ['PandO']|'IC'|'FC': ")
+    if string_model_type == "IC":
         mppt = IC()
-    elif model_type == "FC":
+    elif string_model_type == "FC":
         mppt = FC()
     else:
         mppt = PandO()
-
     simulation = Simulation(mppt.get_name())
 
+    # parameters input dialogue
+    # NOTE: Modify these values
     max_cycle = 350
+    sample_rate = 1
+    v_ref = 0
     temp_regime = [
         [0, 25],
         [10, 20],
@@ -68,9 +72,31 @@ def main():
         [195, 110],
         [200, 140]
     ]
+    string_max_cycle = input("Max cycle ['" + str(max_cycle) + "']: ")
+    try:
+        tmp_max_cycle = int(string_max_cycle)
+        max_cycle = tmp_max_cycle
+    except ValueError:
+        print("Invalid integer. Defaulting to", max_cycle, "cycles.")
 
-    profile_string = input("Profile ['impulse']|'profile': ")
-    if profile_string == "profile":
+    string_sample_rate = input("Sample rate ['" + str(sample_rate) + "']: ")
+    try:
+        tmp_sample_rate = int(string_sample_rate)
+        sample_rate = tmp_sample_rate
+    except ValueError:
+        print("Invalid integer. Defaulting to a sample every " + str(sample_rate) + " cycles.")
+
+    string_v_ref = input("Starting mppt output voltage ['" + str(v_ref) + "']: ")
+    try:
+        tmp_v_ref = float(string_v_ref)
+        v_ref = tmp_v_ref
+    except ValueError:
+        print("Invalid integer. Defaulting to a cycle 0 v_ref of " + str(v_ref) + " V.")
+
+
+
+    string_profile = input("Profile ['impulse']|'profile': ")
+    if string_profile == "profile":
         mode_profile = True
 
     # simulating from a dataset
@@ -88,11 +114,8 @@ def main():
                 cycle_end   = 0
                 # for source and simulation
                 cycle = 0
-
                 # mppt only
-                v_ref = 0 
                 stride = 0
-                sample_rate = 1
                 mppt.setup(v_ref, stride, sample_rate)
 
                 while cycle <= max_cycle: # simulator main loop
@@ -124,11 +147,8 @@ def main():
             cycle_start = 0
             # for source and simulation
             cycle = 0
-
             # mppt only
-            v_ref = 0 
             stride = 0
-            sample_rate = 5
             mppt.setup(v_ref, stride, sample_rate)
 
             while cycle <= max_cycle: # simulator main loop
@@ -163,17 +183,36 @@ def main():
         irradiance  = 0
         temperature = 25
         load        = 0
+
+        string_irrad = input("Starting irradiance ['" + str(irradiance) + "']: ")
+        try:
+            tmp_irrad = float(string_irrad)
+            irradiance = tmp_irrad
+        except ValueError:
+            print("Invalid integer. Defaulting to an irradiance of " + str(irradiance) + " W/m^2.")
+
+        string_temp = input("Starting temperature ['" + str(temperature) + "']: ")
+        try:
+            tmp_temp = float(string_temp)
+            temperature = tmp_temp
+        except ValueError:
+            print("Invalid integer. Defaulting to a temperature of " + str(temperature) + " C.")
+
+        string_load = input("Starting load ['" + str(load) + "']: ")
+        try:
+            tmp_load = float(string_load)
+            load = tmp_load
+        except ValueError:
+            print("Invalid integer. Defaulting to a load of " + str(load) + " W.")
+
+        input("Ready to start. Press enter to run the simulation.")
+
         # initialize startup values into the source
         source.setup_i(irradiance, temperature, load)
-
         # mppt only
-        v_ref = 0 #TODO: mppt doesn't change v_ref if initialized to 0 at the start since dP is 0
         stride = 0
-        sample_rate = 10
         #initialize startup values into the mppt
         mppt.setup(v_ref, stride, sample_rate)
-
-        test_v = .4
 
         while cycle <= max_cycle: # simulator main loop
             print("\nCycle: " + str(cycle))
@@ -193,9 +232,8 @@ def main():
             # update cycle
             cycle += 1
             # impulse update parameters
-            if cycle%1 == 0:
-                temperature += .5
-                source.setup_i(irradiance, temperature, load)
+            # temperature += .5
+            source.setup_i(irradiance, temperature, load)
         
         # display Simulation windows
         simulation.display(cycle_start, max_cycle, time_step)
