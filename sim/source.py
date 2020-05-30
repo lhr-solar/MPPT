@@ -8,11 +8,9 @@ Last Modified: 5/28/20
 Description: This file describes the Source class, which generates input values for the Display and MPPT.
     The Source is time agnostic. The output is purely dependent on current conditions.
 """
-from math import exp
+from math import exp, pow, e
 from numpy import log as ln
 class Source:
-    v_out       = 0
-    i_out       = 0
     irradiance  = 0
     temperature = 0
     load        = 0
@@ -23,10 +21,31 @@ class Source:
     arr_temp    = []
     arr_load    = []
 
-    def __init__(self):
+    model_type  = "Benghanem"
+
+    def __init__(self, model_type):
         """
         init
+        Sets up the model type of the cell.
+
+        Params:
+            - model_type (String): type of model to represent the solar cell
+                - [Benghanem]   (Considers Temperature but not Irradiance), default
+                - Ibrahim       (Considers Temperature and Irradiance)
+                - Zahedi        (Considers Temperature and Irradiance)
+        
+        Returns:
+            - None
         """
+        if model_type == "Benghanem":
+            self.model_type = "Benghanem"
+        elif model_type == "Ibrahim":
+            self.model_type = "Ibrahim"
+        elif model_type == "Zahedi":
+            self.model_type = "Zahedi"
+        else:
+            pass 
+
         return
 
     def setup_f(self, file_name=""):
@@ -65,8 +84,8 @@ class Source:
         """
         for event in regime:
             cycle = event[0]
-            irrad = 0
-            temp = event[1]
+            irrad = event[1]
+            temp = event[2]
             load = 0
             
             self.arr_cycle.append(cycle)
@@ -108,15 +127,9 @@ class Source:
             - (v_out, i_out) (tuple)
         """
         # NOTE: Defaulting to sunpower 1 cell at STD conditions
-
-        # print("Input voltage: ", v_in)
-        # print("Looking for closest voltage.")
-
-        self.v_out = v_in
-
-        self.i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
-        # print("Current at voltage: ",  model(v_in))
-        return [self.v_out, self.i_out]
+        v_out = v_in
+        i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
+        return [v_out, i_out]
 
     def iterate_t(self, v_in, cycle):
         """
@@ -132,16 +145,12 @@ class Source:
             - [v_out, i_out, irrad, temp, load] (list)
         """
         # NOTE: Defaulting to sunpower 1 cell at STD conditions
-
-        # print("Input voltage: ", v_in)
-        # print("Looking for closest voltage.")
-
         # try to set new conditions
         try:
             # if idx exists
             idx = self.arr_cycle.index(cycle)
             # load it
-            self.v_out = v_in
+            v_out = v_in
 
             self.idx = idx
             self.irradiance = self.arr_irrad[idx]
@@ -175,11 +184,9 @@ class Source:
                 
             return self.iterate_t(v_in, cycle)
 
-
         # model most recent conditions
-        self.i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
-        # print("Current at voltage: ",  model(v_in))
-        return [self.v_out, self.i_out, self.irradiance, self.temperature, self.load]
+        i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
+        return [v_out, i_out, self.irradiance, self.temperature, self.load]
 
     def get_conditions(self):
         """
@@ -218,32 +225,135 @@ class Source:
                     ~ https://www.pveducation.org/pvcdrom/solar-cell-operation/effect-of-temperature
                         - for silicon solar cell
                         - V_OC = .721 - (2.2*.001)*(t-25)
-                        - I_SC = 6.15 + (.06*.001)*(t-25)
+                        - I_SC = 6.15 + (.06*.001)*(t-25)*6.15
+                    ~ C_3 = maximal voltage
+                    ~ C_4 = maximal current
             2. Modeling and simulation of photovoltaic arrays (Banu et Istrate)
                 - Section 2, Simulink Model of Solar Cell
                 - TODO: Implement this?
+            3. Review of modelling details in relation to low-concentration solar cell concentrating photovoltaic (Zahedi)
+                - Section 3-6
+                - G - irradiance, W/m^2
 
-        C_3 = maximal voltage
-        C_4 = maximal current
+                - I = I_L(G, T_c) - I_D(V, G, T_c)
+                    - load current is a result of light generated current and diode saturation current
+                - I_L(G, T_c) = I_SC(G, T_c)
+                    - light generated current is equal to the short circuit current in an ideal cell
+                - I_SC(G, T_c) = I_SC,ref * (1 + K_t * (T_c-T_ref) * G / Gref
+                    ~ I_SC,ref = reference short circuit current (A)
+                        - 6.15 A
+                    ~ K_t = some constant
+                        - 0 for I_SC to be ideal
+                    ~ T_c = T_a + (NOCT-20)/80 * S 
+                        - https://www.pveducation.org/pvcdrom/modules-and-arrays/nominal-operating-cell-temperature
+                        - T_a = ambient air temp (C)
+                            ~ avg low to high in Austin from June to Aug is 72-97 F (22.2-36C)
+                        - NOCT = cell temp at NOCT (C)
+                            ~ going with typical module NOCT of 48C, sunniva STD was at 25C, no other details
+                        - S = insolation (incident solar radiation)
+                            ~ 1000 W/m^2 -> 100 mW/cm^2 during the summer solstice in Austin, Energy, the Environment, and Sustainability (2018) p. 213 [Efstathios E. Michaelides]
+                    ~ T_ref = reference temperature (C)
+                        - 25 C
+                    ~ G = solar irradiance (W/m^2)
+                        - variable
+                    ~ G_ref = reference solar irradiance (W/m^2)
+                        - 1000 W/m^2
+                - I_D = I_SC/(exp(V_OC * (1 + K_v * (T_c-T_ref)) / (a * V_T)) - 1)
+                    ~ I_SC = short circuit current, see above (A)
+                    ~ V_OC = open circuit voltage (V)
+                        - doesn't say reference, but assume it is or we're missing things
+                        - .721 V
+                    ~ K_v = some constant
+                        - -.00023 fixed by the paper, NOTE: it can be tweaked
+                    ~ a = diode ideality factor (1-1.5)
+                        - 1.187, NOTE: can be tweaked
+                    ~ V_T - thermal voltage (V)
+                        - V_T = k * T_c / q
+                            - k = boltzmann's constant
+                                ~ 1.381 * 10^-23 J/K
+                            - T_c = cell temperature, see above (in Kelvin -> f(C) = C + 273.15)
+                            - q = electron charge
+                                ~ 1.602 * 10^-19 C
         """
-        k = 0.92 # manufacturing efficiency loss (8% according to test data)
+        if self.model_type == "Benghanem":
+            k = 0.92 # manufacturing efficiency loss (8% according to test data)
 
-        # open circuit voltage and short circuit current dependence on temperature
-        v_oc = .721 - (2.2*.001)*(t_in-25)
-        i_sc = 6.15 + (.06*.001)*(t_in-25)
+            # open circuit voltage and short circuit current dependence on temperature
+            v_oc = .721 - (2.2*.001)*(t_in-25)
+            i_sc = 6.15 + (.06*.001)*(t_in-25)*6.15
 
-        C_3 = 0.817 # maximal voltage - determined by tuning parameters in desmos until maxppt is reached
-        C_4 = -100  # maximal current
+            C_3 = 0.817 # maximal voltage - determined by tuning parameters in desmos until maxppt is reached
+            C_4 = -100  # maximal current
 
-        C_2 = ((C_3/v_oc) - 1) / ln(1 - C_4/i_sc)
-        C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
-        # default explicit model
-        model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
+            C_2 = ((C_3/v_oc) - 1) / ln(1 - C_4/i_sc)
+            C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
+            # default explicit model
+            model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
+            print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
-        print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
-
-        # losses in efficiency as a result of manufacturing (lamination, etc)
-        model2 = model * k
+            # losses in efficiency as a result of manufacturing (lamination, etc)
+            model2 = model * k
+            
+            return model
         
-        return model2
-    
+        if self.model_type == "Ibrahim":
+            return 0
+
+        if self.model_type == "Zahedi":
+            # TODO: Severe issues, not yet usable. Continue to debug.
+            k = 0.92 # manufacturing efficiency loss (8% according to test data)
+
+            G = irr_in
+            T_a = 36
+            # ignore T_c equation and insert our own cell temp into it
+            T_c = t_in # T_a + (48 - 20) / 80 * 100 
+            I_sc= 6.15 * (1 + 0 * (T_c - 25)) * G / 1000
+            print("Short Circuit current I_sc:", I_sc)
+
+            I_l = I_sc
+            K_v = -.00023
+            a = 1.187
+            V_t = 1.381E-23 * (T_c + 273.15) / 1.602E-19
+            print("Thermal voltage V_t:", V_t)
+            I_d = I_sc / (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1) * (e ** (v_in / (a * V_t)) - 1)
+            print("denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
+            print("multiplier:", (e ** (v_in / (a * V_t)) - 1))
+            print("Diode Saturation current:", I_d)
+            model = I_l - I_d
+            print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+
+            # losses in efficiency as a result of manufacturing (lamination, etc)
+            model2 = model * k 
+            return model
+
+    def graph(self):
+        """
+        graph
+        Returns an array of voltage and current values to display current solar panel IV pre-altered by the mppt.
+
+        Args:
+            - None
+
+        Returns:
+            - [[[voltage, current]], gmpp]
+                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
+        """
+        MAX_VOLTAGE = 1
+        v_in = 0
+        step_size = .01
+        p_mpp = 0
+        v_mpp = 0
+        i_mpp = 0
+        output = []
+        while True:
+            [voltage, current] = self.iterate(v_in)
+            output.append([voltage, current])
+            if p_mpp < voltage * current:
+                p_mpp = voltage * current
+                v_mpp = voltage
+                i_mpp = current
+
+            v_in += step_size
+            if current < 0 or voltage < MAX_VOLTAGE:
+                break
+        return [output, [v_mpp, i_mpp, p_mpp]]
