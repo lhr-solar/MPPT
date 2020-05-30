@@ -39,7 +39,7 @@ class IC(MPPT):
             print("Change Voltage: ", dV)
             print("Change Current: ", dI)
 
-            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
+            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
             if dV == 0:
                 if dI == 0:
                     pass

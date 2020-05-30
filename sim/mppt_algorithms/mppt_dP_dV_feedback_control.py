@@ -14,7 +14,7 @@ class FC(MPPT):
     def iterate(self, v_in, i_in, t_in, cycle):
         """
         iterate
-        Runs a single iteration of the PandO algorithm.
+        Runs a single iteration of the FC algorithm.
 
         Args:
             - v_in (float): source voltage (V)
@@ -46,7 +46,7 @@ class FC(MPPT):
             if dV == 0: # prevent division by 0 exception
                 dV = .001
 
-            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
+            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
             if abs(dP/dV) < error:
                 pass
             else:

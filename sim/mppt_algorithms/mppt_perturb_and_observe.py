@@ -44,17 +44,21 @@ class PandO(MPPT):
             # compute power
             p_in = v_in * i_in
             # determine deltas
-            dP = p_in - self.p_old
-            dV = v_in - self.v_old
+            diff_V = v_in - self.v_old
+            diff_P = p_in - self.p_old
 
-            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, t_in)
-            if dP >= 0:
-                if dV >= 0:  # increase v_ref
+            print("Change Voltage: ", diff_V)
+            print("Change Power: ", diff_P)
+
+            dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
+
+            if diff_P > 0:
+                if diff_V > 0:  # increase v_ref
                     self.v_ref += dV_ref
                 else:       # decrease v_ref
                     self.v_ref -= dV_ref
-            elif dP < 0:
-                if dV > 0:  # decrease v_ref
+            else:
+                if diff_V > 0:  # decrease v_ref
                     self.v_ref -= dV_ref
                 else:       # increase v_Ref
                     self.v_ref += dV_ref
@@ -65,7 +69,7 @@ class PandO(MPPT):
             self.p_old = p_in
 
             # clamp to optimize jumping - this might not be necessary or useful.
-            v_ref_max = 1.2 # TODO: Put this somewhere better
+            v_ref_max = .7 # TODO: Put this somewhere better
             v_ref_min = 0
 
             if self.v_ref >= v_ref_max:
