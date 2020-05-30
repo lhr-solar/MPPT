@@ -16,13 +16,16 @@ Description: Parent class for various MPPT Algorithms.
         - [o] Current Sweep (causes loss of power, scanning for the mpp)
         - [x] dP/dV Feedback Control
     Ref:
-        - Comparison of Photovoltaic Aray Maximum Power Point Tracking Techniques (Esram et al)
+        - Comparison of Photovoltaic Array Maximum Power Point Tracking Techniques (Esram et al)
 """
+from math import log10
 class MPPT:
     v_ref = 0
     stride = 1
     sample_rate = 1
 
+    dP_old_old = 0
+    dP_old = 0
     p_old = 0
     v_old = 0
     i_old = 0
@@ -66,7 +69,7 @@ class MPPT:
         """
         return self.v_ref
 
-    def calc_perturb_amt(self, v_ref, v_in, t_in):
+    def calc_perturb_amt(self, v_ref, v_in, i_in, t_in):
         """
         calc_perturb_amt
         Uses a black box method to determine the change to v_ref
@@ -74,6 +77,7 @@ class MPPT:
         Args:
             - v_ref (float): output reference voltage
             - v_in  (float): source voltage
+            - i_in  (float): source current
             - t_in  (float): temperature
 
         Returns:
@@ -91,18 +95,33 @@ class MPPT:
                     - plotting voltage at max power from the source model, we can use a best polynomial fit
                         - 8.93*.000001*(t_in**2) -4.04*.001*t_in + .717
         """
-        k = .05 # 5 percent error
-        v_best = .621 # according to Sunniva
-        v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
-        print("v_best=", v_best, "@T=", t_in)
-        dV_min = .5*(k*k)/(1-k)*v_in + .001
-        x = abs(v_best - v_in)
-        print("f(V_best-V) = ", abs(v_best - v_in))
-        print("dV_min = ", dV_min)
-        if x < dV_min:
-            return x
+        mode = "Piegari"
+
+        if mode == "Piegari":
+            k = .05 # 5 percent error
+            v_best = .621 # according to Sunniva
+            v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
+            print("v_best=", v_best, "@T=", t_in)
+            dV_min = .5*(k*k)/(1-k)*v_in + .001
+            x = abs(v_best - v_in)
+            print("f(V_best-V) = ", x)
+            print("dV_min = ", dV_min)
+            if x < dV_min:
+                return x
+            else:
+                return (x + dV_min)
+        elif mode == "Newton":
+            # newton's method
+            """
+            Seek to optimize max f(X)
+            f()
+            """
+
+        elif mode == "LBFGS":
+            return .1
         else:
-            return x + dV_min
+            return .01
+
 
     def get_name(self):
         """
