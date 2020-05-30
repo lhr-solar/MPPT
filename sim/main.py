@@ -12,6 +12,8 @@ Description: This is the main handler for the mppt simulator.
       2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
       3. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
+import sys
+
 from source import Source
 from simulation import Simulation
 
@@ -25,14 +27,15 @@ def main():
     profile_file_path = ""
     mode_profile = False
 
-    source = Source()
+    string_source_model_type = input("Source Model type (see source documentation): ['Benghanem']|'Ibrahim'|'Zahedi': ")
+    source = Source(string_source_model_type)
 
     # model input dialogue
     mppt = None
-    string_model_type = input("Model type: ['PandO']|'IC'|'FC': ")
-    if string_model_type == "IC":
+    string_mppt_algorithm_type = input("MPPT Algorithm type: ['PandO']|'IC'|'FC': ")
+    if string_mppt_algorithm_type == "IC":
         mppt = IC()
-    elif string_model_type == "FC":
+    elif string_mppt_algorithm_type == "FC":
         mppt = FC()
     else:
         mppt = PandO()
@@ -44,33 +47,38 @@ def main():
     sample_rate = 1
     v_ref = 0
     temp_regime = [
-        [0, 25],
-        [10, 20],
-        [20, 35],
-        [30, 40],
-        [40, 45],
-        [50, 50],
-        [60, 55],
-        [70, 60],
-        [80, 65],
-        [85, 73.75],
-        [90, 82],
-        [95, 91.25],
-        [100, 100],
-        [110, 97.5],
-        [120, 95],
-        [130, 82.5],
-        [140, 70],
-        [150, 80],
-        [160, 90],
-        [165, 72.5],
-        [170, 55],
-        [175, 37.5],
-        [180, 20],
-        [185, 50],
-        [190, 80],
-        [195, 110],
-        [200, 140]
+        [0, 0, 25],
+        [1, 0, 25],
+        [2, 0, 25],
+        [3, 0, 25],
+        [4, 0, 25],
+        [5, 1000, 25],
+        [10, 1000, 20],
+        [20, 1000, 35],
+        [30, 1000, 40],
+        [40, 1000, 45],
+        [50, 1000, 50],
+        [60, 1000, 55],
+        [70, 1000, 60],
+        [80, 1000, 65],
+        [85, 1000, 73.75],
+        [90, 1000, 82],
+        [95, 1000, 91.25],
+        [100, 1000, 100],
+        [110, 1000, 97.5],
+        [120, 1000, 95],
+        [130, 1000, 82.5],
+        [140, 1000, 70],
+        [150, 1000, 80],
+        [160, 1000, 90],
+        [165, 1000, 72.5],
+        [170, 1000, 55],
+        [175, 1000, 37.5],
+        [180, 1000, 20],
+        [185, 1000, 50],
+        [190, 1000, 80],
+        [195, 1000, 110],
+        [200, 1000, 140]
     ]
     string_max_cycle = input("Max cycle ['" + str(max_cycle) + "']: ")
     try:
@@ -115,26 +123,36 @@ def main():
                 # for source and simulation
                 cycle = 0
                 # mppt only
+                v_mppt = 0
+                i_mppt = 0
                 stride = 0
                 mppt.setup(v_ref, stride, sample_rate)
 
+                simulation.init_display()
                 while cycle <= max_cycle: # simulator main loop
                     print("\nCycle: " + str(cycle))
 
-                    # generate outputs for source
-                    [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
-                    print("Source: " + str([v_src, i_src, irrad, temp, load]))
+                    # get source power point
+                    # [coordinates, max_power] = source.graph()
 
-                    # pipe source into the mppt
-                    v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+                    # get source output given voltage point parameter
+                    [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
+                    print("Source: " + str([v_src, i_src]))
+                    # get new values with the existing source
+                    [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
 
                     # update Simulation with new values
-                    simulation.addDatapoint(cycle, irrad, temp, load, v_src, i_src, v_ref)
-                    print(simulation.getDatapoint(cycle))
+                    simulation.add_datapoint(cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt)
+                    print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
+                    print(simulation.get_datapoint(cycle))
+
+                    # pipe source into the mppt and try to find new v_ref
+                    v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+
 
                     # update cycle
                     cycle += 1
-            
+                
                 # display Simulation windows
                 simulation.display(cycle_start, max_cycle, time_step)
                 input("Halted at the end of cycle " +  str(max_cycle))
@@ -148,22 +166,32 @@ def main():
             # for source and simulation
             cycle = 0
             # mppt only
+            v_mppt = 0
+            i_mppt = 0
             stride = 0
             mppt.setup(v_ref, stride, sample_rate)
 
+            simulation.init_display()
             while cycle <= max_cycle: # simulator main loop
                 print("\nCycle: " + str(cycle))
 
-                # generate outputs for source
-                [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
-                print("Source: " + str([v_src, i_src, irrad, temp, load]))
+                # get source power point
+                # [coordinates, max_power] = source.graph()
 
-                # pipe source into the mppt
-                v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+                # get source output given voltage point parameter
+                [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
+                print("Source: " + str([v_src, i_src]))
+                # get new values with the existing source
+                [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
 
                 # update Simulation with new values
-                simulation.addDatapoint(cycle, irrad, temp, load, v_src, i_src, v_ref)
-                print(simulation.getDatapoint(cycle))
+                simulation.add_datapoint(cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt)
+                print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
+                print(simulation.get_datapoint(cycle))
+
+                # pipe source into the mppt and try to find new v_ref
+                v_ref = mppt.iterate(v_src, i_src, temp, cycle)
+
 
                 # update cycle
                 cycle += 1
@@ -183,6 +211,9 @@ def main():
         irradiance  = 0
         temperature = 25
         load        = 0
+        # mppt
+        v_mppt      = 0
+        i_mppt      = 0
 
         string_irrad = input("Starting irradiance ['" + str(irradiance) + "']: ")
         try:
@@ -214,25 +245,31 @@ def main():
         #initialize startup values into the mppt
         mppt.setup(v_ref, stride, sample_rate)
 
+        simulation.init_display()
         while cycle <= max_cycle: # simulator main loop
             print("\nCycle: " + str(cycle))
-    
-            [v_src, i_src] = source.iterate(v_ref)
-            print("Source: " + str([v_src, i_src]))
 
-            # pipe source into the mppt
-            v_ref = mppt.iterate(v_src, i_src, temperature, cycle)
-            print(v_ref)
+            # get source power point
+            [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
+            print(v_mpp, i_mpp, p_mpp)
+
+            # get new values with the existing source
+            [v_mppt, i_mppt] = source.iterate(v_ref)
 
             # update Simulation with new values
-            simulation.addDatapoint(cycle, irradiance, temperature, load, v_src, i_src, v_ref)
-            print("[cycle, vsrc, isrc, psrc, vref, pref, temp, irrad, load]")
-            print(simulation.getDatapoint(cycle))
+            simulation.add_datapoint(cycle, irradiance, temperature, load, v_mpp, i_mpp, v_mppt, i_mppt)
+            print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
+            print(simulation.get_datapoint(cycle))
+
+            # pipe source into the mppt and try to find new v_ref
+            v_ref = mppt.iterate(v_mppt, i_mppt, temperature, cycle)
 
             # update cycle
             cycle += 1
-            # impulse update parameters
-            # temperature += .5
+            # impulse update parameters here
+            # irradiance += UPDATE_HERE
+            temperature += .5
+            # load += UPDATE_HERE
             source.setup_i(irradiance, temperature, load)
         
         # display Simulation windows
@@ -240,6 +277,8 @@ def main():
         input("Halted at the end of cycle " +  str(max_cycle))
 
 if __name__=="__main__":
+    if sys.version_info[0] < 3:
+        raise Exception("This program only supports Python 3.")
     main()
 else:
     print("Run main.py as a script.")
