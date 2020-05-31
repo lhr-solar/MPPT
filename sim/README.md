@@ -23,23 +23,37 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 - [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
 - [x] input parameters
 
-
-Modeling Solar Cells
-https://sites.google.com/site/banuphotovoltaic/pv/pv-arrays
-Irradiance and PV Performance Optimization
-e-education.psu.edu/ae868/node/877
-Factors affecting PV Performance
-file:///home/matthew/Downloads/FactorsAffectingPVperformance.pdf
-
-Maxeon Gen II Solar Cells
-file:///home/matthew/Documents/Uni/UTSVT/sp-gen3-solar-cell-ds-en-a4-160-507816f.pdf
-
-Exploration of MPPT Algorithms
-https://web.wpi.edu/Pubs/E-project/Available/E-project-030617-131157/unrestricted/AN_EXPLORATION_OF_MAXIMUM_POWER_POINT_TRACKING_ALGORITHMS.pdf
+## Buglist
+- [ ] Profile mode: mppt power is greather than max array power by a cycle
+- [ ] Zahedi source model leads to strong mppt oscillation
+- [ ] mppt Newton Method variable stride approximation leads to strong mppt oscillation 
+    - [x] pmpp approximated
+    - [ ] still strong oscillation
 
 
+## Papers and sites I haven't used yet but are promising
+[Modeling Solar Cells](https://sites.google.com/site/banuphotovoltaic/pv/pv-arrays)
 
-PandO with confined search space
-https://www.sciencedirect.com/science/article/pii/S101836391730380X
-PandO
-http://www.actapress.com/Abstract.aspx?paperId=23133
+[Irradiance and PV Performance Optimization](e-education.psu.edu/ae868/node/877)
+
+[Factors affecting PV Performance](file:///home/matthew/Downloads/FactorsAffectingPVperformance.pdf)
+
+[Maxeon Gen II Solar Cells](file:///home/matthew/Documents/Uni/UTSVT/sp-gen3-solar-cell-ds-en-a4-160-507816f.pdf)
+
+[Exploration of MPPT Algorithms](https://web.wpi.edu/Pubs/E-project/Available/E-project-030617-131157/unrestricted/AN_EXPLORATION_OF_MAXIMUM_POWER_POINT_TRACKING_ALGORITHMS.pdf)
+
+[PandO with confined search space](https://www.sciencedirect.com/science/article/pii/S101836391730380X)
+
+[PandO](http://www.actapress.com/Abstract.aspx?paperId=23133)
+
+[Analysis and Optimization of maximum power point tracking algorithms in the presence of noise (Latham et al.)](https://cpb-us-e1.wpmucdn.com/sites.dartmouth.edu/dist/f/1307/files/2017/06/Analysis-and-Optimization-of-Maximum-Power-Point-Tracking-Algorithms-in-the-Presence-of-Noise-qc3ej8.pdf)
+
+[Gradient Descent, possibly on power transformation](https://www.cs.cornell.edu/courses/cs4780/2018fa/lectures/lecturenote07.html)
+
+[A new maximum power point control algorithm of photovoltaic generation system (Bian et al.)](https://www.tandfonline.com/doi/full/10.1080/21642583.2018.1558419)
+
+[On global extrmum seeking in the presence of local extrema](https://www-sciencedirect-com.ezproxy.lib.utexas.edu/science/article/pii/S0005109808004147)
+
+[Advances in solar photovoltaic power plants (Islam et al.)](https://books.google.com/books?id=nPh6DAAAQBAJ&pg=PA91&lpg=PA91&dq=discrete+newton+method+mppt&source=bl&ots=qXRTL0UCqg&sig=ACfU3U2qzhM4SR83wCpQYoiPg1QgVhoQ-g&hl=en&sa=X&ved=2ahUKEwjjt6W69dnpAhUJa80KHVs1ACkQ6AEwB3oECAwQAQ#v=onepage&q=discrete%20newton%20method%20mppt&f=false)
+
+[Accurate Simulation of MPPT Methods Performance When Applied to Commercial Photovoltaic Panels (Cubas et al.)](https://www.hindawi.com/journals/tswj/2015/914212/)
