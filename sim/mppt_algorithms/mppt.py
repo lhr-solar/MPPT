@@ -24,11 +24,14 @@ class MPPT:
     stride = 1
     sample_rate = 1
 
-    dP_old_old = 0
-    dP_old = 0
     p_old = 0
     v_old = 0
     i_old = 0
+
+    f_old  = 0
+    dF_old = 0
+
+    cycle_one = True
 
     def __init__(self):
         """
@@ -103,19 +106,63 @@ class MPPT:
             v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
             print("v_best=", v_best, "@T=", t_in)
             dV_min = .5*(k*k)/(1-k)*v_in + .001
-            x = abs(v_best - v_in)
-            print("f(V_best-V) = ", x)
+            stride = abs(v_best - v_in)
+            print("f(V_best-V) = ", stride)
             print("dV_min = ", dV_min)
-            if x < dV_min:
-                return x
+            if stride < dV_min:
+                return stride
             else:
-                return (x + dV_min)
+                return (stride + dV_min)
         elif mode == "Newton":
             # newton's method
             """
-            Seek to optimize max f(X)
-            f()
+            Newton's method seeks to find min f(X).
+            In this case, f(x) = transformed P-V curve, which is 0 at vmpp.
+            Ideally, the transfomed PV curve is of the form f(V)= -P(V) + Pmpp.
+            Pmpp has to be estimated, or some error checking should be performed.
+
+            Our initial guess is v_ref.
             """
+            p_mpp = 3.62 # Wp, according to sunniva
+            # pveducation says that Voc and Isc is a good approx of Vmp and Imp
+            # v_mpp = v_oc = .721 - (2.2*.001)*(t_in-25)
+            # i_mpp = i_sc = 6.15 + (.06*.001)*(t_in-25)*6.15
+            # k = .8186 # in this case, p_mpp is 3.63 but oc*ssc is 4.43 so we need a constant to regulate it
+            # p_mpp = v_mpp * i_mpp * k
+
+            stride = 0
+            f = 0
+            dF = 0
+            # need two points to determine slope, check if I'm on the first step
+            if self.cycle_one:
+                self.cycle_one = False
+                stride = .01
+                f = -v_in*i_in + p_mpp
+                dF = 0
+            else:
+                f = -v_in*i_in + p_mpp
+                print("f = ", f)
+
+                diff_v = v_in - self.v_old
+                print("diff_v:", diff_v)
+                diff_f = f - self.f_old
+                print("diff_f:", diff_f)
+
+                if diff_v == 0: # we've found the mpp
+                    stride = 0
+                    dF = 0
+                else:
+                    dF = diff_f/diff_v
+                    print("dF:", dF)
+                    if dF == 0: # also found the mpp
+                        stride = 0
+                    else:
+                        stride = abs(- f/dF)
+                        print("v_ref:", stride)
+
+            self.f_old = f
+            self.dF_old= dF 
+            return stride
 
         elif mode == "LBFGS":
             return .1
