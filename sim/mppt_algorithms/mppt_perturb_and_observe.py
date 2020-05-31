@@ -63,16 +63,7 @@ class PandO(MPPT):
             self.v_old = v_in
             self.i_old = i_in
             self.p_old = p_in
-
-            # # clamp to optimize jumping - this might not be necessary or useful.
-            # v_ref_max = .7 # TODO: Put this somewhere better
-            # v_ref_min = 0
-
-            # if self.v_ref >= v_ref_max:
-            #     self.v_ref = v_ref_max
-            # if self.v_ref <= v_ref_min:
-            #     self.v_ref = v_ref_min
-
+            
         return self.v_ref
 
     def get_name(self):

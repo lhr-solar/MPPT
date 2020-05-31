@@ -95,19 +95,33 @@ class MPPT:
                 - dV = f(V_best-V) + dV_min
                 - f(V_best-V) = |V_best - V| optimally
                 - V_best unlikely to match physical conditions, need to add an error estimation
-                    - dV_min > k^2/(2*(1-k))*V
+                    - dV_min > k^2/(2*(1-k))*V_best
                     - k = .05 - 5% error
                 - Can also optimize V_best based on temperature
                     - plotting voltage at max power from the source model, we can use a best polynomial fit
-                        - 8.93*.000001*(t_in**2) -4.04*.001*t_in + .717
+                        - .717 + -4.04E-03t + 8.93E-06t^2
+            2. Novel algorithm of MPPT for PV array based on variable step Newton-Raphson method through model predictive control (Hosseini et al.)
+                - Section 3.2, Maximum Power Point Tracker of Variable Step
+                - v_ref = v_in - F(v_in)/F'(v_in)
+                - stride= -F(v_in)/F'(v_in)
+                - F(v_in) needs to be a function with a 0 at the max power point
+                    - let F(v_in) = - P(v_in) + pmpp
+                    - pmpp is going to be variable based on irradiance and temp
+                        - it needs to fulfil the condition P(vmpp) > pmpp, otherwise things break
+                        - our approximation needs to be GOOD
+                - analytically, F'(v_in) is the slope of F(v_in) - we need two points (can't use instant. ROC)
+                    - F'(v_in) = (F(v_in) - F(v_old)) / (v_in - v_old)
+                - Can optimize pmpp based on temperature
+                    - plotting Source Model 1's pmpp across temperature, a 2nd order polynomial fit line is obtained
+                        - 4.32 + -.0293t + 6.4E-05t^2
         """
 
         if self.stride_mode == "Piegari":
             k = .05 # 5 percent error
             v_best = .621 # according to Sunniva
-            v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
+            v_best = .717 + -4.04E-03*t_in + 8.93E-06*(t_in**2)
             print("v_best=", v_best, "@T=", t_in)
-            dV_min = .5*(k*k)/(1-k)*v_in + .001
+            dV_min = .5*(k*k)/(1-k)*v_best + .001
             stride = abs(v_best - v_in)
             print("f(V_best-V) = ", stride)
             print("dV_min = ", dV_min)
@@ -116,8 +130,9 @@ class MPPT:
             else:
                 return (stride + dV_min)
         elif self.stride_mode == "Newton":
-            # newton's method
             """
+            Newton's method.
+
             Newton's method seeks to find min f(X).
             In this case, f(x) = transformed P-V curve, which is 0 at vmpp.
             Ideally, the transfomed PV curve is of the form f(V)= -P(V) + Pmpp.
@@ -125,23 +140,19 @@ class MPPT:
 
             Our initial guess is v_ref.
             """
-            p_mpp = 3.62 # Wp, according to sunniva
-            # pveducation says that Voc and Isc is a good approx of Vmp and Imp
-            # v_mpp = v_oc = .721 - (2.2*.001)*(t_in-25)
-            # i_mpp = i_sc = 6.15 + (.06*.001)*(t_in-25)*6.15
-            # k = .8186 # in this case, p_mpp is 3.63 but oc*ssc is 4.43 so we need a constant to regulate it
-            # p_mpp = v_mpp * i_mpp * k
+            # p_mpp = 3.62 # pmpp, according to sunniva
+            k = .995 # error approximation to get p_mpp always below P(vmpp)
+            p_mpp = (4.32 + -.0293*t_in + 6.4E-05*(t_in**2)) * k
 
-            f = 0
-            dF = 0
             # need two points to determine slope, check if I'm on the first step
             if self.cycle_one:
                 self.cycle_one = False
-                f = -v_in*i_in + p_mpp
-                dF = 0
+                self.f_old = -v_in*i_in + p_mpp
+                # v_old is set outside this in the parent
+                self.dF_old = 0
             else:
                 f = -v_in*i_in + p_mpp
-                print("f = ", f)
+                print("f:", f)
 
                 diff_v = v_in - self.v_old
                 print("diff_v:", diff_v)
@@ -160,8 +171,8 @@ class MPPT:
                         self.stride = abs(- f/dF)
                         print("v_ref:", self.stride)
 
-            self.f_old = f
-            self.dF_old= dF 
+                self.f_old = f
+                self.dF_old= dF 
             return self.stride
 
         elif self.stride_mode == "LBFGS":

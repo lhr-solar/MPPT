@@ -42,7 +42,7 @@ class Simulation:
     axs = None
     twin_ax = None
 
-    def __init__(self, mppt_name):
+    def __init__(self, mppt_name=""):
         """
         init
 
