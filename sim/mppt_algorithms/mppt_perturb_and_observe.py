@@ -38,9 +38,6 @@ class PandO(MPPT):
                 - https://www.mathworks.com/videos/developing-solar-inverter-control-with-simulink-part-3-designing-the-mppt-algorithm-and-generating-production-code-for-the-ti-c2000-microcontroller-1554990116706.html
         """
         if (cycle % self.sample_rate) is 0: #sampling this run
-            if v_in is 0: # prevent from getting stuck when v_ref starts at 0
-                v_in = .001
-
             # compute power
             p_in = v_in * i_in
             # determine deltas
@@ -51,7 +48,6 @@ class PandO(MPPT):
             print("Change Power: ", diff_P)
 
             dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
-
             if diff_P > 0:
                 if diff_V > 0:  # increase v_ref
                     self.v_ref += dV_ref
@@ -68,14 +64,14 @@ class PandO(MPPT):
             self.i_old = i_in
             self.p_old = p_in
 
-            # clamp to optimize jumping - this might not be necessary or useful.
-            v_ref_max = .7 # TODO: Put this somewhere better
-            v_ref_min = 0
+            # # clamp to optimize jumping - this might not be necessary or useful.
+            # v_ref_max = .7 # TODO: Put this somewhere better
+            # v_ref_min = 0
 
-            if self.v_ref >= v_ref_max:
-                self.v_ref = v_ref_max
-            if self.v_ref <= v_ref_min:
-                self.v_ref = v_ref_min
+            # if self.v_ref >= v_ref_max:
+            #     self.v_ref = v_ref_max
+            # if self.v_ref <= v_ref_min:
+            #     self.v_ref = v_ref_min
 
         return self.v_ref
 

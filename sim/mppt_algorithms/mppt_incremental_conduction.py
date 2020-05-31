@@ -29,9 +29,6 @@ class IC(MPPT):
                 - VI. Incremental Conductance MPPT Algorithm
         """
         if (cycle % self.sample_rate) is 0: # sampling this run
-            if v_in is 0: # prevent from getting stuck when v_ref starts at 0
-                v_in = .001
-
             # determine deltas
             dV = v_in - self.v_old
             dI = i_in - self.i_old
@@ -51,10 +48,10 @@ class IC(MPPT):
             else:
                 dC = (i_in + (dI / dV) * v_in) # instantaneous conductance
                 print("Incremental Conductance: ", dC)
-                if dI/dV == -i_in/v_in:
+                if dI/dV*v_in == -i_in:
                     pass
                 else:
-                    if dI/dV > -i_in/v_in:
+                    if dI/dV*v_in > -i_in:
                         self.v_ref += dV_ref
                     else:
                         self.v_ref -= dV_ref
@@ -62,6 +59,7 @@ class IC(MPPT):
             # update values
             self.v_old = v_in
             self.i_old = i_in
+            self.p_old = v_in*i_in
 
         return self.v_ref
 

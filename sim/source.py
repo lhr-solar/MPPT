@@ -289,7 +289,7 @@ class Source:
             C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
             # default explicit model
             model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
-            print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+            # print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
             # losses in efficiency as a result of manufacturing (lamination, etc)
             model2 = model * k
@@ -354,6 +354,6 @@ class Source:
                 i_mpp = current
 
             v_in += step_size
-            if current < 0 or voltage < MAX_VOLTAGE:
+            if current < 0 or voltage >= MAX_VOLTAGE:
                 break
         return [output, [v_mpp, i_mpp, p_mpp]]
