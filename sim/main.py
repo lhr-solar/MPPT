@@ -27,25 +27,12 @@ def main():
     profile_file_path = ""
     mode_profile = False
 
-    string_source_model_type = input("Source Model type (see source documentation): ['Benghanem']|'Ibrahim'|'Zahedi': ")
-    source = Source(string_source_model_type)
-
-    # model input dialogue
-    mppt = None
-    string_mppt_algorithm_type = input("MPPT Algorithm type: ['PandO']|'IC'|'FC': ")
-    if string_mppt_algorithm_type == "IC":
-        mppt = IC()
-    elif string_mppt_algorithm_type == "FC":
-        mppt = FC()
-    else:
-        mppt = PandO()
-    simulation = Simulation(mppt.get_name())
-
-    # parameters input dialogue
     # NOTE: Modify these values
     max_cycle = 350
     sample_rate = 1
+    stride = .05
     v_ref = 0
+    stride_mode = "Piegari"
     temp_regime = [
         [0, 0, 25],
         [1, 0, 25],
@@ -80,33 +67,60 @@ def main():
         [195, 1000, 110],
         [200, 1000, 140]
     ]
+
+
+    # --------------PARAMETER PROMPTS--------------
+    # source input dialogue
+    string_source_model_type = input("Source Model type (see src docs): ['Benghanem']|'Ibrahim'|'Zahedi': ")
+    source = Source(string_source_model_type)
+    # model input dialogue
+    mppt = None
+    string_mppt_algorithm_type = input("MPPT Algorithm type: ['PandO']|'IC'|'FC': ")
+    if string_mppt_algorithm_type == "IC":
+        mppt = IC()
+    elif string_mppt_algorithm_type == "FC":
+        mppt = FC()
+    else:
+        mppt = PandO()
+    simulation = Simulation(mppt.get_name())
+    # mppt stride mode dialogue
+    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Piegari']|'Newton'|'Fixed': ")
+    if string_stride_mode == "Piegari" or string_stride_mode == "Newton" or string_stride_mode == "Fixed":
+        stride_mode = string_stride_mode
+    else:
+        stride_mode = "Piegari" # bad input converts to default Piegari
+    # profile input dialogue
+    string_profile = input("Profile ['impulse']|'profile': ")
+    if string_profile == "profile":
+        mode_profile = True
+    # parameter input dialogue
     string_max_cycle = input("Max cycle ['" + str(max_cycle) + "']: ")
     try:
         tmp_max_cycle = int(string_max_cycle)
         max_cycle = tmp_max_cycle
     except ValueError:
         print("Invalid integer. Defaulting to", max_cycle, "cycles.")
-
     string_sample_rate = input("Sample rate ['" + str(sample_rate) + "']: ")
     try:
         tmp_sample_rate = int(string_sample_rate)
         sample_rate = tmp_sample_rate
     except ValueError:
         print("Invalid integer. Defaulting to a sample every " + str(sample_rate) + " cycles.")
-
     string_v_ref = input("Starting mppt output voltage ['" + str(v_ref) + "']: ")
     try:
         tmp_v_ref = float(string_v_ref)
         v_ref = tmp_v_ref
     except ValueError:
         print("Invalid integer. Defaulting to a cycle 0 v_ref of " + str(v_ref) + " V.")
+    string_stride = input("Default stride ['" + str(stride) + "']: ")
+    try:
+        tmp_stride = float(string_stride)
+        stride = tmp_stride
+    except ValueError:
+        print("Invalid integer. Defaulting to stride of " + str(stride) + ".")
 
 
-
-    string_profile = input("Profile ['impulse']|'profile': ")
-    if string_profile == "profile":
-        mode_profile = True
-
+    # -------------- SIMULATION START --------------
     # simulating from a dataset
     if mode_profile is True:
         print("Running in Profile mode.")
@@ -125,8 +139,7 @@ def main():
                 # mppt only
                 v_mppt = 0
                 i_mppt = 0
-                stride = 0
-                mppt.setup(v_ref, stride, sample_rate)
+                mppt.setup(v_ref, stride, sample_rate, stride_mode)
 
                 simulation.init_display()
                 while cycle <= max_cycle: # simulator main loop
@@ -164,8 +177,7 @@ def main():
             # mppt only
             v_mppt = 0
             i_mppt = 0
-            stride = 0
-            mppt.setup(v_ref, stride, sample_rate)
+            mppt.setup(v_ref, stride, sample_rate, stride_mode)
 
             simulation.init_display()
             while cycle <= max_cycle: # simulator main loop
@@ -232,10 +244,8 @@ def main():
 
         # initialize startup values into the source
         source.setup_i(irradiance, temperature, load)
-        # mppt only
-        stride = 0
         #initialize startup values into the mppt
-        mppt.setup(v_ref, stride, sample_rate)
+        mppt.setup(v_ref, stride, sample_rate, stride_mode)
 
         simulation.init_display()
         while cycle <= max_cycle: # simulator main loop
@@ -259,9 +269,9 @@ def main():
             cycle += 1
             # impulse update parameters here
             # irradiance += UPDATE_HERE
-            temperature += .5
+            # temperature += .5
             # load += UPDATE_HERE
-            source.setup_i(irradiance, temperature, load)
+            # source.setup_i(irradiance, temperature, load)
         
         # display Simulation windows
         simulation.display(cycle_start, max_cycle, time_step)
