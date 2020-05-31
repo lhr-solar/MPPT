@@ -133,22 +133,18 @@ def main():
                     print("\nCycle: " + str(cycle))
 
                     # get source power point
-                    # [coordinates, max_power] = source.graph()
+                    [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
 
-                    # get source output given voltage point parameter
-                    [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
-                    print("Source: " + str([v_src, i_src]))
                     # get new values with the existing source
                     [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
 
                     # update Simulation with new values
-                    simulation.add_datapoint(cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt)
+                    simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_mppt, i_mppt)
                     print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
                     print(simulation.get_datapoint(cycle))
 
                     # pipe source into the mppt and try to find new v_ref
-                    v_ref = mppt.iterate(v_src, i_src, temp, cycle)
-
+                    v_ref = mppt.iterate(v_mppt, i_mppt, temp, cycle)
 
                     # update cycle
                     cycle += 1
@@ -176,22 +172,18 @@ def main():
                 print("\nCycle: " + str(cycle))
 
                 # get source power point
-                # [coordinates, max_power] = source.graph()
+                [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
 
-                # get source output given voltage point parameter
-                [v_src, i_src, irrad, temp, load] = source.iterate_t(v_ref, cycle)
-                print("Source: " + str([v_src, i_src]))
                 # get new values with the existing source
                 [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
 
                 # update Simulation with new values
-                simulation.add_datapoint(cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt)
+                simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_mppt, i_mppt)
                 print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
                 print(simulation.get_datapoint(cycle))
 
                 # pipe source into the mppt and try to find new v_ref
-                v_ref = mppt.iterate(v_src, i_src, temp, cycle)
-
+                v_ref = mppt.iterate(v_mppt, i_mppt, temp, cycle)
 
                 # update cycle
                 cycle += 1
@@ -251,7 +243,6 @@ def main():
 
             # get source power point
             [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
-            print(v_mpp, i_mpp, p_mpp)
 
             # get new values with the existing source
             [v_mppt, i_mppt] = source.iterate(v_ref)
