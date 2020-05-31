@@ -21,7 +21,7 @@ Description: Parent class for various MPPT Algorithms.
 from math import log10
 class MPPT:
     v_ref = 0
-    stride = 1
+    stride = .1
     sample_rate = 1
 
     p_old = 0
@@ -33,20 +33,22 @@ class MPPT:
 
     cycle_one = True
 
+    stride_mode = ""
+
     def __init__(self):
         """
         init
         """
         return
 
-    def setup(self, v_ref=0, stride=1, sample_rate=1):
+    def setup(self, v_ref=0, stride=.1, sample_rate=1, stride_mode = "Piegari"):
         """
         setup
         Updates MPPT parameters
         
         Args:
             - v_ref (float): reference voltage (V)
-            - stride (float): NOTE: UNUSED
+            - stride (float): default fixed step.
             - sample_rate (int): cycles per iteration (1/Hz)
 
         Returns:
@@ -55,6 +57,7 @@ class MPPT:
         self.v_ref = v_ref
         self.stride = stride
         self.sample_rate = sample_rate
+        self.stride_mode = stride_mode
 
     def iterate(self, v_in, i_in, t_in, cycle):
         """
@@ -98,9 +101,8 @@ class MPPT:
                     - plotting voltage at max power from the source model, we can use a best polynomial fit
                         - 8.93*.000001*(t_in**2) -4.04*.001*t_in + .717
         """
-        mode = "Piegari"
 
-        if mode == "Piegari":
+        if self.stride_mode == "Piegari":
             k = .05 # 5 percent error
             v_best = .621 # according to Sunniva
             v_best = 8.93*.000001*t_in*t_in -4.04*.001*t_in + .717
@@ -113,7 +115,7 @@ class MPPT:
                 return stride
             else:
                 return (stride + dV_min)
-        elif mode == "Newton":
+        elif self.stride_mode == "Newton":
             # newton's method
             """
             Newton's method seeks to find min f(X).
@@ -130,13 +132,11 @@ class MPPT:
             # k = .8186 # in this case, p_mpp is 3.63 but oc*ssc is 4.43 so we need a constant to regulate it
             # p_mpp = v_mpp * i_mpp * k
 
-            stride = 0
             f = 0
             dF = 0
             # need two points to determine slope, check if I'm on the first step
             if self.cycle_one:
                 self.cycle_one = False
-                stride = .01
                 f = -v_in*i_in + p_mpp
                 dF = 0
             else:
@@ -149,25 +149,25 @@ class MPPT:
                 print("diff_f:", diff_f)
 
                 if diff_v == 0: # we've found the mpp
-                    stride = 0
+                    self.stride = 0
                     dF = 0
                 else:
                     dF = diff_f/diff_v
                     print("dF:", dF)
                     if dF == 0: # also found the mpp
-                        stride = 0
+                        self.stride = 0
                     else:
-                        stride = abs(- f/dF)
-                        print("v_ref:", stride)
+                        self.stride = abs(- f/dF)
+                        print("v_ref:", self.stride)
 
             self.f_old = f
             self.dF_old= dF 
-            return stride
+            return self.stride
 
-        elif mode == "LBFGS":
+        elif self.stride_mode == "LBFGS":
             return .1
         else:
-            return .01
+            return self.stride
 
 
     def get_name(self):
