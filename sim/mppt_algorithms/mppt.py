@@ -152,24 +152,24 @@ class MPPT:
                 self.dF_old = 0
             else:
                 f = -v_in*i_in + p_mpp
-                print("f:", f)
+                print("[MPPT] f:", f)
 
                 diff_v = v_in - self.v_old
-                print("diff_v:", diff_v)
+                print("[MPPT] diff_v:", diff_v)
                 diff_f = f - self.f_old
-                print("diff_f:", diff_f)
+                print("[MPPT] diff_f:", diff_f)
 
                 if diff_v == 0: # we've found the mpp
                     self.stride = 0
                     dF = 0
                 else:
                     dF = diff_f/diff_v
-                    print("dF:", dF)
-                    if dF == 0: # also found the mpp
-                        self.stride = 0
+                    print("[MPPT] dF:", dF)
+                    if dF == 0: # slope is 0, MPP is in the middle
+                        self.stride = diff_v/2
                     else:
                         self.stride = abs(- f/dF)
-                        print("v_ref:", self.stride)
+                        print("[MPPT] v_ref:", self.stride)
 
                 self.f_old = f
                 self.dF_old= dF 

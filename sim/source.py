@@ -21,7 +21,7 @@ class Source:
     arr_temp    = []
     arr_load    = []
 
-    model_type  = "Benghanem"
+    model_type  = "Default"
 
     def __init__(self, model_type):
         """
@@ -44,7 +44,7 @@ class Source:
         elif model_type == "Zahedi":
             self.model_type = "Zahedi"
         else:
-            pass 
+            self.model_type == "Default"
 
         return
 
@@ -209,8 +209,8 @@ class Source:
     
         Args:
             - v_in      (float): voltage input      (V)
-            - t_in      (float): temperature input  (C)
             - irr_in    (float): irradiance input   (W/m^2)
+            - t_in      (float): temperature input  (C)
             - ld_in     (float): load input         (W)
 
         Returns:
@@ -225,7 +225,7 @@ class Source:
                     ~ https://www.pveducation.org/pvcdrom/solar-cell-operation/effect-of-temperature
                         - for silicon solar cell
                         - V_OC = .721 - (2.2*.001)*(t-25)
-                        - I_SC = 6.15 + (.06*.001)*(t-25)*6.15
+                        - I_SC = 6.15 + .0006*(t-25)*6.15
                     ~ C_3 = maximal voltage
                     ~ C_4 = maximal current
             2. Modeling and simulation of photovoltaic arrays (Banu et Istrate)
@@ -275,6 +275,30 @@ class Source:
                             - q = electron charge
                                 ~ 1.602 * 10^-19 C
         """
+        if self.model_type == "Default":
+            irr_ref = 1000
+            i_sc = 6.15 # can be converted into a function of irradiance, temperature
+            i_pv_ref = i_sc 
+            # photovoltaic current
+            r_sh = 0
+            r_s = 0
+            i_pv = i_pv_ref * irr_in / irr_ref
+
+            # diode saturation current
+            i_d = 4.1E-12 # this can be converted into a function of irradiance, temperature
+
+            # output current
+            q = 1.602E-19
+            k = 1.381E-23 # in kelvin
+            t_c = t_in + 273.15 # C to K
+            model = i_pv - i_d * (exp(q*v_in/(k*t_c))-1)
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+
+            # losses in efficiency as a result of manufacturing (lamination, etc)
+            model2 = model * k
+            
+            return model
+
         if self.model_type == "Benghanem":
             k = 0.92 # manufacturing efficiency loss (8% according to test data)
 
@@ -289,7 +313,7 @@ class Source:
             C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
             # default explicit model
             model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
-            # print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
             # losses in efficiency as a result of manufacturing (lamination, etc)
             model2 = model * k
@@ -308,19 +332,19 @@ class Source:
             # ignore T_c equation and insert our own cell temp into it
             T_c = t_in # T_a + (48 - 20) / 80 * 100 
             I_sc= 6.15 * (1 + 0 * (T_c - 25)) * G / 1000
-            print("Short Circuit current I_sc:", I_sc)
+            print("[SOURCE] Short Circuit current I_sc:", I_sc)
 
             I_l = I_sc
             K_v = -.00023
             a = 1.187
             V_t = 1.381E-23 * (T_c + 273.15) / 1.602E-19
-            print("Thermal voltage V_t:", V_t)
+            print("[SOURCE] Thermal voltage V_t:", V_t)
             I_d = I_sc / (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1) * (e ** (v_in / (a * V_t)) - 1)
-            print("denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
-            print("multiplier:", (e ** (v_in / (a * V_t)) - 1))
-            print("Diode Saturation current:", I_d)
+            print("[SOURCE] denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
+            print("[SOURCE] multiplier:", (e ** (v_in / (a * V_t)) - 1))
+            print("[SOURCE] Diode Saturation current:", I_d)
             model = I_l - I_d
-            print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
             # losses in efficiency as a result of manufacturing (lamination, etc)
             model2 = model * k 
