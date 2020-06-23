@@ -14,7 +14,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 
 ## Feature Request
 - [x] source dependence on temperature
-- [ ] source dependence on irradiance
+- [x] source dependence on irradiance
 - [ ] source dependence on load
 - [ ] load from some formatted file (probably csv)
 - [x] dP dV feedback control mppt algo
@@ -25,7 +25,6 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 
 ## Buglist
 - [ ] Profile mode: mppt power is greather than max array power by a cycle
-- [ ] Zahedi source model leads to strong mppt oscillation
 - [ ] mppt Newton Method variable stride approximation leads to strong mppt oscillation 
     - [x] pmpp approximated
     - [ ] still strong oscillation

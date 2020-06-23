@@ -32,7 +32,7 @@ def main():
     sample_rate = 1
     stride = .05
     v_ref = 0
-    stride_mode = "Piegari"
+    stride_mode = "Fixed"
     temp_regime = [
         [0, 0, 25],
         [1, 0, 25],
@@ -71,7 +71,7 @@ def main():
 
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
-    string_source_model_type = input("Source Model type (see src docs): ['Benghanem']|'Ibrahim'|'Zahedi': ")
+    string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
     source = Source(string_source_model_type)
     # model input dialogue
     mppt = None
@@ -84,11 +84,11 @@ def main():
         mppt = PandO()
     simulation = Simulation(mppt.get_name())
     # mppt stride mode dialogue
-    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Piegari']|'Newton'|'Fixed': ")
+    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Piegari'|'Newton': ")
     if string_stride_mode == "Piegari" or string_stride_mode == "Newton" or string_stride_mode == "Fixed":
         stride_mode = string_stride_mode
     else:
-        stride_mode = "Piegari" # bad input converts to default Piegari
+        stride_mode = "Fixed" # bad input converts to default Piegari
     # profile input dialogue
     string_profile = input("Profile ['impulse']|'profile': ")
     if string_profile == "profile":
@@ -212,7 +212,7 @@ def main():
         cycle_start = 0
         # for source and simulation
         cycle       = 0
-        irradiance  = 0
+        irradiance  = 1000
         temperature = 25
         load        = 0
         # mppt
