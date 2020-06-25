@@ -4,7 +4,7 @@ main.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/24/20
-Last Modified: 5/28/20
+Last Modified: 6/24/20
 Description: This is the main handler for the mppt simulator. 
   It uses Kivy for the UI of this application, in particular the graphs and statistics.
   The simulator has three main components:
@@ -22,6 +22,7 @@ from mppt_algorithms.mppt_incremental_conduction import IC
 # from mppt_algorithms.mppt_ripple_correlation_control import RCC
 # from mppt_algorithms.mppt_fuzzy_logic import FL
 from mppt_algorithms.mppt_dP_dV_feedback_control import FC
+from mppt_algorithms.mppt_passthrough import PT
 
 def main():
     profile_file_path = ""
@@ -73,26 +74,32 @@ def main():
     # source input dialogue
     string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
     source = Source(string_source_model_type)
+
     # model input dialogue
     mppt = None
-    string_mppt_algorithm_type = input("MPPT Algorithm type: ['PandO']|'IC'|'FC': ")
+    string_mppt_algorithm_type = input("MPPT Algorithm type: ['PandO']|'IC'|'FC'|'Passthrough': ")
     if string_mppt_algorithm_type == "IC":
         mppt = IC()
     elif string_mppt_algorithm_type == "FC":
         mppt = FC()
+    elif string_mppt_algorithm_type == "Passthrough":
+        mppt = PT()
     else:
         mppt = PandO()
     simulation = Simulation(mppt.get_name())
+
     # mppt stride mode dialogue
-    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Piegari'|'Newton': ")
-    if string_stride_mode == "Piegari" or string_stride_mode == "Newton" or string_stride_mode == "Fixed":
+    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Optimal'|'Ternary'|'Golden'|'Newton': ")
+    if string_stride_mode == "Fixed" or string_stride_mode == "Optimal" or string_stride_mode == "Ternary" or string_stride_mode == "Golden" or string_stride_mode == "Newton":
         stride_mode = string_stride_mode
     else:
         stride_mode = "Fixed" # bad input converts to default Piegari
+
     # profile input dialogue
     string_profile = input("Profile ['impulse']|'profile': ")
     if string_profile == "profile":
         mode_profile = True
+        
     # parameter input dialogue
     string_max_cycle = input("Max cycle ['" + str(max_cycle) + "']: ")
     try:
@@ -143,10 +150,11 @@ def main():
 
                 simulation.init_display()
                 while cycle <= max_cycle: # simulator main loop
-                    print("\nCycle: " + str(cycle))
+                    if cycle%20 == 0:
+                        print("\nCycle: " + str(cycle))
 
                     # get source power point
-                    [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
+                    [v_mpp, i_mpp, p_mpp] = source.get_mppt()
 
                     # get new values with the existing source
                     [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
@@ -154,7 +162,7 @@ def main():
                     # update Simulation with new values
                     simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_mppt, i_mppt)
                     print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
-                    print(simulation.get_datapoint(cycle))
+                    # print(simulation.get_datapoint(cycle))
 
                     # pipe source into the mppt and try to find new v_ref
                     v_ref = mppt.iterate(v_mppt, i_mppt, temp, cycle)
@@ -181,18 +189,19 @@ def main():
 
             simulation.init_display()
             while cycle <= max_cycle: # simulator main loop
-                print("\nCycle: " + str(cycle))
+                if cycle%20 == 0:
+                    print("\nCycle: " + str(cycle))
 
                 # get source power point
-                [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
+                [v_mpp, i_mpp, p_mpp] = source.get_mppt()
 
                 # get new values with the existing source
                 [v_mppt, i_mppt, irrad, temp, load] = source.iterate_t(v_ref, cycle)
 
                 # update Simulation with new values
                 simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_mppt, i_mppt)
-                print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
-                print(simulation.get_datapoint(cycle))
+                # print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
+                # print(simulation.get_datapoint(cycle))
 
                 # pipe source into the mppt and try to find new v_ref
                 v_ref = mppt.iterate(v_mppt, i_mppt, temp, cycle)
@@ -249,10 +258,11 @@ def main():
 
         simulation.init_display()
         while cycle <= max_cycle: # simulator main loop
-            print("\nCycle: " + str(cycle))
+            if cycle%20 == 0:
+                print("\nCycle: " + str(cycle))
 
             # get source power point
-            [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph()
+            [v_mpp, i_mpp, p_mpp] = source.get_mppt()
 
             # get new values with the existing source
             [v_mppt, i_mppt] = source.iterate(v_ref)

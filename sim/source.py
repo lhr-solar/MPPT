@@ -4,7 +4,7 @@ Source.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/24/20
-Last Modified: 5/28/20
+Last Modified: 6/24/20
 Description: This file describes the Source class, which generates input values for the Display and MPPT.
     The Source is time agnostic. The output is purely dependent on current conditions.
 """
@@ -198,7 +198,7 @@ class Source:
         """
         return [self.irradiance, self.temperature, self.load]
 
-    def model(self, v_in, irr_in=0, t_in=0, ld_in=0):
+    def model(self, v_in, irr_in=0.001, t_in=0, ld_in=0):
         """
         model
         Function describing the current output of a SINGLE Bin Le1 Sunpower cell given voltage and other factors.
@@ -281,6 +281,10 @@ class Source:
         i_sc_ref= 6.15
         r_s     = .032
         r_sh    = 36.1
+
+        # overflow error if irr_in is 0
+        if irr_in == 0:
+            irr_in = .001
 
         if self.model_type == "Default" or self.model_type == "Nonideal":
             # convert t_in from C to K
@@ -411,7 +415,53 @@ class Source:
             v_in += step_size
             if current < 0 or voltage >= MAX_VOLTAGE:
                 break
+
         return [output, [v_mpp, i_mpp, p_mpp]]
+
+    def get_mppt(self):
+        """
+        get_mppt
+        Returns the maximum power point parameters to be used by the simulation display
+        Uses ternary search to find the maximum of the unimodal single cell. This will not work for a multi module model.
+
+        Args:
+            None
+        Returns:
+            - [gmpp]
+                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
+        """
+        min_resolution = .01 # 11 iterations
+
+        MAX_VOLTAGE = .8
+        p_mpp = 0
+        v_mpp = 0
+        i_mpp = 0
+
+        left = 0
+        right = MAX_VOLTAGE
+        v_in = 0
+
+        while abs(right-left) >= min_resolution:
+            l1 = (right-left)/3 + left
+            l2 = right - (right-left)/3
+
+            [v_l, c_l] = self.iterate(l1)
+            [v_r, c_r] = self.iterate(l2)
+            
+            l1_power = v_l * c_l
+            l2_power = v_r * c_r
+
+            if l1_power > l2_power:
+                right = l2
+            else:
+                left = l1
+
+            v_in = left
+
+        [v_mpp, i_mpp] = self.iterate(v_in)
+        p_mpp = v_mpp * i_mpp
+
+        return [v_mpp, i_mpp, p_mpp]
 
     def get_model_name(self):
         """

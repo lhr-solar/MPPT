@@ -1,10 +1,12 @@
 # Python simulator for MPPT Algorithms.
+
 Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicles Team.
 
 *Consider making an actual structured repo, Matthew.*
 [Repo Structure](https://docs.python-guide.org/writing/structure/)
 
 ## Dependencies
+
 * python3
 * sys
 * matplotlib
@@ -13,24 +15,31 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * math
 
 ## Feature Request
-- [x] source dependence on temperature
-- [x] source dependence on irradiance
-- [ ] source dependence on load
-- [ ] load from some formatted file (probably csv)
-- [x] dP dV feedback control mppt algo
-- [ ] fuzzy logic mppt algo
-- [ ] ripple correlation control mppt algo
-- [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
-- [x] input parameters
+
+* [x] source dependence on temperature
+* [x] source dependence on irradiance
+* [ ] source dependence on load
+* [ ] load from some formatted file (probably csv)
+* [x] dP dV feedback control mppt algo
+* [ ] fuzzy logic mppt algo
+* [ ] ripple correlation control mppt algo
+* [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
+* [x] input parameters
+* [x] optimize processing speed
+  * [x] since the model is monotonically decreasing, swap from linear search to ternary search
+* [ ] Graph the effect of variable ratio in ternary search - suspicious that it converges at some point and diverges elsewhere
+* [ ] Fix Newton's method
 
 ## Buglist
-- [ ] Profile mode: mppt power is greather than max array power by a cycle
-- [ ] mppt Newton Method variable stride approximation leads to strong mppt oscillation 
-    - [x] pmpp approximated
-    - [ ] still strong oscillation
 
+* [ ] Profile mode: mppt power is greater than max array power by a cycle
+* [ ] mppt stride function Newton variable stride approximation leads to strong mppt oscillation 
+  * [x] pmpp approximated
+  * [ ] still strong oscillation
+* [ ] mppt stride function Piegari (Optimal) needs to develop an accurate model function for best voltage
 
 ## Papers and sites I haven't used yet but are promising
+
 [Modeling Solar Cells](https://sites.google.com/site/banuphotovoltaic/pv/pv-arrays)
 
 [Irradiance and PV Performance Optimization](e-education.psu.edu/ae868/node/877)
