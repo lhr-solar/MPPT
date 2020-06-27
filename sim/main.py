@@ -33,7 +33,7 @@ def main():
     sample_rate = 1
     stride = .05
     v_ref = 0
-    stride_mode = "Fixed"
+    stride_mode = None
     temp_regime = [
         [0, 0, 25],
         [1, 0, 25],
@@ -72,7 +72,7 @@ def main():
 
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
-    string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
+    string_source_model_type = input("Source Model type (see src docs): ['Nonideal']|'Ideal': ")
     source = Source(string_source_model_type)
 
     # model input dialogue
@@ -89,11 +89,15 @@ def main():
     simulation = Simulation(mppt.get_name())
 
     # mppt stride mode dialogue
-    string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Optimal'|'Ternary'|'Golden'|'Newton': ")
-    if string_stride_mode == "Fixed" or string_stride_mode == "Optimal" or string_stride_mode == "Ternary" or string_stride_mode == "Golden" or string_stride_mode == "Newton":
-        stride_mode = string_stride_mode
+    if string_mppt_algorithm_type == "Passthrough":
+        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Golden']|'Ternary'|'Bisection(X)'|'Newton(X)'|'BFGS(X)': ")
+        if string_stride_mode == "Golden" or string_stride_mode == "Ternary" or string_stride_mode == "Bisection" or string_stride_mode == "Newton" or string_stride_mode == "BFGS":
+            stride_mode = string_stride_mode
+            print(stride_mode)
     else:
-        stride_mode = "Fixed" # bad input converts to default Piegari
+        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Optimal': ")
+        if string_stride_mode == "Fixed" or string_stride_mode == "Optimal":
+            stride_mode = string_stride_mode
 
     # profile input dialogue
     string_profile = input("Profile ['impulse']|'profile': ")

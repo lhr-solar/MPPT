@@ -50,7 +50,7 @@ class MPPT:
         """
         return
 
-    def setup(self, v_ref=0, stride=.1, sample_rate=1, stride_mode = "Fixed"):
+    def setup(self, v_ref=0, stride=.1, sample_rate=1, stride_mode=None):
         """
         setup
         Updates MPPT parameters
@@ -63,6 +63,8 @@ class MPPT:
         Returns:
             - None
         """
+        if stride_mode is None:
+            stride_mode = "Fixed"
         self.v_ref = v_ref
         self.stride = stride
         self.sample_rate = sample_rate
@@ -124,160 +126,15 @@ class MPPT:
                     - plotting Source Model 1's pmpp across temperature, a 2nd order polynomial fit line is obtained
                         - 4.32 + -.0293t + 6.4E-05t^2
         """
-        if self.stride_mode == "Fixed": # mode 1
-            return self.stride
-        elif self.stride_mode == "Ternary":
-            """
-            Ternary Search
-            https://en.wikipedia.org/wiki/Ternary_search
-
-            Ternary search seeks to find the min/max of a unimodal function.
-            In this case, f(x) = P-V curve, which is at max at vmpp.
-
-            Does not require an initial guess, but assumes that the initial voltage bound is [0, .8].
-            """
-            [left, right] = self.bounds
-            cycle = self.cycle
-
-            # Ternary - we need points every iteration: left third and right third
-            if cycle == 0: # set left third
-                self.l2_pow = v_in * i_in
-                # restrict the bounds           - this works in the base case since l1 and l2 is initialized to bounds
-                if self.l1_pow > self.l2_pow:
-                    self.bounds[1] = self.l2
-                else:
-                    self.bounds[0] = self.l1
-                # calculate l1 to test
-                self.l1 = (right-left)/3 + left                
-                self.stride = self.l1
-                self.cycle += 1
-            elif cycle == 1: # set right third
-                self.l1_pow = v_in * i_in
-                # calculate l2 to test
-                self.l2 = right - (right-left)/3
-                self.stride = self.l2
-                self.cycle = 0
-            else:
-                print("[ERROR] I shouldn't be here.")
-
-            return self.stride
-        elif self.stride_mode == "Golden":
-            """
-            Golden Section Search
-            https://en.wikipedia.org/wiki/Golden-section_search
-
-            Golden Section search seeks to find the min/max of a unimodal function.
-            In this case, f(x) = P-V curve, which is at max at vmpp.
-
-            Does not require an initial guess, but assumes that the initial voltage bound is [0, .8].
-            """
-            [l, r] = self.bounds
-            cycle = self.cycle
-
-            if cycle == 0:
-                # find l1
-                self.l1 = r-(r-l)*self.phi
-                self.stride = self.l1
-                self.cycle += 1
-            elif cycle == 1:
-                # find l2
-                self.l1_pow = i_in*v_in
-                self.l2 = (r-l)*self.phi+l
-                self.stride = self.l2
-                self.cycle += 1
-            else:
-                if cycle == 2: # updated l2 in previous round
-                    self.l2_pow = i_in*v_in
-                elif cycle == 3: # updated l1 in previous round
-                    self.l1_pow = i_in*v_in
-                else:
-                    print("[ERROR] I shouldn't be here.")
-
-                # compare and cut the bounds
-                if self.l1_pow > self.l2_pow:
-                    # cut right side
-                    self.bounds[1] = self.l2
-                    # l1 becomes l2
-                    self.l2 = self.l1
-                    self.l2_pow = self.l1_pow
-                    # find next l1
-                    [l, r] = self.bounds
-                    self.l1 = r-(r-l)*self.phi
-                    self.stride = self.l1
-                    self.cycle = 3
-                else:
-                    # cut left side
-                    self.bounds[0] = self.l1
-                    # l2 becomes l1
-                    self.l1 = self.l2
-                    self.l1_pow = self.l2_pow
-                    # find next x1
-                    [l, r] = self.bounds
-                    self.l2 = (r-l)*self.phi+l
-                    self.stride = self.l2
-                    self.cycle = 2
-
-            return self.stride
-        elif self.stride_mode == "Optimal":
+        if self.stride_mode == "Optimal":
             # Piegari - we assume we know where the mpp should be and jump to there
             k = .05 # 5 percent error
             v_mpp = .47282#.621 # according to Sunniva # TODO UPDATE THIS ESTIMATE
             v_min = k*k/(2*(1-k))*v_mpp + .001
             stride = abs(v_mpp - v_in)
             return stride + v_min
-        elif self.stride_mode == "Newton":
-            """
-            Newton's method.
-
-            Newton's method seeks to find min f(X).
-            In this case, f(x) = transformed P-V curve, which is 0 at vmpp.
-            Ideally, the transfomed PV curve is of the form f(V)= -P(V) + Pmpp.
-            Pmpp has to be estimated, or some error checking should be performed.
-
-            Our initial guess is v_ref.
-            """
-            # p_mpp = 3.62 # pmpp, according to sunniva
-            k = .995 # error approximation to get p_mpp always below P(vmpp)
-            p_mpp = (4.32 + -.0293*t_in + 6.4E-05*(t_in**2)) * k
-
-            # need two points to determine slope, check if I'm on the first step
-            if self.cycle_one:
-                self.cycle_one = False
-                self.f_old = -v_in*i_in + p_mpp
-                # v_old is set outside this in the parent
-                self.dF_old = 0
-            else:
-                f = -v_in*i_in + p_mpp
-                # print("[MPPT] f:", f)
-
-                diff_v = v_in - self.v_old
-                # print("[MPPT] diff_v:", diff_v)
-                diff_f = f - self.f_old
-                # print("[MPPT] diff_f:", diff_f)
-
-                if diff_v == 0: # we've found the mpp
-                    self.stride = v_in + 0
-                    dF = 0
-                else:
-                    dF = diff_f/diff_v
-                    # print("[MPPT] dF:", dF)
-                    if dF == 0: # slope is 0, MPP is in the middle
-                        self.stride = v_in + diff_v/2
-                    else:
-                        self.stride = v_in - f/dF
-                        # print("[MPPT] v_ref:", self.stride)
-
-                self.f_old = f
-                self.dF_old= dF 
-            if(self.stride > .8 or self.stride < 0):
-                self.stride = 0
-                print("Warning, Newton output has exceeded range", self.stride)
+        else: # defaulte fixed
             return self.stride
-        elif self.stride_mode == "BFGS": #LBFGS
-            return self.stride
-        else: # default Fixed
-            return self.stride
-
 
     def get_name(self):
         """
