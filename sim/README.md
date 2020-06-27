@@ -14,29 +14,31 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * bisect
 * math
 
-## Feature Request
+## Feature Request and Bug list
 
-* [x] source dependence on temperature
-* [x] source dependence on irradiance
-* [ ] source dependence on load
-* [ ] load from some formatted file (probably csv)
-* [x] dP dV feedback control mppt algo
-* [ ] fuzzy logic mppt algo
-* [ ] ripple correlation control mppt algo
-* [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
-* [x] input parameters
-* [x] optimize processing speed
+* source
+  * [x] source dependence on temperature
+  * [x] source dependence on irradiance
+  * [ ] source dependence on load
+  * [ ] load from some formatted file (probably csv)
+* dc-dc converter
+  * [ ] research simulating a dc-dc converter that converts duty cycle to v_ref
+* mppt
+  * mppt_passthrough
+    * [ ] Newton's method - stride approximation leads to strong mppt oscillation
+    * [ ] Piegari (Optimal) - needs to develop an accurate model function for best voltage
+  * mppt_other
+    * [x] PandO
+    * [ ] PandO variable
+    * [x] dP dV feedback control mppt algo
+    * [ ] fuzzy logic mppt algo
+    * [ ] ripple correlation control mppt algo
+    * [ ] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
+  * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
+* simulation
+  * [ ] Profile mode: mppt power is greater than max array power by a cycle
+* optimization
   * [x] since the model is monotonically decreasing, swap from linear search to ternary search
-* [ ] Graph the effect of variable ratio in ternary search - suspicious that it converges at some point and diverges elsewhere
-* [ ] Fix Newton's method
-
-## Buglist
-
-* [ ] Profile mode: mppt power is greater than max array power by a cycle
-* [ ] mppt stride function Newton variable stride approximation leads to strong mppt oscillation 
-  * [x] pmpp approximated
-  * [ ] still strong oscillation
-* [ ] mppt stride function Piegari (Optimal) needs to develop an accurate model function for best voltage
 
 ## Papers and sites I haven't used yet but are promising
 
