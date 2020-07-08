@@ -22,7 +22,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
   * [ ] source dependence on load
   * [ ] load from some formatted file (probably csv)
 * dc-dc converter
-  * [ ] research simulating a dc-dc converter that converts duty cycle to v_ref
+  * [ ] research simulating a dc-dc converter that converts duty cycle to v_ref TODO: priority
 * mppt
   * mppt_passthrough
     * [ ] Newton's method - stride approximation leads to strong mppt oscillation

@@ -34,7 +34,7 @@ def main():
     stride = .05
     v_ref = 0
     stride_mode = None
-    temp_regime = [
+    env_regime = [
         [0, 0, 25],
         [1, 0, 25],
         [2, 0, 25],
@@ -95,8 +95,8 @@ def main():
             stride_mode = string_stride_mode
             print(stride_mode)
     else:
-        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Optimal': ")
-        if string_stride_mode == "Fixed" or string_stride_mode == "Optimal":
+        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Fixed']|'Adaptive'|'Optimal': ")
+        if string_stride_mode == "Fixed" or string_stride_mode == "Optimal" or string_stride_mode == "Adaptive":
             stride_mode = string_stride_mode
 
     # profile input dialogue
@@ -180,7 +180,7 @@ def main():
             else:
                 print("Unsuccessful load. Exiting.")
         else:
-            source.setup_a(temp_regime)
+            source.setup_a(env_regime)
             # simulation only
             time_step   = 1
             cycle_start = 0

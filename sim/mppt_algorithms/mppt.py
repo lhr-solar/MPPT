@@ -19,6 +19,7 @@ Description: Parent class for various MPPT Algorithms.
         - Comparison of Photovoltaic Array Maximum Power Point Tracking Techniques (Esram et al)
 """
 from math import log10, sqrt
+from math import exp
 class MPPT:
     v_ref = 0
     stride = .1
@@ -126,14 +127,27 @@ class MPPT:
                     - plotting Source Model 1's pmpp across temperature, a 2nd order polynomial fit line is obtained
                         - 4.32 + -.0293t + 6.4E-05t^2
         """
+        v_mpp = .47282 # .621 # according to Sunniva # TODO UPDATE THIS ESTIMATE
         if self.stride_mode == "Optimal":
             # Piegari - we assume we know where the mpp should be and jump to there
-            k = .05 # 5 percent error
-            v_mpp = .47282#.621 # according to Sunniva # TODO UPDATE THIS ESTIMATE
-            v_min = k*k/(2*(1-k))*v_mpp + .001
+            k = .1 # 10% estimation error
+            v_min = k*k/(2*(1-k))*v_mpp # this works out to be .55% for a 10% estimation error
+            
             stride = abs(v_mpp - v_in)
             return stride + v_min
-        else: # defaulte fixed
+        elif self.stride_mode == "Adaptive":
+            # Piegari - we assume we know where the mpp should be and use the following piecewise function
+            # f(V_M - V) = (exp(V_M - V)/3 - 1) V < V_M
+            #              0                    V > V_M
+            k = .2 # 20% estimation error
+            v_min = k*k/(2*(1-k))*v_mpp
+            
+            if v_in < v_mpp:
+                stride = exp((v_mpp - v_in)/3)-1 + v_min
+            else:
+                stride = v_min
+            return stride
+        else: # default fixed
             return self.stride
 
     def get_name(self):
