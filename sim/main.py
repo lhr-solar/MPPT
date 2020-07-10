@@ -123,7 +123,7 @@ def main():
         v_ref = tmp_v_ref
     except ValueError:
         print("Invalid integer. Defaulting to a cycle 0 v_ref of " + str(v_ref) + " V.")
-    string_stride = input("Default stride ['" + str(stride) + "']: ")
+    string_stride = input("Default stride (for fixed stride function) ['" + str(stride) + "']: ")
     try:
         tmp_stride = float(string_stride)
         stride = tmp_stride
@@ -273,8 +273,8 @@ def main():
 
             # update Simulation with new values
             simulation.add_datapoint(cycle, irradiance, temperature, load, v_mpp, i_mpp, v_mppt, i_mppt)
-            print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
-            print(simulation.get_datapoint(cycle))
+            # print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
+            # print(simulation.get_datapoint(cycle))
 
             # pipe source into the mppt and try to find new v_ref
             v_ref = mppt.iterate(v_mppt, i_mppt, temperature, cycle)

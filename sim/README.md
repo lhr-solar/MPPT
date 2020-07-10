@@ -1,4 +1,4 @@
-# Python simulator for MPPT Algorithms.
+# Python simulator for MPPT Algorithms
 
 Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicles Team.
 
@@ -19,9 +19,10 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * source
   * [x] source dependence on temperature
   * [x] source dependence on irradiance
-  * [ ] source dependence on load
-  * [ ] load from some formatted file (probably csv)
-* dc-dc converter
+  * [ ] <del>source dependence on load</del> remove source dependence on load - this is managed by the mppt
+  * [ ] load profile from some formatted file (probably csv) TODO: priority
+  * [ ] load source model from some formatted file
+* dc-dc converter TODO: priority
   * [ ] research simulating a dc-dc converter that converts duty cycle to v_ref TODO: priority
 * mppt
   * mppt_passthrough
@@ -37,9 +38,12 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
   * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
 * simulation
   * [ ] Profile mode: mppt power is greater than max array power by a cycle
-  * [ ] Save to file
+  * [x] Save to file
 * optimization
   * [x] since the model is monotonically decreasing, swap from linear search to ternary search
+  * [ ] have a hashed model (perhaps loaded from a file?) of a complete IV curve for all quantized values of temperature and irradiance. Additionally, perhaps use interpolation to get curve values if temp/irrad entry does not exist.
+* upgrade
+  * [ ] consider the feasibility of rewriting this application in rust or C++, as there may be extensive overhead computation as source models get more expensive. **LONG TERM**
 
 ## Papers and sites I haven't used yet but are promising
 
