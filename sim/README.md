@@ -1,10 +1,12 @@
-# Python simulator for MPPT Algorithms.
+# Python simulator for MPPT Algorithms
+
 Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicles Team.
 
 *Consider making an actual structured repo, Matthew.*
 [Repo Structure](https://docs.python-guide.org/writing/structure/)
 
 ## Dependencies
+
 * python3
 * sys
 * matplotlib
@@ -12,26 +14,39 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * bisect
 * math
 
-## Feature Request
-- [x] source dependence on temperature
-- [ ] source dependence on irradiance
-- [ ] source dependence on load
-- [ ] load from some formatted file (probably csv)
-- [x] dP dV feedback control mppt algo
-- [ ] fuzzy logic mppt algo
-- [ ] ripple correlation control mppt algo
-- [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle and create a dc to dc converter that'll convert duty cycle to v_ref
-- [x] input parameters
+## Feature Request and Bug list
 
-## Buglist
-- [ ] Profile mode: mppt power is greather than max array power by a cycle
-- [ ] Zahedi source model leads to strong mppt oscillation
-- [ ] mppt Newton Method variable stride approximation leads to strong mppt oscillation 
-    - [x] pmpp approximated
-    - [ ] still strong oscillation
-
+* source
+  * [x] source dependence on temperature
+  * [x] source dependence on irradiance
+  * [ ] <del>source dependence on load</del> remove source dependence on load - this is managed by the mppt
+  * [ ] load profile from some formatted file (probably csv) TODO: priority
+  * [ ] load source model from some formatted file
+* dc-dc converter TODO: priority
+  * [ ] research simulating a dc-dc converter that converts duty cycle to v_ref TODO: priority
+* mppt
+  * mppt_passthrough
+    * [ ] Newton's method - stride approximation leads to strong mppt oscillation
+    * [ ] Piegari (Optimal) - needs to develop an accurate model function for best voltage
+  * mppt_other
+    * [x] PandO
+    * [x] PandO variable
+    * [x] dP dV feedback control mppt algo
+    * [ ] fuzzy logic mppt algo
+    * [ ] ripple correlation control mppt algo
+    * [ ] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
+  * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
+* simulation
+  * [ ] Profile mode: mppt power is greater than max array power by a cycle
+  * [x] Save to file
+* optimization
+  * [x] since the model is monotonically decreasing, swap from linear search to ternary search
+  * [ ] have a hashed model (perhaps loaded from a file?) of a complete IV curve for all quantized values of temperature and irradiance. Additionally, perhaps use interpolation to get curve values if temp/irrad entry does not exist.
+* upgrade
+  * [ ] consider the feasibility of rewriting this application in rust or C++, as there may be extensive overhead computation as source models get more expensive. **LONG TERM**
 
 ## Papers and sites I haven't used yet but are promising
+
 [Modeling Solar Cells](https://sites.google.com/site/banuphotovoltaic/pv/pv-arrays)
 
 [Irradiance and PV Performance Optimization](e-education.psu.edu/ae868/node/877)

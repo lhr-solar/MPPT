@@ -4,7 +4,7 @@ mppt.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/27/20
-Last Modified: 5/28/20
+Last Modified: 6/24/20
 Description: Parent class for various MPPT Algorithms.
     Algorithms Implemented: [x - implemented, u - considered, o - not considered]
         - [x] Perturb and Observe
@@ -18,7 +18,8 @@ Description: Parent class for various MPPT Algorithms.
     Ref:
         - Comparison of Photovoltaic Array Maximum Power Point Tracking Techniques (Esram et al)
 """
-from math import log10
+from math import log10, sqrt
+from math import exp
 class MPPT:
     v_ref = 0
     stride = .1
@@ -31,6 +32,15 @@ class MPPT:
     f_old  = 0
     dF_old = 0
 
+    # for Ternary, Golden, Bisection
+    cycle = 0
+    bounds = [0, .8]
+    l1 = bounds[0]
+    l1_pow = 0
+    l2 = bounds[1]
+    l2_pow = 0
+    phi = (sqrt(5) + 1)/2 - 1
+
     cycle_one = True
 
     stride_mode = ""
@@ -41,7 +51,7 @@ class MPPT:
         """
         return
 
-    def setup(self, v_ref=0, stride=.1, sample_rate=1, stride_mode = "Piegari"):
+    def setup(self, v_ref=0, stride=.1, sample_rate=1, stride_mode=None):
         """
         setup
         Updates MPPT parameters
@@ -54,6 +64,8 @@ class MPPT:
         Returns:
             - None
         """
+        if stride_mode is None:
+            stride_mode = "Fixed"
         self.v_ref = v_ref
         self.stride = stride
         self.sample_rate = sample_rate
@@ -115,71 +127,28 @@ class MPPT:
                     - plotting Source Model 1's pmpp across temperature, a 2nd order polynomial fit line is obtained
                         - 4.32 + -.0293t + 6.4E-05t^2
         """
-
-        if self.stride_mode == "Piegari":
-            k = .05 # 5 percent error
-            v_best = .621 # according to Sunniva
-            v_best = .717 + -4.04E-03*t_in + 8.93E-06*(t_in**2)
-            print("v_best=", v_best, "@T=", t_in)
-            dV_min = .5*(k*k)/(1-k)*v_best + .001
-            stride = abs(v_best - v_in)
-            print("f(V_best-V) = ", stride)
-            print("dV_min = ", dV_min)
-            if stride < dV_min:
-                return stride
+        v_mpp = .47282 # .621 # according to Sunniva # TODO UPDATE THIS ESTIMATE
+        if self.stride_mode == "Optimal":
+            # Piegari - we assume we know where the mpp should be and jump to there
+            k = .1 # 10% estimation error
+            v_min = k*k/(2*(1-k))*v_mpp # this works out to be .55% for a 10% estimation error
+            
+            stride = abs(v_mpp - v_in)
+            return stride + v_min
+        elif self.stride_mode == "Adaptive":
+            # Piegari - we assume we know where the mpp should be and use the following piecewise function
+            # f(V_M - V) = (exp(V_M - V)/3 - 1) V < V_M
+            #              0                    V > V_M
+            k = .2 # 20% estimation error
+            v_min = k*k/(2*(1-k))*v_mpp
+            
+            if v_in < v_mpp:
+                stride = exp((v_mpp - v_in)/3)-1 + v_min
             else:
-                return (stride + dV_min)
-        elif self.stride_mode == "Newton":
-            """
-            Newton's method.
-
-            Newton's method seeks to find min f(X).
-            In this case, f(x) = transformed P-V curve, which is 0 at vmpp.
-            Ideally, the transfomed PV curve is of the form f(V)= -P(V) + Pmpp.
-            Pmpp has to be estimated, or some error checking should be performed.
-
-            Our initial guess is v_ref.
-            """
-            # p_mpp = 3.62 # pmpp, according to sunniva
-            k = .995 # error approximation to get p_mpp always below P(vmpp)
-            p_mpp = (4.32 + -.0293*t_in + 6.4E-05*(t_in**2)) * k
-
-            # need two points to determine slope, check if I'm on the first step
-            if self.cycle_one:
-                self.cycle_one = False
-                self.f_old = -v_in*i_in + p_mpp
-                # v_old is set outside this in the parent
-                self.dF_old = 0
-            else:
-                f = -v_in*i_in + p_mpp
-                print("f:", f)
-
-                diff_v = v_in - self.v_old
-                print("diff_v:", diff_v)
-                diff_f = f - self.f_old
-                print("diff_f:", diff_f)
-
-                if diff_v == 0: # we've found the mpp
-                    self.stride = 0
-                    dF = 0
-                else:
-                    dF = diff_f/diff_v
-                    print("dF:", dF)
-                    if dF == 0: # also found the mpp
-                        self.stride = 0
-                    else:
-                        self.stride = abs(- f/dF)
-                        print("v_ref:", self.stride)
-
-                self.f_old = f
-                self.dF_old= dF 
+                stride = v_min
+            return stride
+        else: # default fixed
             return self.stride
-
-        elif self.stride_mode == "LBFGS":
-            return .1
-        else:
-            return self.stride
-
 
     def get_name(self):
         """

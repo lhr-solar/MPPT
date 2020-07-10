@@ -44,8 +44,8 @@ class PandO(MPPT):
             diff_V = v_in - self.v_old
             diff_P = p_in - self.p_old
 
-            print("Change Voltage: ", diff_V)
-            print("Change Power: ", diff_P)
+            # print("[PANDO] Change Voltage: ", diff_V)
+            # print("[PANDO] Change Power: ", diff_P)
 
             dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
             if diff_P > 0:

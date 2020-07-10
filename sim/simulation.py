@@ -11,6 +11,7 @@ Description: This Simulation class contains the state of the simulation.
 """
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from bisect import bisect
 import numpy as np
 import math
@@ -21,6 +22,9 @@ class Simulation:
     disp_vsrc   = []
     disp_isrc   = []
     disp_psrc   = []
+    disp_vmpp   = []
+    disp_impp   = []
+
     # mppt output
     disp_vmppt  = []
     disp_imppt  = []
@@ -65,6 +69,7 @@ class Simulation:
             - v_src   (float): source voltage (V)
             - i_src   (float): source current (A)
             - v_mppt  (float): mppt reference voltage (V)
+            - i_mppt  (float): mppt induced current (V)
         
         Returns:
             - None (NOTE: Possibly add error return here for handling exceptions?)
@@ -115,6 +120,35 @@ class Simulation:
         self.disp_pDiff.insert(insert_index, p_diff)
         self.disp_pDiffA.insert(insert_index, p_diffA)
         self.disp_pEff.insert(insert_index, tracking_eff)
+        return
+
+    def add_datapoint_source_model(self, irrad, temp, load, v_src, i_src):
+        """
+        addDatapoint
+        adds a datapoint to each data structure corresponding to the inputs.
+        
+        Args:
+            - irrad   (float): irradiance
+            - temp    (float): temperature (C)
+            - load    (float): load on the system (W/s) NOTE: UNUSED
+            - v_src   (float): source voltage (V)
+            - i_src   (float): source current (A)
+        
+        Returns:
+            - None (NOTE: Possibly add error return here for handling exceptions?)
+        """
+        # calculate secondary results
+        p_src = v_src * i_src
+
+        self.disp_vsrc.append(v_src)
+        self.disp_isrc.append(i_src)
+        self.disp_psrc.append(p_src)
+
+        
+        self.disp_temp.append(temp)
+        self.disp_irrad.append(irrad)
+        self.disp_load.append(load)
+        
         return
 
     def get_datapoint(self, cycle):
@@ -181,7 +215,7 @@ class Simulation:
         plt.tight_layout()
 
         self.fig_num = plt.gcf().number
-        print("Fig num:", self.fig_num)
+        print("[SIMULATION] Fig num:", self.fig_num)
 
     def display(self, cycle_start=0, cycle_end=0, time_step=1):
         """
@@ -250,4 +284,64 @@ class Simulation:
 
         plt.tight_layout()
         plt.show()
+
+    def display_source_model(self, mode="Temperature"):
+        """
+        init_display
+        sets up the display window for the source model. Call once (globally) before display.
+
+        Args:
+            - mode (String): What sort of model dependency should be displayed.
+        
+        Return:
+            - None
+        """
+
+        fig = plt.figure(figsize=plt.figaspect(0.5))
+        ax  = fig.add_subplot(1,2,1, projection='3d')
+        ax2 = fig.add_subplot(1,2,2, projection='3d')
+
+        if mode == "Irradiance":
+            idx = 0
+            for obj in self.disp_vsrc:
+                X = self.disp_vsrc[idx]
+                Y = self.disp_irrad[idx]
+                Z = self.disp_isrc[idx]
+                Z2= self.disp_psrc[idx]
+                idx += 1
+                ax.scatter(X, Y, Z, marker='o', color=[X/1, Y/1000, Z/10.0])
+                ax2.scatter(X, Y, Z2, marker='o', color=[X/1, Y/1000, Z/10.0])
+            
+            ax.set_xlabel('Voltage (V)')
+            ax.set_ylabel('Irradiance (W/m^2)')
+            ax.set_zlabel('Current (I)')
+            ax2.set_xlabel('Voltage (V)')
+            ax2.set_ylabel('Irradiance (W/m^2)')
+            ax2.set_zlabel('Power (W)')
+
+        else: # default temp
+            idx = 0
+            for obj in self.disp_vsrc:
+                X = self.disp_vsrc[idx]
+                Y = self.disp_temp[idx]
+                Z = self.disp_isrc[idx]
+                Z2= self.disp_psrc[idx]
+                idx += 1
+                ax.scatter(X, Y, Z, marker='o', color=[X/1, Y/120, Z/10.0])
+                ax2.scatter(X, Y, Z2, marker='o', color=[X/1, Y/120, Z/10.0])
+            
+            ax.set_xlabel('Voltage (V)')
+            ax.set_ylabel('Temperature (C)')
+            ax.set_zlabel('Current (I)')
+            ax2.set_xlabel('Voltage (V)')
+            ax2.set_ylabel('Temperature (C)')
+            ax2.set_zlabel('Power (W)')
+
+        fig.suptitle(self.mppt_name) # but this is actually source model name
+        plt.show()
+
+    def save_model(self):
+        with open("results.csv", "ab") as f:
+            a = np.transpose(np.asarray([self.disp_cycle, self.disp_pDiff]))
+            np.savetxt(f, a, delimiter=",", fmt='%.4f')
 

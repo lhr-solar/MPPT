@@ -12,13 +12,13 @@ class IC(MPPT):
     # overload iterate method
     def iterate(self, v_in, i_in, t_in, cycle):
         """
-        iterate TODO: Add paper
+        iterate
         Runs a single iteration of the PandO algorithm.
 
         Args:
             - v_in (float): source voltage (V)
             - i_in (float): source current (A)
-            - t_in (float): temperature
+            - t_in (float): temperature (C)
             - cycle (int): current simulation cycle
 
         Returns:
@@ -33,8 +33,8 @@ class IC(MPPT):
             dV = v_in - self.v_old
             dI = i_in - self.i_old
 
-            print("Change Voltage: ", dV)
-            print("Change Current: ", dI)
+            print("[IC] Change Voltage: ", dV)
+            print("[IC] Change Current: ", dI)
 
             dV_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
             if dV == 0:
@@ -47,7 +47,7 @@ class IC(MPPT):
                         self.v_ref += dV_ref
             else:
                 dC = (i_in + (dI / dV) * v_in) # instantaneous conductance
-                print("Incremental Conductance: ", dC)
+                print("[IC] Incremental Conductance: ", dC)
                 if dI/dV*v_in == -i_in:
                     pass
                 else:

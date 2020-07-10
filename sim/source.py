@@ -4,7 +4,7 @@ Source.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/24/20
-Last Modified: 5/28/20
+Last Modified: 6/24/20
 Description: This file describes the Source class, which generates input values for the Display and MPPT.
     The Source is time agnostic. The output is purely dependent on current conditions.
 """
@@ -21,9 +21,9 @@ class Source:
     arr_temp    = []
     arr_load    = []
 
-    model_type  = "Benghanem"
+    model_type  = "Default"
 
-    def __init__(self, model_type):
+    def __init__(self, model_type="Default"):
         """
         init
         Sets up the model type of the cell.
@@ -37,14 +37,10 @@ class Source:
         Returns:
             - None
         """
-        if model_type == "Benghanem":
-            self.model_type = "Benghanem"
-        elif model_type == "Ibrahim":
-            self.model_type = "Ibrahim"
-        elif model_type == "Zahedi":
-            self.model_type = "Zahedi"
+        if model_type == "Ideal":
+            self.model_type = "Ideal"
         else:
-            pass 
+            self.model_type = "Nonideal"
 
         return
 
@@ -202,15 +198,15 @@ class Source:
         """
         return [self.irradiance, self.temperature, self.load]
 
-    def model(self, v_in, irr_in=0, t_in=0, ld_in=0):
+    def model(self, v_in, irr_in=0.001, t_in=0, ld_in=0):
         """
-        model TODO: update with a more advanced model with irradiance
+        model
         Function describing the current output of a SINGLE Bin Le1 Sunpower cell given voltage and other factors.
     
         Args:
             - v_in      (float): voltage input      (V)
-            - t_in      (float): temperature input  (C)
             - irr_in    (float): irradiance input   (W/m^2)
+            - t_in      (float): temperature input  (C)
             - ld_in     (float): load input         (W)
 
         Returns:
@@ -225,7 +221,7 @@ class Source:
                     ~ https://www.pveducation.org/pvcdrom/solar-cell-operation/effect-of-temperature
                         - for silicon solar cell
                         - V_OC = .721 - (2.2*.001)*(t-25)
-                        - I_SC = 6.15 + (.06*.001)*(t-25)*6.15
+                        - I_SC = 6.15 + .0006*(t-25)*6.15
                     ~ C_3 = maximal voltage
                     ~ C_4 = maximal current
             2. Modeling and simulation of photovoltaic arrays (Banu et Istrate)
@@ -275,6 +271,70 @@ class Source:
                             - q = electron charge
                                 ~ 1.602 * 10^-19 C
         """
+        threshold = .005
+
+        k       = 1.381E-23
+        q       = 1.602E-19
+        t_ref   = 25+273.15
+        irr_ref = 1000
+        v_oc_ref= .721
+        i_sc_ref= 6.15
+        r_s     = .032
+        r_sh    = 36.1
+
+        # overflow error if irr_in is 0
+        if irr_in == 0:
+            irr_in = .001
+
+        if self.model_type == "Default" or self.model_type == "Nonideal":
+            # convert t_in from C to K
+            t_c = t_in + 273.15
+
+            # nonideal single diode model
+            i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
+            v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
+            i_pv = i_sc
+            i_0  = exp(ln(i_sc) - q * v_oc / (k * t_c))
+
+            # iteratively solve implicit parameter
+            i = 0
+            left = i
+
+            right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
+            difference = (left - right) * (left - right)
+            decreasing = True
+
+            while decreasing:# > threshold:
+                i = i + .001
+                left = i
+                right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
+                if (difference - (left - right) * (left - right)) <= 0.0: # positive
+                    decreasing = False;
+                difference = (left - right) * (left - right)
+
+            model = i
+            # print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
+            # losses in efficiency as a result of manufacturing (lamination, etc)
+            # model2 = model * k
+            return model
+
+        if self.model_type == "Ideal":
+            # ideal single diode model
+            t_c = t_in + 273.15 # convert into kelvin
+
+            i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
+            v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
+            i_pv = i_sc
+            i_0 = exp(ln(i_sc) - q * v_oc / (k * t_c))
+            i_d = i_0 * (exp(q * v_in / (k * t_c) - 1))
+            i = i_pv - i_d
+
+            model = i
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
+            # losses in efficiency as a result of manufacturing (lamination, etc)
+            # model2 = model * k
+            return model
+
         if self.model_type == "Benghanem":
             k = 0.92 # manufacturing efficiency loss (8% according to test data)
 
@@ -289,7 +349,7 @@ class Source:
             C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
             # default explicit model
             model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
-            # print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
             # losses in efficiency as a result of manufacturing (lamination, etc)
             model2 = model * k
@@ -308,39 +368,38 @@ class Source:
             # ignore T_c equation and insert our own cell temp into it
             T_c = t_in # T_a + (48 - 20) / 80 * 100 
             I_sc= 6.15 * (1 + 0 * (T_c - 25)) * G / 1000
-            print("Short Circuit current I_sc:", I_sc)
+            print("[SOURCE] Short Circuit current I_sc:", I_sc)
 
             I_l = I_sc
             K_v = -.00023
             a = 1.187
             V_t = 1.381E-23 * (T_c + 273.15) / 1.602E-19
-            print("Thermal voltage V_t:", V_t)
+            print("[SOURCE] Thermal voltage V_t:", V_t)
             I_d = I_sc / (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1) * (e ** (v_in / (a * V_t)) - 1)
-            print("denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
-            print("multiplier:", (e ** (v_in / (a * V_t)) - 1))
-            print("Diode Saturation current:", I_d)
+            print("[SOURCE] denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
+            print("[SOURCE] multiplier:", (e ** (v_in / (a * V_t)) - 1))
+            print("[SOURCE] Diode Saturation current:", I_d)
             model = I_l - I_d
-            print("Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
             # losses in efficiency as a result of manufacturing (lamination, etc)
             model2 = model * k 
             return model
 
-    def graph(self):
+    def graph(self, step_size=.01):
         """
         graph
         Returns an array of voltage and current values to display current solar panel IV pre-altered by the mppt.
 
         Args:
-            - None
+            - step_size (float): step size. Defaults to .01 V.
 
         Returns:
             - [[[voltage, current]], gmpp]
                 - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
         """
-        MAX_VOLTAGE = 1
+        MAX_VOLTAGE = .8
         v_in = 0
-        step_size = .01
         p_mpp = 0
         v_mpp = 0
         i_mpp = 0
@@ -356,4 +415,62 @@ class Source:
             v_in += step_size
             if current < 0 or voltage >= MAX_VOLTAGE:
                 break
+
         return [output, [v_mpp, i_mpp, p_mpp]]
+
+    def get_mppt(self):
+        """
+        get_mppt
+        Returns the maximum power point parameters to be used by the simulation display
+        Uses ternary search to find the maximum of the unimodal single cell. This will not work for a multi module model.
+
+        Args:
+            None
+        Returns:
+            - [gmpp]
+                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
+        """
+        min_resolution = .01 # 11 iterations
+
+        MAX_VOLTAGE = .8
+        p_mpp = 0
+        v_mpp = 0
+        i_mpp = 0
+
+        left = 0
+        right = MAX_VOLTAGE
+        v_in = 0
+
+        while abs(right-left) >= min_resolution:
+            l1 = (right-left)/3 + left
+            l2 = right - (right-left)/3
+
+            [v_l, c_l] = self.iterate(l1)
+            [v_r, c_r] = self.iterate(l2)
+            
+            l1_power = v_l * c_l
+            l2_power = v_r * c_r
+
+            if l1_power > l2_power:
+                right = l2
+            else:
+                left = l1
+
+            v_in = left
+
+        [v_mpp, i_mpp] = self.iterate(v_in)
+        p_mpp = v_mpp * i_mpp
+
+        return [v_mpp, i_mpp, p_mpp]
+
+    def get_model_name(self):
+        """
+        get_model_name
+        Returns the name of the model.
+
+        Args:
+            - None
+        Returns:
+            - String name
+        """
+        return self.model_type
