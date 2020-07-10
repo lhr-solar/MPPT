@@ -90,7 +90,7 @@ def main():
 
     # mppt stride mode dialogue
     if string_mppt_algorithm_type == "Passthrough":
-        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Golden']|'Ternary'|'Bisection(X)'|'Newton(X)'|'BFGS(X)': ")
+        string_stride_mode = input("Stride mode for MPPT (see src docs): ['Golden']|'Ternary'|'Bisection'|'Newton(X)'|'BFGS(X)': ")
         if string_stride_mode == "Golden" or string_stride_mode == "Ternary" or string_stride_mode == "Bisection" or string_stride_mode == "Newton" or string_stride_mode == "BFGS":
             stride_mode = string_stride_mode
             print(stride_mode)

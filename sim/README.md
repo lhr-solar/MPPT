@@ -29,7 +29,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
     * [ ] Piegari (Optimal) - needs to develop an accurate model function for best voltage
   * mppt_other
     * [x] PandO
-    * [ ] PandO variable
+    * [x] PandO variable
     * [x] dP dV feedback control mppt algo
     * [ ] fuzzy logic mppt algo
     * [ ] ripple correlation control mppt algo
@@ -37,6 +37,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
   * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
 * simulation
   * [ ] Profile mode: mppt power is greater than max array power by a cycle
+  * [ ] Save to file
 * optimization
   * [x] since the model is monotonically decreasing, swap from linear search to ternary search
 

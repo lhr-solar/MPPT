@@ -131,7 +131,34 @@ class PT(MPPT):
 
             return self.stride
         elif self.stride_mode == "Bisection":
-            # TODO: implement this
+            k = .01
+            [left, right] = self.bounds
+            cycle = self.cycle
+
+            if cycle == 0:
+                self.stride = (left + right)/2
+                self.cycle = 1
+            else:
+                self.l1_pow = v_in * i_in
+
+                dP_dV = 0
+                if v_in - self.v_old != 0: # prevent divide by 0 issues
+                    dP_dV = (v_in*i_in - self.p_old)/(v_in - self.v_old)
+
+                if abs(dP_dV) <= k:
+                    self.v_old = v_in
+                    self.stride = self.v_old
+                elif dP_dV > 0:
+                    self.bounds[0] = v_in
+                    self.stride = (self.bounds[0] + right)/2
+                    self.v_old = self.stride
+                    self.p_old = v_in*i_in
+                else:
+                    self.bounds[1] = v_in
+                    self.stride = (left + self.bounds[1])/2
+                    self.v_old = self.stride
+                    self.p_old = v_in*i_in
+
             return self.stride
         elif self.stride_mode == "Newton":
             """

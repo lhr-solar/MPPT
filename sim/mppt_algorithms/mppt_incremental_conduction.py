@@ -12,13 +12,13 @@ class IC(MPPT):
     # overload iterate method
     def iterate(self, v_in, i_in, t_in, cycle):
         """
-        iterate TODO: Add paper
+        iterate
         Runs a single iteration of the PandO algorithm.
 
         Args:
             - v_in (float): source voltage (V)
             - i_in (float): source current (A)
-            - t_in (float): temperature
+            - t_in (float): temperature (C)
             - cycle (int): current simulation cycle
 
         Returns:

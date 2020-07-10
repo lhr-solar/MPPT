@@ -340,24 +340,8 @@ class Simulation:
         fig.suptitle(self.mppt_name) # but this is actually source model name
         plt.show()
 
-        # fig = plt.figure(figsize=plt.figaspect(0.5))
-        # ax = fig.add_subplot(1, 2, 1, projection='3d')
+    def save_model(self):
+        with open("results.csv", "ab") as f:
+            a = np.transpose(np.asarray([self.disp_cycle, self.disp_pDiff]))
+            np.savetxt(f, a, delimiter=",", fmt='%.4f')
 
-        # X = self.disp_vsrc
-        # Y = self.disp_isrc
-        # X, Y = np.meshgrid(X, Y)
-        # Z = self.disp_irrad
-
-        # # IV curve with irradiance as Z dimension
-        # surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-        # ax.set_zlim(0, 1000)
-        # fig.colorbar(surf, shrink=0.5, aspect=10)
-
-        # # PV curve with irradiance as Z dimension
-        # ax2 = fig.add_subplot(1, 2, 2, projection='3d')
-        # Y2 = self.disp_psrc
-        # surf2 = ax2.plot_surface(X, Y2, Z, rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-        # ax2.set_zlim(0, 1000)
-        # fig.colorbar(surf2, shrink=0.5, aspect=10)
-
-        # plt.show()

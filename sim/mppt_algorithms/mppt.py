@@ -32,7 +32,7 @@ class MPPT:
     f_old  = 0
     dF_old = 0
 
-    # for Ternary and Golden
+    # for Ternary, Golden, Bisection
     cycle = 0
     bounds = [0, .8]
     l1 = bounds[0]
