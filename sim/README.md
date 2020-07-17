@@ -14,6 +14,8 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * bisect
 * math
 
+Install dependencies using `pip3 install -r requirements.txt`
+
 ## Feature Request and Bug list
 
 * source

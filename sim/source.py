@@ -309,7 +309,7 @@ class Source:
                 left = i
                 right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
                 if (difference - (left - right) * (left - right)) <= 0.0: # positive
-                    decreasing = False;
+                    decreasing = False
                 difference = (left - right) * (left - right)
 
             model = i

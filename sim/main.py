@@ -191,7 +191,7 @@ def main():
             i_mppt = 0
             mppt.setup(v_ref, stride, sample_rate, stride_mode)
 
-            simulation.init_display()
+            # simulation.init_display()
             while cycle <= max_cycle: # simulator main loop
                 if cycle%20 == 0:
                     print("\nCycle: " + str(cycle))
@@ -288,7 +288,7 @@ def main():
             # source.setup_i(irradiance, temperature, load)
         
         # display Simulation windows
-        simulation.display(cycle_start, max_cycle, time_step)
+        # simulation.display(cycle_start, max_cycle, time_step)
         input("Halted at the end of cycle " +  str(max_cycle))
 
 if __name__=="__main__":

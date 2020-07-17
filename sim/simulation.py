@@ -186,7 +186,7 @@ class Simulation:
             - None
         """
         self.fig, self.axs = plt.subplots(2, 2)
-        self.fig.set_size_inches(9, 10)
+        self.fig.set_size_inches(8, 9)
 
         self.axs[0, 0].set_xlabel('Cycle')
         self.axs[0, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')

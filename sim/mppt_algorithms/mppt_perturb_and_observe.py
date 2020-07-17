@@ -37,7 +37,7 @@ class PandO(MPPT):
                 - Part 3: Designing the MPPT Algorithm and Generating Production Code for the TI C2000 Microcontroller (Jonathan LeSage)
                 - https://www.mathworks.com/videos/developing-solar-inverter-control-with-simulink-part-3-designing-the-mppt-algorithm-and-generating-production-code-for-the-ti-c2000-microcontroller-1554990116706.html
         """
-        if (cycle % self.sample_rate) is 0: #sampling this run
+        if (cycle % self.sample_rate) == 0: #sampling this run
             # compute power
             p_in = v_in * i_in
             # determine deltas
