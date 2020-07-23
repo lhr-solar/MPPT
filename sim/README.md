@@ -34,7 +34,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
     * [x] dP dV feedback control mppt algo
     * [ ] fuzzy logic mppt algo
     * [ ] ripple correlation control mppt algo
-    * [ ] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
+    * [x] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
   * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
 * simulation
   * [ ] Profile mode: mppt power is greater than max array power by a cycle

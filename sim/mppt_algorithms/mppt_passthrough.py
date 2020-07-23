@@ -106,7 +106,7 @@ class PT(MPPT):
             """
             [left, right] = self.bounds
             cycle = self.cycle
-            q = .38179469685375
+            q = .33
 
             # Ternary - we need points every iteration: left third and right third
             if cycle == 0: # set left third
