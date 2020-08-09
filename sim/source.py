@@ -1,18 +1,38 @@
 """
 Source.py
 
-Author: Matthew Yu, Array Lead (2020).
-Contact: matthewjkyu@gmail.com
-Created: 5/24/20
-Last Modified: 6/24/20
-Description: This file describes the Source class, which generates input values for the Display and MPPT.
-    The Source does not do any modelling, but it aggregates the results of the cells.
+Author: Matthew Yu, Array Lead (2020). 
+Contact: matthewjkyu@gmail.com 
+Created: 5/24/20 
+Last Modified: 6/24/20 
+
+Description: This file describes the Source class, which generates input values
+for the Display and MPPT. The Source does not do any modelling, but it
+aggregates the results of the cells.
+
+Functionality: I should be able to do the following:
+    - (setup) load from a configuration file or pass in an impulse or regime
+        (the latter two are for single cell source modelling).
+    - (iterate) able to step forward a cycle for all of the modules in the 
+        source and return PV voltage and current.
+    - (get_source_IV) able to return a full IV curve across all of the modules 
+        in the source based on the current environmental conditions.
+    - (get_source_gmpp) able to get the GMPP characteristics of the PV at the 
+        current cycle.
+    - (get_env_conditions) able to get the current environmental conditions 
+        for all of the modules in the PV.
+    - (get_model_type) able to get the current cell model name (i.e. nonideal, 
+        ideal).
+    - (set_current_cycle, increment_cycle) able to jump forward and rewind 
+        back in time.
+
 """
 from math import exp, pow, e
 from numpy import log as ln
 class Source:
     MAX_CURRENT = 100
 
+    cycle = 0
     modules = []
     model_type = "Default"
 
@@ -98,7 +118,7 @@ class Source:
             print("[CELL] WARN: Invalid setup type -", setup_type)
             return False
 
-    def iterate(self, v_in, cycle=0):
+    def iterate(self, v_in):
         """
         iterate Calculates the PV voltage and current the system should expect
         across a set of modules. If done in impulse mode, we take the current
@@ -123,7 +143,7 @@ class Source:
         temp = 0.0
         load = 0.0
         for module in modules:
-            (v_out, i_out, irrad, temp, load) = module.iterate(v_in, cycle)
+            (v_out, i_out, irrad, temp, load) = module.iterate(v_in, self.cycle)
             # simplistically, we just grab the total voltage and the lowest current.
             v_out_tot += v_out
             if i_out_tot > i_out:
@@ -131,50 +151,48 @@ class Source:
         # TODO: add the effect of bypass diodes (essentially remove x volts for
         # TODO: every module based on y current)
 
+        # move forward one step in time.
+        self.cycle += 1
+
         return (v_out, i_out, irrad, temp, load)
 
-    def graph(self, step_size=.01, cycle=0):
+    def get_source_IV(self, step_size=.01):
         """
-        graph 
+        TODO: figure this out
+        get_source_IV 
         Returns an array of voltage and current values to display current
         solar panel IV pre-altered by the mppt.
 
         Args: 
             - step_size (float): step size. Defaults to .01 V.
-            - cycle (int): cycle to find the GMPP at. If the setup is impulse,
-                this argument doesn't matter. If the setup is array, cycle defaults
-                to 0 unless specified. 
 
         Returns: 
             - [[[[voltage, current]], gmpp], ...] (list of lists of lists)
                 - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
         """
+        # for each module, get their IV curve, and search through the IV curve and grab the total voltage and min current for each cell voltage.
         characteristics = []
         for module in self.modules:
-            characteristics.append(module.graph(step_size, cycle))
+            characteristics.append(module.get_cell_IV(step_size, self.cycle))
         return characteristics
 
-
-    def get_source_gmpp(self, cycle=0):
+    def get_source_gmpp(self):
         """
         TODO: figure this out
-        get_cell_gmpp 
+        get_source_gmpp 
         Returns the global maximum power point parameters to be
         used by the simulation display. This is done by ...
-
-        Args: 
-            - cycle (int): cycle to find the GMPP at. If the setup is impulse,
-                this argument doesn't matter. If the setup is array, cycle defaults
-                to 0 unless specified. 
 
         Returns: 
             - (vmpp, impp, pmpp) tuple of global maximum power point characteristics
         """
+        characteristics = self.get_source_IV()
+        # seek through the characteristics to find the max power and extract that
         return (0.0, 0.0, 0.0)
     
-    def get_conditions(self):
+    def get_env_conditions(self):
         """
-        get_conditions
+        get_env_conditions
         Returns source conditions for data analysis.
 
         Args:
@@ -183,9 +201,7 @@ class Source:
         Returns:
             - [(irradiance, temperature, load), ...] (list of tuples)
         """
-        env_conditions = []
-        for module in self.modules:
-            env_conditions.append(module.get_conditions())
+        env_conditions = [module.get_env_conditions() for module in self.modules]
         return env_conditions
 
     def get_model_type(self):
@@ -199,3 +215,22 @@ class Source:
             - String name
         """
         return self.model_type
+
+    def set_current_cycle(self, cycle):
+        """
+        set_current_cycle 
+        Sets the current cycle for all modules in the PV.
+
+        Args:
+            - cycle (int): current cycle for the PV modules.
+        """
+        for module in self.modules: 
+            module.set_current_cycle(cycle)
+
+    def increment_cycle(self):
+        """
+        increment_cycle 
+        Increments the current cycle for all modules in the PV
+        """
+        for module in self.modules: 
+            module.increment_cycle()

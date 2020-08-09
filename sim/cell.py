@@ -5,7 +5,28 @@ Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 8/9/20
 Last Modified: 8/9/20
-Description: This file describes the Cell class, which generates a model for the Source class based on environmental inputs. The Cell is time agnostic. The output is purely dependent on current conditions.
+
+Description: This file describes the Cell class, which generates a model for the
+Source class based on environmental inputs. The Cell is time agnostic. The
+output is purely dependent on current conditions.
+
+Functionality: I should be able to do the following:
+    - (setup) load from a configuration file or pass in an impulse or regime
+        (the latter two are for single cell source modelling). 
+    - (iterate) able to step forward a cycle and return PV voltage and current. 
+        Depends on model. 
+    - (model) able to return the current given a model type and the environmental
+        conditions (voltage applied, irradiance, temp, load) 
+    - (get_cell_IV) able to get the IV curve of the PV at the current cycle. Depends 
+        on model and runs a scan using voltage applied. 
+    - (get_cell_gmpp) able to get the GMPP characteristics of the PV at the 
+        current cycle. Depends on model and runs a scan using voltage applied. 
+    - (get_env_conditions) able to get the environmental conditions for the cell 
+        for the current cycle. 
+    - (get_model_type) able to get the current cell model name (i.e. nonideal,
+        ideal). 
+    - (set_current_cycle, increment_cycle) able to jump forward and
+        rewind back in time.
 """
 from math import exp, pow, e
 from numpy import log as ln
@@ -17,6 +38,7 @@ class Cell:
     temperature = 0
     load        = 0
     idx         = 0
+    cycle       = 0
 
     arr_cycle   = []
     arr_irrad   = []
@@ -64,6 +86,17 @@ class Cell:
 
         # TODO: no support for load at the moment.
         """
+        # refresh values
+        self.arr_cycle  = []
+        self.arr_irrad  = []
+        self.arr_temp   = []
+        self.arr_load   = []
+        irradiance      = 0
+        temperature     = 0
+        load            = 0
+        self.idx        = 0
+        self.cycle      = 0
+
         if setup_type == "":
             print("[CELL] WARN: Empty setup type -", setup_type)
             return False
@@ -80,6 +113,7 @@ class Cell:
                 self.arr_load.append(0)
             
             self.setup_type = "Array"
+            self.cycle = 0
             return True
 
         elif setup_type == "Impulse":
@@ -92,13 +126,14 @@ class Cell:
             self.load = 0
 
             self.setup_type = "Impulse"
+            self.cycle = 0
             return True
 
         else:
             print("[CELL] WARN: Invalid setup type -", setup_type)
             return False
 
-    def iterate(self, v_in, cycle=0):
+    def iterate(self, v_in):
         """
         iterate Using source conditions, calculate the source voltage and
         current the system should expect. If done in impulse mode, we take the
@@ -111,7 +146,8 @@ class Cell:
         Returns:
             - (v_out, i_out, irrad, temp, load) (tuple)
 
-        # NOTE: This model is for Sunpower 1 cell at STD conditions
+        NOTE: This model is for Sunpower 1 cell at STD conditions
+        NOTE: the cycle needs to be manually incremented after calling iterate.
         """
         if self.setup_type == "Impulse":
             v_out = v_in
@@ -122,7 +158,7 @@ class Cell:
             # try to set new conditions
             try:
                 # if idx exists
-                idx = self.arr_cycle.index(cycle)
+                idx = self.arr_cycle.index(self.cycle)
                 # load it
                 v_out = v_in
 
@@ -157,11 +193,11 @@ class Cell:
                     self.arr_load.insert(insert_idx,    self.arr_load[insert_idx - 1])
                 finally:
                     # now get the result after we've interpolated it
-                    return self.iterate(v_in, cycle)
-
-            # model most recent conditions
-            i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
-            return (v_out, i_out, self.irradiance, self.temperature, self.load)
+                    return self.iterate(v_in, self.cycle)
+            finally:
+                # model most recent conditions
+                i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
+                return (v_out, i_out, self.irradiance, self.temperature, self.load)
 
         else:
             print("[CELL] WARN: Invalid setup type -", setup_type)
@@ -356,29 +392,26 @@ class Cell:
             model2 = model * k 
             return model
 
-    def graph(self, step_size=.01, cycle=0):
+    def get_cell_IV(self, step_size=.01):
         """
-        graph 
-        Returns an array of voltage and current values to display current
-        solar panel IV pre-altered by the mppt.
+        get_cell_IV 
+        Returns an array of PV characteristics of the cell at the current environmental conditions.
 
         Args: 
             - step_size (float): step size. Defaults to .01 V.
-            - cycle (int): cycle to find the GMPP at. If the setup is impulse,
-                this argument doesn't matter. If the setup is array, cycle defaults
-                to 0 unless specified. 
 
         Returns: 
-            - [[[voltage, current]], gmpp] - gmpp: global maximum power
-                point characteristics, [vmpp, impp, pmpp]
+            - [[[voltage, current]], gmpp] 
+                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
         """
         v_in = 0
         p_mpp = 0
         v_mpp = 0
         i_mpp = 0
         output = []
+
         while True:
-            (voltage, current, _irradiance, _temp, _load) = self.iterate(v_in, cycle)
+            (voltage, current, _irradiance, _temp, _load) = self.iterate(v_in)
             output.append([voltage, current])
             if p_mpp < voltage * current:
                 p_mpp = voltage * current
@@ -391,57 +424,23 @@ class Cell:
 
         return [output, [v_mpp, i_mpp, p_mpp]]
 
-    def get_cell_gmpp(self, cycle=0):
+    def get_cell_gmpp(self):
         """
         get_cell_gmpp 
         Returns the global maximum power point parameters to be
-        used by the simulation display Uses ternary search to find the maximum
+        used by the simulation display. Uses ternary search to find the maximum
         of the unimodal single cell. This will not work for a multi module
         model.
-
-        Args: 
-            - cycle (int): cycle to find the GMPP at. If the setup is impulse,
-                this argument doesn't matter. If the setup is array, cycle defaults
-                to 0 unless specified. 
 
         Returns: 
             - (vmpp, impp, pmpp) tuple of global maximum power point characteristics
         """
-        min_resolution = .01 # 11 iterations
-
-        p_mpp = 0
-        v_mpp = 0
-        i_mpp = 0
-
-        left = 0
-        right = self.MAX_VOLTAGE
-        v_in = 0
-
-        while abs(right-left) >= min_resolution:
-            l1 = (right-left)/3 + left
-            l2 = right - (right-left)/3
-
-            (v_l, c_l, _irrad, _temp, _load) = self.iterate(l1, cycle)
-            (v_r, c_r, _irrad, _temp, _load) = self.iterate(l2, cycle)
-            
-            l1_power = v_l * c_l
-            l2_power = v_r * c_r
-
-            if l1_power > l2_power:
-                right = l2
-            else:
-                left = l1
-
-            v_in = left
-
-        (v_mpp, i_mpp, _irrad, _temp, _load) = self.iterate(v_in, cycle)
-        p_mpp = v_mpp * i_mpp
-
+        [output, [v_mpp, i_mpp, p_mpp]] = self.get_IV()
         return (v_mpp, i_mpp, p_mpp)
 
-    def get_conditions(self):
+    def get_env_conditions(self):
         """
-        get_conditions
+        get_env_conditions
         Returns source conditions for data analysis.
 
         Args:
@@ -449,9 +448,8 @@ class Cell:
 
         Returns:
             - (irradiance, temperature, load) (tuple)
-
         """
-        return [self.irradiance, self.temperature, self.load]
+        return (self.irradiance, self.temperature, self.load)
 
     def get_model_type(self):
         """
@@ -464,3 +462,20 @@ class Cell:
             - String name
         """
         return self.model_type
+
+    def set_current_cycle(self, cycle):
+        """
+        set_current_cycle 
+        Sets the current cycle for all modules in the PV.
+
+        Args:
+            - cycle (int): current cycle for the PV modules.
+        """
+        self.cycle = cycle
+
+    def increment_cycle(self):
+        """
+        increment_cycle 
+        Increments the current cycle for the cell
+        """
+        self.cycle += 1
