@@ -65,7 +65,7 @@ class Cell:
         else:
             self.model_type = "Nonideal"
 
-    def setup(self, setup_type="", file_name="", regime=[], impulse=()):
+    def setup(self, setup_type="", regime=[], impulse=()):
         """
         setup Sets up an internal environmental regime either using an array of
         values, a file, or with initial conditions (an impulse).
@@ -117,7 +117,7 @@ class Cell:
             return True
 
         elif setup_type == "Impulse":
-            if not all(impulse):
+            if not impulse:
                 print("[CELL] WARN: Impulse setup type was selected, but impulse is an empty tuple.")
                 return False
 
@@ -435,7 +435,7 @@ class Cell:
         Returns: 
             - (vmpp, impp, pmpp) tuple of global maximum power point characteristics
         """
-        [output, [v_mpp, i_mpp, p_mpp]] = self.get_IV()
+        [output, [v_mpp, i_mpp, p_mpp]] = self.get_cell_IV()
         return (v_mpp, i_mpp, p_mpp)
 
     def get_env_conditions(self):

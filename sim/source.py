@@ -4,7 +4,7 @@ Source.py
 Author: Matthew Yu, Array Lead (2020). 
 Contact: matthewjkyu@gmail.com 
 Created: 5/24/20 
-Last Modified: 6/24/20 
+Last Modified: 8/9/20 
 
 Description: This file describes the Source class, which generates input values
 for the Display and MPPT. The Source does not do any modelling, but it
@@ -29,6 +29,7 @@ Functionality: I should be able to do the following:
 """
 from math import exp, pow, e
 from numpy import log as ln
+from cell import Cell
 class Source:
     MAX_CURRENT = 100
 
@@ -90,7 +91,7 @@ class Source:
             return cell.setup(setup_type, regime=regime)
 
         elif setup_type == "Impulse":
-            if not all(impulse):
+            if not impulse:
                 print("[CELL] WARN: Impulse setup type was selected, but impulse is an empty tuple.")
                 return False
 
@@ -215,6 +216,18 @@ class Source:
             - String name
         """
         return self.model_type
+
+    def get_modules(self):
+        """
+        get_modules
+        Returns the list of Modules.
+
+        Args:
+            - None
+        Returns:
+            - List (Cell)
+        """
+        return self.modules
 
     def set_current_cycle(self, cycle):
         """
