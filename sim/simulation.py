@@ -54,7 +54,6 @@ class Simulation:
             - mppt_name (String): name of MPPT Algorithm to be displayed
         """
         self.mppt_name = mppt_name
-        return
 
     def add_datapoint(self, cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt):
         """
@@ -120,7 +119,6 @@ class Simulation:
         self.disp_pDiff.insert(insert_index, p_diff)
         self.disp_pDiffA.insert(insert_index, p_diffA)
         self.disp_pEff.insert(insert_index, tracking_eff)
-        return
 
     def add_datapoint_source_model(self, irrad, temp, load, v_src, i_src):
         """
@@ -144,12 +142,9 @@ class Simulation:
         self.disp_isrc.append(i_src)
         self.disp_psrc.append(p_src)
 
-        
         self.disp_temp.append(temp)
         self.disp_irrad.append(irrad)
         self.disp_load.append(load)
-        
-        return
 
     def get_datapoint(self, cycle):
         """

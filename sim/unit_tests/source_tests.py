@@ -1,13 +1,16 @@
+# TODO: This entire file is Failing and incomplete.
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
 from cell import Cell
+from source import Source
 
-class TestCell(unittest.TestCase):
+class TestSource(unittest.TestCase):
+    file_path = "source_models/two_cells_with_diode.json"
 
     def init(self):
-        self.cell = Cell()
+        self.source = Source()
 
     def test_setup(self):
         self.init()
@@ -97,6 +100,19 @@ class TestCell(unittest.TestCase):
         cell = Cell("Nonideal")
         self.assertEqual(cell.get_model_type(), "Nonideal", "Should be Nonideal")
 
+    def test_get_modules(self):
+        self.init()
+        # deps
+        self.test_setup()
+
+        # single source
+        env = (1000, 25)
+        self.assertTrue(self.source.setup(setup_type="Impulse", impulse=env), "Bad setup")
+        self.assertIsNotNone(self.source.get_modules(), "Result is not None")
+
+        # multiple sources
+        self.assertTrue(self.source.setup(setup_type="File", file_name=self.file_path), "Bad setup")
+
     def test_set_current_cycle(self):
         self.init()
         self.assertEqual(self.cell.cycle, 0, "Cycle does not match 0")
@@ -105,6 +121,8 @@ class TestCell(unittest.TestCase):
 
     def test_increment_cycle(self):
         self.init()
+        # deps
+
         self.assertEqual(self.cell.cycle, 0, "Cycle does not match 0")
         self.cell.increment_cycle()
         self.assertEqual(self.cell.cycle, 1, "Cycle does not match 1")

@@ -156,18 +156,17 @@ class Cell:
 
         elif self.setup_type == "Array":
             # try to set new conditions
+            v_out = v_in
             try:
                 # if idx exists
                 idx = self.arr_cycle.index(self.cycle)
-                # load it
-                v_out = v_in
 
                 self.idx = idx
                 self.irradiance = self.arr_irrad[idx]
                 self.temperature = self.arr_temp[idx]
                 self.load = self.arr_load[idx]
             except ValueError:
-                print("[CELL] NOTE: Cycle does not exist in data. Interpolating data.")
+                print("[CELL] NOTE: Cycle ", self.cycle, " does not exist in data. Interpolating data.")
                 # if idx doesn't exist, grab two closest points
                 idx_new = self.idx + 1
                 idx_curr = self.idx
@@ -185,7 +184,7 @@ class Cell:
                         self.arr_temp.insert(insert_idx,    self.arr_temp[insert_idx - 1] + sTemp)
                         self.arr_load.insert(insert_idx,    self.arr_load[insert_idx - 1] + sLoad)
                 except IndexError:
-                    print("[CELL] NOTE: Cycle does not exist in data. Reached end of regime data. Don't interpolate.")
+                    print("[CELL] NOTE: Cycle ", self.cycle, " does not exist in data. Reached end of regime data. Don't interpolate.")
                     insert_idx = idx_curr + 1
                     self.arr_cycle.insert(insert_idx,   self.arr_cycle[insert_idx - 1] + 1)
                     self.arr_irrad.insert(insert_idx,   self.arr_irrad[insert_idx - 1])
@@ -193,7 +192,7 @@ class Cell:
                     self.arr_load.insert(insert_idx,    self.arr_load[insert_idx - 1])
                 finally:
                     # now get the result after we've interpolated it
-                    return self.iterate(v_in, self.cycle)
+                    return self.iterate(v_in)
             finally:
                 # model most recent conditions
                 i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
@@ -477,5 +476,9 @@ class Cell:
         """
         increment_cycle 
         Increments the current cycle for the cell
+
+        Returns:
+            current cycle.
         """
         self.cycle += 1
+        return self.cycle
