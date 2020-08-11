@@ -170,7 +170,7 @@ class Simulation:
         except ValueError:
             print("[SIMULATION] Error: Cycle does not exist in data.")
 
-    def init_display(self):
+    def init_display(self, num_cells=1):
         """
         init_display
         sets up the display window. Call once (globally) before display.
@@ -181,12 +181,23 @@ class Simulation:
         Return:
             - None
         """
+        # our predictions of max voltage and current
+        MAX_VOLTAGE = .8
+        MAX_CURRENT = 6
+        SCALING = .8
+        source_lim = 7
+        if num_cells > 2:
+            source_lim += ((num_cells-1) * MAX_VOLTAGE * MAX_CURRENT) * SCALING
+        power_lim = 7 
+        if num_cells > 2:
+            power_lim += num_cells * MAX_VOLTAGE * MAX_CURRENT * SCALING
+
         self.fig, self.axs = plt.subplots(2, 2)
         self.fig.set_size_inches(9, 10)
 
         self.axs[0, 0].set_xlabel('Cycle')
         self.axs[0, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[0, 0].set_ylim([0, 7])
+        self.axs[0, 0].set_ylim([0, source_lim])
         self.twin_ax = self.axs[0, 0].twinx()
         self.twin_ax.set_ylabel('Irradiance (10s of W/m^2), Temp (C)')
         self.twin_ax.set_ylim([0, 150])
@@ -194,12 +205,12 @@ class Simulation:
 
         self.axs[1, 0].set_xlabel('Cycle')
         self.axs[1, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[1, 0].set_ylim([0, 7])
+        self.axs[1, 0].set_ylim([0, power_lim])
         self.axs[1, 0].set_title('MPPT Characteristics Over Time')
 
         self.axs[0, 1].set_xlabel('Cycle')
         self.axs[0, 1].set_ylabel('Max Pwr (W) and Actual Pwr (W)')
-        self.axs[0, 1].set_ylim([0, 4])
+        self.axs[0, 1].set_ylim([0, power_lim])
         self.axs[0, 1].set_title('Power Comparison Over Time')
 
         self.axs[1, 1].set_xlabel('Cycle')

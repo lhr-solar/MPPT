@@ -202,7 +202,7 @@ class Cell:
         else:
             print("[CELL] WARN: Invalid setup type -", setup_type)
             # return not useful, identifiable data. TODO: Maybe throw an exception.
-            return (-1, -1, -1, -1, -1)
+            return (0, 0, 0, 0, 0)
 
     def model(self, v_in, irr_in=0.001, t_in=0, ld_in=0):
         """
@@ -401,8 +401,8 @@ class Cell:
             - step_size (float): step size. Defaults to .01 V.
 
         Returns: 
-            - [[[voltage, current]], gmpp] 
-                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
+            - [[[voltage, current], ...], gmpp] 
+                - gmpp: global maximum power point characteristics, vmpp, impp, pmpp]
         """
         v_in = 0
         p_mpp = 0

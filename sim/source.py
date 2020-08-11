@@ -88,6 +88,9 @@ class Source:
 
         # TODO: no support for load at the moment.
         """
+        # clear out modules first
+        self.modules = []
+
         if setup_type == "":
             print("[CELL] WARN: Empty setup type -", setup_type)
             return False
@@ -126,8 +129,10 @@ class Source:
 
                     # get module type
                     module_type = 1
-                    if module['module_type'] == "1x1":
+                    if module['module_type'] == '1x1':
                         module_type = SINGLE
+                    elif module['module_type'] == '1x2':
+                        module_type = DOUBLE
                     elif module['module_type'] == '2x2':
                         module_type = QUAD
                     elif module['module_type'] == '2x4':
@@ -142,6 +147,7 @@ class Source:
                         if not cell.setup(module['env_type'], regime=module['env_regime']):
                             return False
                     elif module['env_type'] == "Impulse":
+                        # TODO: using eval is bad security practice, possibly replace
                         if not cell.setup(module['env_type'], impulse=eval(module['env_regime'])):
                             return False
                     else:
@@ -179,17 +185,20 @@ class Source:
         for module in self.modules:
             (v_out, i_out, irrad, temp, load) = module[CELL].iterate(v_in)
             # simplistically, we just grab the total voltage and the lowest current.
+            # multiply v_out by amount of cells in that module
+            if module[MOD_TYPE] > 1:
+                v_out *= module[MOD_TYPE]
+            # TODO: add the effect of bypass diodes (essentially remove x volts for
+            # TODO: every module based on y current)
             v_out_tot += v_out
             if i_out_tot > i_out:
                 i_out_tot = i_out
-        # TODO: add the effect of bypass diodes (essentially remove x volts for
-        # TODO: every module based on y current)
+
 
         return (v_out, i_out, irrad, temp, load)
 
     def get_source_IV(self, step_size=.01):
         """
-        TODO: figure this out
         get_source_IV 
         Returns an array of voltage and current values to display current
         solar panel IV pre-altered by the mppt.
@@ -198,29 +207,70 @@ class Source:
             - step_size (float): step size. Defaults to .01 V.
 
         Returns: 
-            - [[[[voltage, current]], gmpp], ...] (list of lists of lists)
+            - [[[voltage, current], ...], gmpp] 
                 - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
         """
         # for each module, get their IV curve, and search through the IV curve and grab the total voltage and min current for each cell voltage.
-        characteristics = []
+        # build up individual 
+        module_IVs = []
         for module in self.modules:
-            characteristics.append(module[CELL].get_cell_IV(step_size))
-        return characteristics
+            output = module[CELL].get_cell_IV(step_size)[0]
+            # multiply by amount of cells in that module
+            if module[MOD_TYPE] > 1:
+                output = [[entry[0] * module[MOD_TYPE], entry[1]] for entry in output]
+            # TODO: deal with bypass diodes here as well
+            module_IVs.append(output)
+        
+        characteristics = []
+        for voltage_entry in range(0, len(module_IVs[0])):
+            # get the total voltage and min current for the cell v_ref
+            v_out_tot = 0
+            i_out_tot = self.MAX_CURRENT
+            for iv in module_IVs:
+                v_out_tot += iv[voltage_entry][0]
+                if i_out_tot > iv[voltage_entry][1]:
+                    i_out_tot = iv[voltage_entry][1]
+            
+            characteristics.append([v_out_tot, i_out_tot])
+
+        # seek through the characteristics to find the max power and extract that
+        v_mpp = 0
+        i_mpp = 0
+        p_mpp = 0
+        for [voltage, current] in characteristics:
+            if p_mpp < voltage * current:
+                p_mpp = voltage * current
+                v_mpp = voltage
+                i_mpp = current
+
+        return [characteristics, [v_mpp, i_mpp, p_mpp]]
 
     def get_source_gmpp(self):
         """
-        TODO: figure this out
         get_source_gmpp 
-        Returns the global maximum power point parameters to be
-        used by the simulation display. This is done by ...
+        Returns the global maximum power point parameters to be used by the
+        simulation display.
 
         Returns: 
             - (vmpp, impp, pmpp) tuple of global maximum power point characteristics
         """
-        characteristics = self.get_source_IV()
-        # seek through the characteristics to find the max power and extract that
-        return tuple(self.modules[0][CELL].get_cell_gmpp())
-    
+        [characteristics, [v_mpp, i_mpp, p_mpp]] = self.get_source_IV()
+        return (v_mpp, i_mpp, p_mpp)
+
+    def get_num_cells(self):
+        """
+        get_num_cells 
+        Returns the total number of cells in the PV. Used for adjusting the
+        bounds on the simulator.
+
+        Returns: 
+            - number of cells (int)
+        """
+        num_cells = 0
+        for module in self.modules:
+            num_cells += module[MOD_TYPE]
+        return num_cells
+
     def get_env_conditions(self):
         """
         get_env_conditions

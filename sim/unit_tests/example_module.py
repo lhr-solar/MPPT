@@ -64,7 +64,7 @@ def main():
 
     # Nonideal model of a single cell impulse regime
     source = Source("Nonideal")
-    source.setup(setup_type="File", file_name=single_cell, regime=env_regime, impulse=(1000, 25))
+    source.setup(setup_type="File", file_name=multi_cell, regime=env_regime, impulse=(1000, 25))
     # PandO MPPT running Fixed step stride
     mppt = PandO()
     v_ref = 0
@@ -73,7 +73,7 @@ def main():
     mppt.setup(v_ref, stride, sample_rate, "Fixed")
     # Set up display
     simulation = Simulation(mppt.get_name())
-    simulation.init_display()
+    simulation.init_display(source.get_num_cells())
 
     # main loop
     cycle = 0
@@ -84,6 +84,7 @@ def main():
         
         # get source power point
         (v_mpp, i_mpp, p_mpp) = source.get_source_gmpp()
+
         # get new values with the existing source after applying reference voltage
         (v_out, i_out, irrad, temp, load) = source.iterate(v_ref)
         
