@@ -137,7 +137,8 @@ class Cell:
         """
         iterate Using source conditions, calculate the source voltage and
         current the system should expect. If done in impulse mode, we take the
-        current conditions, but if done in array mode, we take the passed in cycle and interpolate from the regime.
+        current conditions, but if done in array mode, we take the passed in
+        cycle and interpolate from the regime.
 
         Args:
             - v_in    (float): input voltage
@@ -152,7 +153,7 @@ class Cell:
         if self.setup_type == "Impulse":
             v_out = v_in
             i_out = self.model(v_in, self.irradiance, self.temperature, self.load)
-            return [v_out, i_out, self.irradiance, self.temperature, self.load]
+            return (v_out, i_out, self.irradiance, self.temperature, self.load)
 
         elif self.setup_type == "Array":
             # try to set new conditions
@@ -446,9 +447,9 @@ class Cell:
             - None
 
         Returns:
-            - (irradiance, temperature, load) (tuple)
+            - [(irradiance, temperature, load), ...] (list of tuples)
         """
-        return (self.irradiance, self.temperature, self.load)
+        return [module.get_env_conditions() for module in modules]
 
     def get_model_type(self):
         """

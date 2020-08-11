@@ -6,8 +6,7 @@ Contact: matthewjkyu@gmail.com
 Created: 5/24/20
 Last Modified: 8/10/20
 Description: This is the main handler for the mppt simulator. 
-  It uses Kivy for the UI of this application, in particular the graphs and statistics.
-  The simulator has three main components:
+    The simulator has three main components:
       1. Source simulator - The program simulates a solar cell or set of solar cells by taking in static parameters or a datafile of input values over time.
       2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
       3. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
@@ -68,7 +67,6 @@ def main():
         [195, 1000, 110],
         [200, 1000, 140]
     ]
-
 
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue

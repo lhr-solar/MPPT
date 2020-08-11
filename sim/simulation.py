@@ -154,8 +154,9 @@ class Simulation:
         Args:
             - cycle     (int): simulation cycle that points should be retrieved from
         
-        Returns:
-            - [cycle, v_src, i_src, p_src, v_mppt, i_mppt, p_mppt, temp, irrad, load, pDiff, pDiffA]
+        Returns: 
+            - [cycle, v_src, i_src, p_src, v_mppt, i_mppt, p_mppt, temp,
+                irrad, load, pDiff, pDiffA]
         """
         try:
             idx = self.disp_cycle.index(cycle)

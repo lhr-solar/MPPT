@@ -6,6 +6,7 @@
         {
             "module_num": 0,
             "module_type": "1x1",
+            "env_type": "Array",
             "env_regime": [
                 [0, 0, 25],
                 [1, 0, 25],

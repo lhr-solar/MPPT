@@ -6,7 +6,9 @@
         {
             "module_num": 0,
             "module_type": "1x1",
-            "env_regime": [
+            "env_type": "Impulse",
+            "env_regime": "(1000, 25)",
+            "junk": [
                 [0, 0, 25],
                 [1, 0, 25],
                 [2, 0, 25],
@@ -44,6 +46,7 @@
         {
             "module_num": 1,
             "module_type": "1x1",
+            "env_type": "Array",
             "env_regime": [
                 [0, 0, 25],
                 [1, 0, 25],

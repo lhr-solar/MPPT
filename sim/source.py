@@ -30,6 +30,17 @@ Functionality: I should be able to do the following:
 from math import exp, pow, e
 from numpy import log as ln
 from cell import Cell
+import json
+
+SINGLE  = 1
+DOUBLE  = 2
+QUAD    = 4
+OCT     = 8
+
+MOD_NUM = 0
+MOD_TYPE= 1
+CELL    = 2
+
 class Source:
     MAX_CURRENT = 100
 
@@ -63,6 +74,7 @@ class Source:
         Args:
             - self
             - type      (String): Either "File", "Array", or "Impulse".
+            - file_name (String): name of file in the `source_models` folder.
             - regime    ([[(int) Cycle, (float) Irradiance, (float) Temperature], ...]): Environmental regime.
             - impulse   (((float) Irradiance, (float) Temperature)): Impulse
 
@@ -87,7 +99,7 @@ class Source:
 
             # create a single cell
             cell = Cell(self.model_type)
-            self.modules.append(cell)
+            self.modules.append((len(self.modules), SINGLE, cell))
             return cell.setup(setup_type, regime=regime)
 
         elif setup_type == "Impulse":
@@ -97,23 +109,44 @@ class Source:
 
             # create a single cell
             cell = Cell(self.model_type)
-            self.modules.append(cell)
+            self.modules.append((len(self.modules), SINGLE, cell))
             return cell.setup(setup_type, impulse=impulse)
 
         elif setup_type == "File":
             # TODO: check to see if we can find file
-            # Parse checking
+            with open("./source_models/" + file_name) as f:
+                data = json.load(f)
 
-            # for module in the file
-            # Build module regime
-            module_regime = []
-            # create a single cell
-            cell = Cell(self.model_type)
-            self.modules.append(cell)
-            if not cell.setup(setup_type, regime=module_regime):
-                return False
-            
-            return True
+                # get number of modules
+                num_modules = int(data['num_modules'])
+
+                # for each module, add a source object
+                for module_index in range(0, num_modules):
+                    module = data['pv_model'][module_index]
+
+                    # get module type
+                    module_type = 1
+                    if module['module_type'] == "1x1":
+                        module_type = SINGLE
+                    elif module['module_type'] == '2x2':
+                        module_type = QUAD
+                    elif module['module_type'] == '2x4':
+                        module_type = OCT
+                    else:
+                        module_type = SINGLE
+
+                    cell = Cell(self.model_type)
+                    self.modules.append((module_index, module_type, cell))
+                    if module['env_type'] == "Array":
+                        # early exit if one of the modules fail to build.
+                        if not cell.setup(module['env_type'], regime=module['env_regime']):
+                            return False
+                    elif module['env_type'] == "Impulse":
+                        if not cell.setup(module['env_type'], impulse=eval(module['env_regime'])):
+                            return False
+                    else:
+                        print("[SOURCE] WARN: Invalid module type in file for module", module['module_num'])
+                        return False
             
         else:
             print("[CELL] WARN: Invalid setup type -", setup_type)
@@ -143,17 +176,14 @@ class Source:
         irrad = 0.0
         temp = 0.0
         load = 0.0
-        for module in modules:
-            (v_out, i_out, irrad, temp, load) = module.iterate(v_in, self.cycle)
+        for module in self.modules:
+            (v_out, i_out, irrad, temp, load) = module[CELL].iterate(v_in)
             # simplistically, we just grab the total voltage and the lowest current.
             v_out_tot += v_out
             if i_out_tot > i_out:
                 i_out_tot = i_out
         # TODO: add the effect of bypass diodes (essentially remove x volts for
         # TODO: every module based on y current)
-
-        # move forward one step in time.
-        self.cycle += 1
 
         return (v_out, i_out, irrad, temp, load)
 
@@ -174,7 +204,7 @@ class Source:
         # for each module, get their IV curve, and search through the IV curve and grab the total voltage and min current for each cell voltage.
         characteristics = []
         for module in self.modules:
-            characteristics.append(module.get_cell_IV(step_size, self.cycle))
+            characteristics.append(module[CELL].get_cell_IV(step_size))
         return characteristics
 
     def get_source_gmpp(self):
@@ -189,7 +219,7 @@ class Source:
         """
         characteristics = self.get_source_IV()
         # seek through the characteristics to find the max power and extract that
-        return (0.0, 0.0, 0.0)
+        return tuple(self.modules[0][CELL].get_cell_gmpp())
     
     def get_env_conditions(self):
         """
@@ -202,7 +232,7 @@ class Source:
         Returns:
             - [(irradiance, temperature, load), ...] (list of tuples)
         """
-        env_conditions = [module.get_env_conditions() for module in self.modules]
+        env_conditions = [module[CELL].get_env_conditions() for module in self.modules]
         return env_conditions
 
     def get_model_type(self):
@@ -238,12 +268,18 @@ class Source:
             - cycle (int): current cycle for the PV modules.
         """
         for module in self.modules: 
-            module.set_current_cycle(cycle)
+            module[CELL].set_current_cycle(cycle)
 
     def increment_cycle(self):
         """
         increment_cycle 
         Increments the current cycle for all modules in the PV
+        
+        Returns:
+            current cycle.
         """
         for module in self.modules: 
-            module.increment_cycle()
+            module[CELL].increment_cycle()
+
+        self.cycle += 1
+        return self.cycle
