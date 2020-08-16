@@ -29,7 +29,7 @@ Functionality: I should be able to do the following:
 """
 from math import exp, pow, e
 from numpy import log as ln
-from cell import Cell
+from src.cell import Cell
 import json
 
 SINGLE  = 1
@@ -72,7 +72,6 @@ class Source:
         values, a file, or with initial conditions (an impulse).
 
         Args:
-            - self
             - type      (String): Either "File", "Array", or "Impulse".
             - file_name (String): name of file in the `source_models` folder.
             - regime    ([[(int) Cycle, (float) Irradiance, (float) Temperature], ...]): Environmental regime.
@@ -183,19 +182,21 @@ class Source:
         temp = 0.0
         load = 0.0
         for module in self.modules:
+            # TODO: issue here to pick up on: I pass in v_ref, which should be the voltage across the ENTIRE PV, not across each cell. I need to be able to get the current across here, but it would be hard to implicitly calculate the voltage across each cell without ...
             (v_out, i_out, irrad, temp, load) = module[CELL].iterate(v_in)
+
             # simplistically, we just grab the total voltage and the lowest current.
             # multiply v_out by amount of cells in that module
             if module[MOD_TYPE] > 1:
                 v_out *= module[MOD_TYPE]
+
             # TODO: add the effect of bypass diodes (essentially remove x volts for
             # TODO: every module based on y current)
             v_out_tot += v_out
             if i_out_tot > i_out:
                 i_out_tot = i_out
 
-
-        return (v_out, i_out, irrad, temp, load)
+        return (v_out_tot, i_out_tot, irrad, temp, load)
 
     def get_source_IV(self, step_size=.01):
         """

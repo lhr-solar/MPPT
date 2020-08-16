@@ -4,7 +4,7 @@ simulation.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/27/20
-Last Modified: 5/28/20
+Last Modified: 8/15/20
 Description: This Simulation class contains the state of the simulation. 
     It  1) collects data from the source and mppt
     and 2) displays it using matplotlib.
@@ -294,11 +294,12 @@ class Simulation:
 
     def display_source_model(self, mode="Temperature"):
         """
-        init_display
-        sets up the display window for the source model. Call once (globally) before display.
+        display_source_model
+        sets up the display window for the source model.
 
         Args:
             - mode (String): What sort of model dependency should be displayed.
+                Irradiance | Temperature | Both
         
         Return:
             - None
@@ -326,7 +327,7 @@ class Simulation:
             ax2.set_ylabel('Irradiance (W/m^2)')
             ax2.set_zlabel('Power (W)')
 
-        else: # default temp
+        elif mode == "Temperature": # default temp
             idx = 0
             for obj in self.disp_vsrc:
                 X = self.disp_vsrc[idx]
@@ -343,6 +344,32 @@ class Simulation:
             ax2.set_xlabel('Voltage (V)')
             ax2.set_ylabel('Temperature (C)')
             ax2.set_zlabel('Power (W)')
+        
+        else:
+            idx = 0
+            for obj in self.disp_vsrc:
+                X = self.disp_vsrc[idx]
+                Y = self.disp_temp[idx]
+                Z = self.disp_irrad[idx]
+                ax.scatter(X, Y, Z, marker='o', color=[
+                    X/1, 
+                    Y/120,
+                    Z/1200
+                ], alpha=self.disp_isrc[idx]/10.0)
+                ax2.scatter(X, Y, Z, marker='o', color=[
+                    X/1, 
+                    Y/120,
+                    Z/1200
+                ], alpha=self.disp_psrc[idx]/10.0)
+                idx += 1
+
+            ax.set_xlabel('Voltage (V)')
+            ax.set_ylabel('Temperature (C)')
+            ax.set_zlabel('Irradiance (G)')
+
+            ax2.set_xlabel('Voltage (V)')
+            ax2.set_ylabel('Temperature (C)')
+            ax2.set_zlabel('Irradiance (G)')
 
         fig.suptitle(self.mppt_name) # but this is actually source model name
         plt.show()

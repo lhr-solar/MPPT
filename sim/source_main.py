@@ -3,26 +3,24 @@ source_main.py
 
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
-Created: 5/31/20
-Last Modified: 5/31/20
-Description: This file emulatea source IV curves across multiple dimensions.
+Created: 8/15/20
+Last Modified: 8/15/20
+Description: This file emulates a single cell source IV curve across multiple dimensions.
 
 """
 import sys
-
-from source import Source
-from simulation import Simulation
+import time
+from src.cell import Cell
+from src.simulation import Simulation
+from src.source_file import SourceFile
 
 def main():
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
     string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
-    source = Source(string_source_model_type)
-    simulation = Simulation(source.get_model_name())
-    # mode input dialogue
-    string_mode = input("See effect of: ['Temperature']|'Irradiance'|'Load': ")
-    if string_mode != "Irradiance" and string_mode != "Load":
-        string_mode = "Temperature"
+    cell = Cell(string_source_model_type)
+
+    simulation = Simulation(cell.get_model_type())
 
     step_size_v = .01
     step_size_t = 20
@@ -36,60 +34,85 @@ def main():
     except ValueError:
         print("Invalid integer. Defaulting to", step_size_v, "step size.")
 
-    if string_mode == "Irradiance": # irradiance step size
-        string_step_size_i = input("Irradiance Step Size ['" + str(step_size_i) + "']: ")
-        try:
-            tmp_step_size_i = int(string_step_size_i)
-            step_size_i = tmp_step_size_i
-        except ValueError:
-            print("Invalid integer. Defaulting to", step_size_i, "step size.")
-    else: # temperature step size
-        string_step_size_t = input("Temperature Step Size ['" + str(step_size_t) + "']: ")
-        try:
-            tmp_step_size_t = int(string_step_size_t)
-            step_size_t = tmp_step_size_t
-        except ValueError:
-            print("Invalid integer. Defaulting to", step_size_t, "step size.")
+    # irradiance step size
+    string_step_size_i = input("Irradiance Step Size ['" + str(step_size_i) + "']: ")
+    try:
+        tmp_step_size_i = int(string_step_size_i)
+        step_size_i = tmp_step_size_i
+    except ValueError:
+        print("Invalid integer. Defaulting to", step_size_i, "step size.")
+
+    # temperature step size
+    string_step_size_t = input("Temperature Step Size ['" + str(step_size_t) + "']: ")
+    try:
+        tmp_step_size_t = int(string_step_size_t)
+        step_size_t = tmp_step_size_t
+    except ValueError:
+        print("Invalid integer. Defaulting to", step_size_t, "step size.")
+
+    string_disp_sim = input("Display output graphs [NO]|YES: ")
+    disp_sim = False
+    if string_disp_sim == "YES":
+        disp_sim = True
+    
 
     # -------------- SIMULATION START --------------
-    MAX_IRRADIANCE  = 1000  # W/M^2
-    MAX_TEMPERATURE = 100   # C
+    MAX_VOLTAGE     = 0.8
+    MAX_IRRADIANCE  = 1000.001  # W/M^2
+    MAX_TEMPERATURE = 100.001   # C
     MAX_LOAD        = 0     # W
     irradiance = 0.001
     temperature = 0.001
     load = 0
 
-    # impulse update parameters here
-    if string_mode == "Irradiance":
-        irradiance = 0.001
-        temperature = 25 # fixed
-    else:
-        irradiance = 1000 # fixed
-        temperature = 0
+    # set up output file results
+    source_file = SourceFile()
+    num_bins = int(MAX_VOLTAGE/step_size_v)+1 # add one just to make sure we always have more bins than characteristics
+    results = []
+    for bin in range(num_bins):
+        results.append([])
 
-    while irradiance <= MAX_IRRADIANCE and temperature <= MAX_TEMPERATURE and load <= MAX_LOAD :
-        # input("Wait:")
-        source.setup_i(irradiance, temperature, load)
-        # source gets the IV curve for current conditions
-        [coordinates, [v_mpp, i_mpp, p_mpp]] = source.graph(step_size_v)
-        # print([coordinates, [v_mpp, i_mpp, p_mpp]])
+    print("Start model generation.")
+    start = time.time()
+    # cycle outside through inside
+    while irradiance <= MAX_IRRADIANCE:
+        temperature = 0.001
+        while temperature <= MAX_TEMPERATURE:
+            cell.setup("Impulse", impulse=(irradiance, temperature))
+            # source gets the IV curve for current conditions
+            [characteristics, [v_mpp, i_mpp, p_mpp]] = cell.get_cell_IV(step_size_v)
 
-        for coordinate in coordinates[:-1]:
-            # print(coordinate)
-            simulation.add_datapoint_source_model(irradiance, temperature, load, coordinate[0], coordinate[1])
+            bin_num = 0
+            for characteristic in characteristics[:-1]:
+                # we want the voltage to be on the very outside, so we sort by bins
+                results[bin_num].append([
+                    round(characteristic[0], 3), 
+                    round(irradiance, 3), 
+                    round(temperature, 3), 
+                    round(characteristic[1], 3)
+                ])
+                if disp_sim:
+                    simulation.add_datapoint_source_model(
+                        round(irradiance, 3), 
+                        round(temperature, 3), 
+                        0,
+                        round(characteristic[0], 3), 
+                        round(characteristic[1], 3)
+                    )
+                bin_num += 1
 
-        # impulse update parameters here
-        if string_mode == "Irradiance":
-            irradiance += step_size_i
-            temperature = 25 # fixed
-        else:
-            irradiance = 1000 # fixed
             temperature += step_size_t
-        # load += UPDATE_HERE
+        irradiance += step_size_i
 
-    simulation.display_source_model(string_mode)
+    for bin in results:
+        for entry in bin:
+            source_file.add_source(entry)
+    source_file.write_file()
+    end = time.time()
+    print("Build time: ", (end - start))
 
-
+    if disp_sim:
+        simulation.display_source_model(mode="Both")
 
 if __name__=="__main__":
     if sys.version_info[0] < 3:

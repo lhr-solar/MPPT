@@ -67,10 +67,7 @@ def main():
     source.setup(setup_type="File", file_name=multi_cell, regime=env_regime, impulse=(1000, 25))
     # PandO MPPT running Fixed step stride
     mppt = PandO()
-    v_ref = 0
-    stride = 0.05
-    sample_rate = 1
-    mppt.setup(v_ref, stride, sample_rate, "Fixed")
+    mppt.setup()
     # Set up display
     simulation = Simulation(mppt.get_name())
     simulation.init_display(source.get_num_cells())
@@ -78,6 +75,7 @@ def main():
     # main loop
     cycle = 0
     max_cycle = 50
+    v_ref = 0
     while cycle < max_cycle:
         if cycle%20 == 0:
             print("\nCycle: " + str(cycle))
@@ -87,20 +85,26 @@ def main():
 
         # get new values with the existing source after applying reference voltage
         (v_out, i_out, irrad, temp, load) = source.iterate(v_ref)
-        
+
         # update Simulation
-        simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_out, i_out)
+        simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, 0, 0)
         # print("[cycle, vsrc, isrc, psrc, vmppt, imppt, pmppt, temp, irrad, load]")
         # print(simulation.get_datapoint(cycle))
 
         # pipe source into the mppt to find the new v_ref
+        print(
+            "Cycle: ", cycle, 
+            "\tV: {:.2f}".format(v_out), 
+            "\tI: {:.2f}".format(i_out), 
+            "\tP: {:.2f}".format(v_out*i_out)
+        )
         v_ref = mppt.iterate(v_out, i_out, temp, cycle)
 
         # update cycle
         cycle = source.increment_cycle()
 
     # display the simulation and wait for exit
-    simulation.display(0, max_cycle, sample_rate)
+    simulation.display(0, max_cycle)
     input("Halted at the end of the cycle " + str(max_cycle))
 
 if __name__=="__main__":
