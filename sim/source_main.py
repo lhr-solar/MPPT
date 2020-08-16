@@ -18,13 +18,13 @@ def main():
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
     string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
-    cell = Cell(string_source_model_type)
+    cell = Cell(string_source_model_type, use_file=False)
 
     simulation = Simulation(cell.get_model_type())
 
     step_size_v = .01
-    step_size_t = 20
-    step_size_i = 200
+    step_size_t = .5
+    step_size_i = 50
 
     # voltage step size
     string_step_size_v = input("Voltage Step Size ['" + str(step_size_v) + "']: ")
@@ -32,23 +32,23 @@ def main():
         tmp_step_size_v = float(string_step_size_v)
         step_size_v = tmp_step_size_v
     except ValueError:
-        print("Invalid integer. Defaulting to", step_size_v, "step size.")
+        print("Invalid float. Defaulting to", step_size_v, "step size.")
 
     # irradiance step size
     string_step_size_i = input("Irradiance Step Size ['" + str(step_size_i) + "']: ")
     try:
-        tmp_step_size_i = int(string_step_size_i)
+        tmp_step_size_i = float(string_step_size_i)
         step_size_i = tmp_step_size_i
     except ValueError:
-        print("Invalid integer. Defaulting to", step_size_i, "step size.")
+        print("Invalid float. Defaulting to", step_size_i, "step size.")
 
     # temperature step size
     string_step_size_t = input("Temperature Step Size ['" + str(step_size_t) + "']: ")
     try:
-        tmp_step_size_t = int(string_step_size_t)
+        tmp_step_size_t = float(string_step_size_t)
         step_size_t = tmp_step_size_t
     except ValueError:
-        print("Invalid integer. Defaulting to", step_size_t, "step size.")
+        print("Invalid float. Defaulting to", step_size_t, "step size.")
 
     string_disp_sim = input("Display output graphs [NO]|YES: ")
     disp_sim = False
@@ -58,8 +58,8 @@ def main():
 
     # -------------- SIMULATION START --------------
     MAX_VOLTAGE     = 0.8
-    MAX_IRRADIANCE  = 1000.001  # W/M^2
-    MAX_TEMPERATURE = 100.001   # C
+    MAX_IRRADIANCE  = 1000  # W/M^2
+    MAX_TEMPERATURE = 80    # C
     MAX_LOAD        = 0     # W
     irradiance = 0.001
     temperature = 0.001
@@ -101,7 +101,11 @@ def main():
                     )
                 bin_num += 1
 
+            if temperature == 0.001:
+                temperature = 0
             temperature += step_size_t
+        if irradiance == 0.001:
+            irradiance = 0
         irradiance += step_size_i
 
     for bin in results:

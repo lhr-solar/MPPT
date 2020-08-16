@@ -62,13 +62,13 @@ Description: This file is a standalone file that can be inserted into a program 
     continuously).
 """
 import csv
-
+import time
 
 class SourceFile():
     header = []
     data = []
     file = ""
-    
+
     def __init__(self, header=["v_ref (V)", "irrad (G)", "temp (C)", "current (A)"], file="model.csv"):
         """
         __init__ sets up the header for the file.
@@ -96,8 +96,21 @@ class SourceFile():
         
         Params:
             - params    [list of independent variables in column order to search]
+        
         """
-        pass
+        # regularize input
+        # NOTE: we round because int conversion will truncate, breaks things when val is like 0.9999998
+        temp_idx = int(round(params[2]*2))
+        irrad_idx = int(round(params[1]/50))
+        v_ref_idx = int(round(params[0]*100))
+        # same way you'd index a flattened 3d RGB array, +1 for header line
+        idx = 1 + temp_idx + 161 * irrad_idx + 3381 * v_ref_idx
+        data = self.data[idx]
+
+        for param_idx in range(len(params)):
+            if round(float(data[param_idx]), 2) != round(params[param_idx], 2):
+                return 0
+        return data[3]
 
     def write_file(self):
         """
@@ -113,4 +126,10 @@ class SourceFile():
         """
         Initializes data with contents of the file, perhaps with some optimizing information.
         """
-        pass
+        with open(self.file, "r", newline='\n') as csv_file:
+            reader = csv.reader(csv_file)
+            count = 0
+            
+            for row in reader:
+                self.data.append(row)
+                count += 1

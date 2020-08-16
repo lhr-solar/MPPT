@@ -30,6 +30,8 @@ Functionality: I should be able to do the following:
 """
 from math import exp, pow, e
 from numpy import log as ln
+
+from src.source_file import SourceFile
 class Cell:
     MAX_VOLTAGE = .8
     setup_type = ""
@@ -47,7 +49,10 @@ class Cell:
 
     model_type  = "Default"
 
-    def __init__(self, model_type="Default"):
+    use_file = False
+    source_file = None
+
+    def __init__(self, model_type="Default", use_file=True):
         """
         init
         Sets up the model type of the cell.
@@ -56,6 +61,7 @@ class Cell:
             - model_type (String): type of model to represent the solar cell
                 - [Nonideal]    (Single diode nonideal cell), default
                 - Ideal         (Single diode ideal cell)
+            - use_file (bool): use source_file if true. TODO: unused.
         
         Returns:
             - None
@@ -64,6 +70,11 @@ class Cell:
             self.model_type = "Ideal"
         else:
             self.model_type = "Nonideal"
+        
+        if use_file:
+            self.source_file = SourceFile()
+            self.source_file.read_file()
+            self.use_file = True
 
     def setup(self, setup_type="", regime=[], impulse=()):
         """
@@ -174,9 +185,16 @@ class Cell:
                 try:
                     # interpolate slope
                     dCycle = (self.arr_cycle[idx_new] - self.arr_cycle[idx_curr])
-                    sIrr   = (self.arr_irrad[idx_new] - self.arr_irrad[idx_curr])/dCycle
-                    sTemp  = (self.arr_temp[idx_new] - self.arr_temp[idx_curr])/dCycle
-                    sLoad  = (self.arr_load[idx_new] - self.arr_load[idx_curr])/dCycle
+                    # round if we can
+                    sIrr   = round_num((self.arr_irrad[idx_new] - self.arr_irrad[idx_curr])/dCycle, 3, .1)
+                    sTemp  = round_num((self.arr_temp[idx_new] - self.arr_temp[idx_curr])/dCycle, 3, .1)
+                    sLoad  = round_num((self.arr_load[idx_new] - self.arr_load[idx_curr])/dCycle, 3, .1)
+
+                    print(
+                        sIrr,
+                        sTemp,
+                        sLoad
+                    )
 
                     for i in range(0, dCycle - 1): # append entries to relevant arrays
                         insert_idx = idx_curr + i + 1
@@ -277,6 +295,9 @@ class Cell:
                             - q = electron charge
                                 ~ 1.602 * 10^-19 C
         """
+        if self.use_file:
+            return(float(self.source_file.retrieve_source([round(v_in, 2), irr_in, t_in])))
+
         threshold = .005
 
         k       = 1.381E-23
@@ -419,7 +440,7 @@ class Cell:
                 i_mpp = current
 
             v_in += step_size
-            if current < 0 or voltage >= self.MAX_VOLTAGE:
+            if round(v_in, 4) > self.MAX_VOLTAGE: # round to prevent E-5 float being larger than self.MAX_VOLTAGE
                 break
 
         return [output, [v_mpp, i_mpp, p_mpp]]
@@ -483,3 +504,6 @@ class Cell:
         """
         self.cycle += 1
         return self.cycle
+
+def round_num(x, prec=2, base=.05):
+  return round(base * round(float(x)/base),prec)

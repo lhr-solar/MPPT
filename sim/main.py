@@ -13,65 +13,33 @@ Description: This is the main handler for the mppt simulator.
 """
 import sys
 
-from cell import Cell
-from simulation import Simulation
+from src.cell import Cell
+from src.simulation import Simulation
 
-from mppt_algorithms.mppt_perturb_and_observe import PandO
-from mppt_algorithms.mppt_incremental_conduction import IC
-# from mppt_algorithms.mppt_ripple_correlation_control import RCC
-# from mppt_algorithms.mppt_fuzzy_logic import FL
-from mppt_algorithms.mppt_dP_dV_feedback_control import FC
-from mppt_algorithms.mppt_passthrough import PT
+from src.mppt_algorithms.mppt_perturb_and_observe import PandO
+from src.mppt_algorithms.mppt_incremental_conduction import IC
+# from src.mppt_algorithms.mppt_ripple_correlation_control import RCC
+# from src.mppt_algorithms.mppt_fuzzy_logic import FL
+from src.mppt_algorithms.mppt_dP_dV_feedback_control import FC
+from src.mppt_algorithms.mppt_passthrough import PT
+
+from regime import env_regime
 
 def main():
     profile_file_path = ""
     mode_profile = False
 
     # NOTE: Modify these values
-    max_cycle = 350
+    max_cycle = 200
     sample_rate = 1
     stride = .05
     v_ref = 0
     stride_mode = None
-    env_regime = [
-        [0, 0, 25],
-        [1, 0, 25],
-        [2, 0, 25],
-        [3, 0, 25],
-        [4, 0, 25],
-        [5, 1000, 25],
-        [10, 1000, 20],
-        [20, 1000, 35],
-        [30, 1000, 40],
-        [40, 1000, 45],
-        [50, 1000, 50],
-        [60, 1000, 55],
-        [70, 1000, 60],
-        [80, 1000, 65],
-        [85, 1000, 73.75],
-        [90, 1000, 82],
-        [95, 1000, 91.25],
-        [100, 1000, 100],
-        [110, 1000, 97.5],
-        [120, 1000, 95],
-        [130, 1000, 82.5],
-        [140, 1000, 70],
-        [150, 1000, 80],
-        [160, 1000, 90],
-        [165, 1000, 72.5],
-        [170, 1000, 55],
-        [175, 1000, 37.5],
-        [180, 1000, 20],
-        [185, 1000, 50],
-        [190, 1000, 80],
-        [195, 1000, 110],
-        [200, 1000, 140]
-    ]
 
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
     string_source_model_type = input("Source Model type (see src docs): ['Nonideal']|'Ideal': ")
-    source = Cell(string_source_model_type)
+    source = Cell(string_source_model_type, use_file=False)
 
     # model input dialogue
     mppt = None
