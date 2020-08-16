@@ -48,7 +48,9 @@ class Source:
     modules = []
     model_type = "Default"
 
-    def __init__(self, model_type="Default"):
+    use_file = False
+
+    def __init__(self, model_type="Default", use_file=True):
         """
         init
         Sets up the model type of the cell.
@@ -57,7 +59,8 @@ class Source:
             - model_type (String): type of model to represent the solar cell
                 - [Nonideal]    (Single diode nonideal cell), default
                 - Ideal         (Single diode ideal cell)
-        
+            - use_file (bool): use source_file if true.
+
         Returns:
             - None
         """
@@ -65,6 +68,9 @@ class Source:
             self.model_type = "Ideal"
         else:
             self.model_type = "Nonideal"
+
+        if use_file:
+            self.use_file = True
 
     def setup(self, setup_type="", file_name="", regime=[], impulse=()):
         """
@@ -100,7 +106,7 @@ class Source:
                 return False
 
             # create a single cell
-            cell = Cell(self.model_type)
+            cell = Cell(self.model_type, self.use_file)
             self.modules.append((len(self.modules), SINGLE, cell))
             return cell.setup(setup_type, regime=regime)
 
@@ -110,7 +116,7 @@ class Source:
                 return False
 
             # create a single cell
-            cell = Cell(self.model_type)
+            cell = Cell(self.model_type, self.use_file)
             self.modules.append((len(self.modules), SINGLE, cell))
             return cell.setup(setup_type, impulse=impulse)
 
@@ -139,7 +145,7 @@ class Source:
                     else:
                         module_type = SINGLE
 
-                    cell = Cell(self.model_type)
+                    cell = Cell(self.model_type, self.use_file)
                     self.modules.append((module_index, module_type, cell))
                     if module['env_type'] == "Array":
                         # early exit if one of the modules fail to build.

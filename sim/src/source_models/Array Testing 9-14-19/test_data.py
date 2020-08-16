@@ -73,7 +73,7 @@ fig.savefig("test.png")
 plt.show()
 
 f = open("reformatted_data.txt", "w")
-for idx in range(0, 200): # len(cycle)):
+for idx in range(0, len(cycle)):
     line = "[" + str(idx) + ", " + str(1000) + ", " + str(round_num(temp1[idx], 1, .5)) + "],\n"
     f.write(line)
 

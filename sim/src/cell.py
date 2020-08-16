@@ -61,7 +61,7 @@ class Cell:
             - model_type (String): type of model to represent the solar cell
                 - [Nonideal]    (Single diode nonideal cell), default
                 - Ideal         (Single diode ideal cell)
-            - use_file (bool): use source_file if true. TODO: unused.
+            - use_file (bool): use source_file if true.
         
         Returns:
             - None
@@ -186,15 +186,9 @@ class Cell:
                     # interpolate slope
                     dCycle = (self.arr_cycle[idx_new] - self.arr_cycle[idx_curr])
                     # round if we can
-                    sIrr   = round_num((self.arr_irrad[idx_new] - self.arr_irrad[idx_curr])/dCycle, 3, .1)
-                    sTemp  = round_num((self.arr_temp[idx_new] - self.arr_temp[idx_curr])/dCycle, 3, .1)
-                    sLoad  = round_num((self.arr_load[idx_new] - self.arr_load[idx_curr])/dCycle, 3, .1)
-
-                    print(
-                        sIrr,
-                        sTemp,
-                        sLoad
-                    )
+                    sIrr   = (self.arr_irrad[idx_new] - self.arr_irrad[idx_curr])/dCycle
+                    sTemp  = (self.arr_temp[idx_new] - self.arr_temp[idx_curr])/dCycle
+                    sLoad  = (self.arr_load[idx_new] - self.arr_load[idx_curr])/dCycle
 
                     for i in range(0, dCycle - 1): # append entries to relevant arrays
                         insert_idx = idx_curr + i + 1
@@ -297,121 +291,121 @@ class Cell:
         """
         if self.use_file:
             return(float(self.source_file.retrieve_source([round(v_in, 2), irr_in, t_in])))
+        else:
+            threshold = .005
 
-        threshold = .005
+            k       = 1.381E-23
+            q       = 1.602E-19
+            t_ref   = 25+273.15
+            irr_ref = 1000
+            v_oc_ref= .721
+            i_sc_ref= 6.15
+            r_s     = .032
+            r_sh    = 36.1
 
-        k       = 1.381E-23
-        q       = 1.602E-19
-        t_ref   = 25+273.15
-        irr_ref = 1000
-        v_oc_ref= .721
-        i_sc_ref= 6.15
-        r_s     = .032
-        r_sh    = 36.1
+            # overflow error if irr_in is 0
+            if irr_in == 0:
+                irr_in = .001
 
-        # overflow error if irr_in is 0
-        if irr_in == 0:
-            irr_in = .001
+            if self.model_type == "Default" or self.model_type == "Nonideal":
+                # convert t_in from C to K
+                t_c = t_in + 273.15
 
-        if self.model_type == "Default" or self.model_type == "Nonideal":
-            # convert t_in from C to K
-            t_c = t_in + 273.15
+                # nonideal single diode model
+                i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
+                v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
+                i_pv = i_sc
+                i_0  = exp(ln(i_sc) - q * v_oc / (k * t_c))
 
-            # nonideal single diode model
-            i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
-            v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
-            i_pv = i_sc
-            i_0  = exp(ln(i_sc) - q * v_oc / (k * t_c))
-
-            # iteratively solve implicit parameter
-            i = 0
-            left = i
-
-            right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
-            difference = (left - right) * (left - right)
-            decreasing = True
-
-            while decreasing:
-                i = i + .001
+                # iteratively solve implicit parameter
+                i = 0
                 left = i
+
                 right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
-                if (difference - (left - right) * (left - right)) <= 0.0: # positive
-                    decreasing = False;
                 difference = (left - right) * (left - right)
+                decreasing = True
 
-            model = i
-            # print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
-            # losses in efficiency as a result of manufacturing (lamination, etc)
-            # model2 = model * k
-            return model
+                while decreasing:
+                    i = i + .001
+                    left = i
+                    right = i_pv - i_0 * (exp(q * (v_in + i * r_s) / (k * t_c)) - 1) - (v_in + i * r_s) / r_sh
+                    if (difference - (left - right) * (left - right)) <= 0.0: # positive
+                        decreasing = False;
+                    difference = (left - right) * (left - right)
 
-        if self.model_type == "Ideal":
-            # ideal single diode model
-            t_c = t_in + 273.15 # convert into kelvin
+                model = i
+                # print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
+                # losses in efficiency as a result of manufacturing (lamination, etc)
+                # model2 = model * k
+                return model
 
-            i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
-            v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
-            i_pv = i_sc
-            i_0 = exp(ln(i_sc) - q * v_oc / (k * t_c))
-            i_d = i_0 * (exp(q * v_in / (k * t_c) - 1))
-            i = i_pv - i_d
+            if self.model_type == "Ideal":
+                # ideal single diode model
+                t_c = t_in + 273.15 # convert into kelvin
 
-            model = i
-            # print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
-            # losses in efficiency as a result of manufacturing (lamination, etc)
-            # model2 = model * k
-            return model
+                i_sc = irr_in / irr_ref * i_sc_ref * (1 + 6E-4 * (t_c - t_ref))
+                v_oc = v_oc_ref - 2.2E-3 * (t_c - t_ref) + k * t_c / q * ln(irr_in / irr_ref)
+                i_pv = i_sc
+                i_0 = exp(ln(i_sc) - q * v_oc / (k * t_c))
+                i_d = i_0 * (exp(q * v_in / (k * t_c) - 1))
+                i = i_pv - i_d
 
-        if self.model_type == "Benghanem":
-            k = 0.92 # manufacturing efficiency loss (8% according to test data)
+                model = i
+                # print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_c, "LOAD=", ld_in, "]")
+                # losses in efficiency as a result of manufacturing (lamination, etc)
+                # model2 = model * k
+                return model
 
-            # open circuit voltage and short circuit current dependence on temperature
-            v_oc = .721 - (2.2*.001)*(t_in-25)
-            i_sc = 6.15 + (.06*.001)*(t_in-25)*6.15
+            if self.model_type == "Benghanem":
+                k = 0.92 # manufacturing efficiency loss (8% according to test data)
 
-            C_3 = 0.817 # maximal voltage - determined by tuning parameters in desmos until maxppt is reached
-            C_4 = -100  # maximal current
+                # open circuit voltage and short circuit current dependence on temperature
+                v_oc = .721 - (2.2*.001)*(t_in-25)
+                i_sc = 6.15 + (.06*.001)*(t_in-25)*6.15
 
-            C_2 = ((C_3/v_oc) - 1) / ln(1 - C_4/i_sc)
-            C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
-            # default explicit model
-            model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
-            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+                C_3 = 0.817 # maximal voltage - determined by tuning parameters in desmos until maxppt is reached
+                C_4 = -100  # maximal current
 
-            # losses in efficiency as a result of manufacturing (lamination, etc)
-            model2 = model * k
+                C_2 = ((C_3/v_oc) - 1) / ln(1 - C_4/i_sc)
+                C_1 = (1 - C_4/i_sc)*exp( -C_3/(C_2*v_oc) )
+                # default explicit model
+                model = i_sc*( 1 - C_1*( exp( v_in/(C_2*v_oc) ) - 1 ) )
+                print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+
+                # losses in efficiency as a result of manufacturing (lamination, etc)
+                model2 = model * k
+                
+                return model
             
-            return model
-        
-        if self.model_type == "Ibrahim":
-            return 0
+            if self.model_type == "Ibrahim":
+                return 0
 
-        if self.model_type == "Zahedi":
-            # TODO: Severe issues, not yet usable. Continue to debug.
-            k = 0.92 # manufacturing efficiency loss (8% according to test data)
+            if self.model_type == "Zahedi":
+                # TODO: Severe issues, not yet usable. Continue to debug.
+                k = 0.92 # manufacturing efficiency loss (8% according to test data)
 
-            G = irr_in
-            T_a = 36
-            # ignore T_c equation and insert our own cell temp into it
-            T_c = t_in # T_a + (48 - 20) / 80 * 100 
-            I_sc= 6.15 * (1 + 0 * (T_c - 25)) * G / 1000
-            print("[SOURCE] Short Circuit current I_sc:", I_sc)
+                G = irr_in
+                T_a = 36
+                # ignore T_c equation and insert our own cell temp into it
+                T_c = t_in # T_a + (48 - 20) / 80 * 100 
+                I_sc= 6.15 * (1 + 0 * (T_c - 25)) * G / 1000
+                print("[SOURCE] Short Circuit current I_sc:", I_sc)
 
-            I_l = I_sc
-            K_v = -.00023
-            a = 1.187
-            V_t = 1.381E-23 * (T_c + 273.15) / 1.602E-19
-            print("[SOURCE] Thermal voltage V_t:", V_t)
-            I_d = I_sc / (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1) * (e ** (v_in / (a * V_t)) - 1)
-            print("[SOURCE] denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
-            print("[SOURCE] multiplier:", (e ** (v_in / (a * V_t)) - 1))
-            print("[SOURCE] Diode Saturation current:", I_d)
-            model = I_l - I_d
-            print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
+                I_l = I_sc
+                K_v = -.00023
+                a = 1.187
+                V_t = 1.381E-23 * (T_c + 273.15) / 1.602E-19
+                print("[SOURCE] Thermal voltage V_t:", V_t)
+                I_d = I_sc / (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1) * (e ** (v_in / (a * V_t)) - 1)
+                print("[SOURCE] denom:", (exp(.721 * (1 + K_v * (T_c - 25)) / (a * V_t)) - 1))
+                print("[SOURCE] multiplier:", (e ** (v_in / (a * V_t)) - 1))
+                print("[SOURCE] Diode Saturation current:", I_d)
+                model = I_l - I_d
+                print("[SOURCE] Model: [I=", model, "|@V=", v_in, "IRR=", irr_in, "TEMP=", t_in, "LOAD=", ld_in, "]")
 
-            # losses in efficiency as a result of manufacturing (lamination, etc)
-            model2 = model * k 
-            return model
+                # losses in efficiency as a result of manufacturing (lamination, etc)
+                model2 = model * k 
+                return model
 
     def get_cell_IV(self, step_size=.01):
         """
@@ -504,6 +498,3 @@ class Cell:
         """
         self.cycle += 1
         return self.cycle
-
-def round_num(x, prec=2, base=.05):
-  return round(base * round(float(x)/base),prec)
