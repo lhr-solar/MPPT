@@ -55,6 +55,11 @@ def main():
     if string_disp_sim == "YES":
         disp_sim = True
     
+    string_save_sim = input("Save output model [YES]|NO: ")
+    save_sim = True
+    if string_save_sim == "NO":
+        save_sim = False
+
 
     # -------------- SIMULATION START --------------
     MAX_VOLTAGE     = 0.8
@@ -111,7 +116,9 @@ def main():
     for bin in results:
         for entry in bin:
             source_file.add_source(entry)
-    source_file.write_file()
+    if save_sim:
+        source_file.write_file()
+        
     end = time.time()
     print("Build time: ", (end - start))
 
