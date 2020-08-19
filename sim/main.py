@@ -12,6 +12,7 @@ Description: This is the main handler for the mppt simulator.
       3. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
 import sys
+import time
 
 from src.source import Source
 from src.simulation import Simulation
@@ -31,6 +32,7 @@ def main():
 
     # NOTE: Modify these values
     max_cycle = 200
+    refresh_rate = 30 # FPS
     sample_rate = 1
     stride = .05
     v_ref = 0
@@ -64,9 +66,14 @@ def main():
 
 
     # profile input dialogue
-    string_profile = input("Profile ['impulse']|'profile': ")
+    string_profile = input("Profile ['impulse']|'profile'|'file': ")
     if string_profile == "profile":
         mode_profile = True
+    if string_profile == "file":
+        string_file_path = input("Enter file name (i.e. 'single_cell.json'): ")
+        profile_file_path = string_file_path
+        mode_profile = True
+
     # use file
     string_use_file = input("Use cached model or from scratch: ['file']|'scratch':")
     if string_use_file == "scratch":
@@ -109,8 +116,13 @@ def main():
     # simulating from a dataset
     if mode_profile is True:
         print("Running in Profile mode.")
+        input("Ready to start. Press enter to run the simulation.")
 
-        source.setup("Array", regime=env_regime)
+        if profile_file_path != "":
+            source.setup("File", file_name=profile_file_path)
+        else:
+            source.setup("Array", regime=env_regime)
+
         # simulation only
         time_step   = 1
         cycle_start = 0
@@ -121,24 +133,29 @@ def main():
         i_mppt = 0
         mppt.setup(v_ref, stride, sample_rate, stride_mode)
 
-        simulation.init_display()
+        simulation.init_display(0, cycle_start, max_cycle, time_step)
         while cycle <= max_cycle: # simulator main loop
             if cycle%20 == 0:
                 print("\nCycle: " + str(cycle))
 
             # get source power point
-            (v_mpp, i_mpp, p_mpp) = source.get_source_gmpp()
+            (characteristics, (v_mpp, i_mpp, p_mpp)) = source.get_source_IV()
             # get new values with the existing source after applying reference voltage
             (v_out, i_out, irrad, temp, load) = source.iterate(v_ref)
             # update Simulation
-            simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_out, i_out)
+            simulation.add_datapoint(
+                cycle, 
+                (irrad, temp, load), 
+                (characteristics, (v_mpp, i_mpp, p_mpp)),
+                (v_out, i_out, v_out*i_out)
+            )
+            simulation.update_display(cycle_start, max_cycle, time_step)
+            time.sleep(1/refresh_rate)
             # pipe source into the mppt to find the new v_ref
             v_ref = mppt.iterate(v_out, i_out, temp, cycle)
             # update cycle
             cycle = source.increment_cycle()
-        
-        # display Simulation windows
-        simulation.display(cycle_start, max_cycle, time_step)
+
         input("Halted at the end of cycle " +  str(max_cycle))
 
     # simulating from an impulse created by the user
@@ -190,11 +207,18 @@ def main():
                 print("\nCycle: " + str(cycle))
 
             # get source power point
-            (v_mpp, i_mpp, p_mpp) = source.get_source_gmpp()
+            (characteristics, (v_mpp, i_mpp, p_mpp)) = source.get_source_IV()
             # get new values with the existing source after applying reference voltage
             (v_out, i_out, irrad, temp, load) = source.iterate(v_ref)
             # update Simulation
-            simulation.add_datapoint(cycle, irrad, temp, load, v_mpp, i_mpp, v_out, i_out)
+            simulation.add_datapoint(
+                cycle, 
+                (irrad, temp, load), 
+                (characteristics, (v_mpp, i_mpp, p_mpp)),
+                (v_out, i_out, v_out*i_out)
+            )
+            simulation.update_display(cycle_start, max_cycle, time_step)
+            time.sleep(1/refresh_rate)
             # pipe source into the mppt to find the new v_ref
             v_ref = mppt.iterate(v_out, i_out, temp, cycle)
             # update cycle
@@ -206,8 +230,6 @@ def main():
             # load += UPDATE_HERE
             # source.setup_i(irradiance, temperature, load)
         
-        # display Simulation windows
-        simulation.display(cycle_start, max_cycle, time_step)
         input("Halted at the end of cycle " +  str(max_cycle))
 
 if __name__=="__main__":

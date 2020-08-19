@@ -41,6 +41,8 @@ MOD_NUM = 0
 MOD_TYPE= 1
 CELL    = 2
 
+SOURCE_MODEL_PATH = "./src/source_models/"
+
 class Source:
     MAX_CURRENT = 100
 
@@ -122,7 +124,7 @@ class Source:
 
         elif setup_type == "File":
             # TODO: check to see if we can find file
-            with open("./source_models/" + file_name) as f:
+            with open(SOURCE_MODEL_PATH + file_name) as f:
                 data = json.load(f)
 
                 # get number of modules
@@ -214,8 +216,8 @@ class Source:
             - step_size (float): step size. Defaults to .01 V.
 
         Returns: 
-            - [[[voltage, current], ...], gmpp] 
-                - gmpp: global maximum power point characteristics, [vmpp, impp, pmpp]
+            - ([[voltage, current], ...], gmpp)
+                - gmpp: global maximum power point characteristics, (vmpp, impp, pmpp)
         """
         # for each module, get their IV curve, and search through the IV curve and grab the total voltage and min current for each cell voltage.
         # build up individual 
@@ -250,7 +252,7 @@ class Source:
                 v_mpp = voltage
                 i_mpp = current
 
-        return [characteristics, [v_mpp, i_mpp, p_mpp]]
+        return (characteristics, (v_mpp, i_mpp, p_mpp))
 
     def get_source_gmpp(self):
         """
@@ -261,7 +263,7 @@ class Source:
         Returns: 
             - (vmpp, impp, pmpp) tuple of global maximum power point characteristics
         """
-        [characteristics, [v_mpp, i_mpp, p_mpp]] = self.get_source_IV()
+        (characteristics, (v_mpp, i_mpp, p_mpp)) = self.get_source_IV()
         return (v_mpp, i_mpp, p_mpp)
 
     def get_num_cells(self):

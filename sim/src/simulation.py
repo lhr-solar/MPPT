@@ -9,9 +9,18 @@ Description: This Simulation class contains the state of the simulation.
     It  1) collects data from the source and mppt
     and 2) displays it using matplotlib.
 """
+# deprecating
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
+
+# used for primary display and realtime update
+from pyqtgraph.Qt import QtGui, QtCore
+import numpy as np
+import pyqtgraph as pg
+import sys
+
+
 from bisect import bisect
 import numpy as np
 import math
@@ -38,7 +47,19 @@ class Simulation:
     disp_pDiffA = [] # % of cycles > % diff from max power by cycle x
     disp_pEff   = [] # tracking efficiency
 
-    disp_open = False
+
+    cycles = []
+    irradiances = []
+    temps = []
+    voltages = []
+    currents = []
+    powers = []
+
+    iv_curve = [[], [], [], (0, 0, 0)]
+
+    voltages2 = []
+    currents2 = []
+    powers2 = []
 
     mppt_name = ""
     fig = None
@@ -54,35 +75,84 @@ class Simulation:
             - mppt_name (String): name of MPPT Algorithm to be displayed
         """
         self.mppt_name = mppt_name
+        
+        self.app = QtGui.QApplication([])
+        self.view = pg.GraphicsView()
+        self.layout = pg.GraphicsLayout(border=(100, 100, 100))
+        self.view.setCentralItem(self.layout)
+        # Enable antialiasing for prettier plots and set to light theme
+        pg.setConfigOptions( #TODO: set to white background with black text
+            antialias=True,
+            background=pg.mkColor(0, 0, 0),
+            foreground=pg.mkColor(255, 255, 255)
+        )
 
-    def add_datapoint(self, cycle, irrad, temp, load, v_src, i_src, v_mppt, i_mppt):
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('MPPT Simulator')
+        self.view.resize(1200, 600)
+
+    def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
         addDatapoint
         adds a datapoint to each data structure corresponding to the inputs.
         
         Args:
-            - cycle     (int): current simulation cycle.
-            - irrad   (float): irradiance
-            - temp    (float): temperature (C)
-            - load    (float): load on the system (W/s) NOTE: UNUSED
-            - v_src   (float): source voltage (V)
-            - i_src   (float): source current (A)
-            - v_mppt  (float): mppt reference voltage (V)
-            - i_mppt  (float): mppt induced current (V)
+            - cycle             (int): current simulation cycle.
+            - env_conditions    (tuple): environmental conditions.
+                (irrad, temp, load)
+                - irrad   (float): irradiance
+                - temp    (float): temperature (C)
+                - load    (float): load on the system (W/s) NOTE: UNUSED
+
+            - source:           [list] source IV curve and gmpp.
+                (characteristics (list), (v_mpp, i_mpp, p_mpp))
+                - characteristics is a list of [v_src, i_src].
+                - all values are in float.
+                - voltages: (V)
+                - current: (A)
+            - mppt:             (tuple): values for the mppt
+                (v_mppt, i_mppt, p_mppt)
+                - v_mppt  (float): mppt reference voltage (V)
+                - i_mppt  (float): mppt induced current (A)
+                - p_mppt  (float): mppt induced power (W)
         
         Returns:
             - None (NOTE: Possibly add error return here for handling exceptions?)
         """
+        (characteristics, (v_mpp, i_mpp, p_mpp)) = source
+        (v_mppt, i_mppt, p_mppt) = mppt
+        # widget 1
+        self.cycles.append(cycle)
+        self.irradiances.append(env_conditions[0]/1000) # to get this in a visible range
+        self.temps.append(env_conditions[1]/100) # to get this in a visible range
+        self.voltages.append(source[1][0])
+        self.currents.append(source[1][1])
+        self.powers.append(source[1][2])
+
+        # widget 2
+        self.iv_curve = [[], [], [], (0, 0, 0)]
+        for characteristic in characteristics:
+            self.iv_curve[0].append(characteristic[0])
+            self.iv_curve[1].append(characteristic[1])
+            self.iv_curve[2].append(characteristic[0]*characteristic[1])
+        self.iv_curve[3] = (mppt[0], mppt[1], mppt[0]*mppt[1])
+
+        # widget 3
+        self.voltages2.append(mppt[0])
+        self.currents2.append(mppt[1])
+        self.powers2.append(mppt[2])
+
+        # widget 4
         # calculate secondary results
-        p_src = v_src * i_src
         p_mppt = v_mppt * i_mppt
 
         p_diff = 0
-        if (p_src + p_mppt) != 0:
-            p_diff = abs(p_src-p_mppt)/((p_src+p_mppt)/2)
+        if (p_mpp + p_mppt) != 0:
+            p_diff = abs(p_mpp-p_mppt)/((p_mpp+p_mppt)/2)
 
         # find index to insert into for all lists
-        insert_index = bisect(self.disp_cycle, cycle)
+        insert_index = cycle
 
         # grab prev entry's p_diffA
         prev_p_diffA = 0
@@ -102,20 +172,6 @@ class Simulation:
         if s_max_pwr > 0:
             tracking_eff = s_act_pwr/s_max_pwr
 
-        self.disp_cycle.insert(insert_index, cycle)
-
-        self.disp_vsrc.insert(insert_index, v_src)
-        self.disp_isrc.insert(insert_index, i_src)
-        self.disp_psrc.insert(insert_index, p_src)
-
-        self.disp_vmppt.insert(insert_index, v_mppt)
-        self.disp_imppt.insert(insert_index, i_mppt)
-        self.disp_pmppt.insert(insert_index, p_mppt)
-        
-        self.disp_temp.insert(insert_index, temp)
-        self.disp_irrad.insert(insert_index, irrad/10)
-        self.disp_load.insert(insert_index, load)
-        
         self.disp_pDiff.insert(insert_index, p_diff)
         self.disp_pDiffA.insert(insert_index, p_diffA)
         self.disp_pEff.insert(insert_index, tracking_eff)
@@ -170,64 +226,185 @@ class Simulation:
         except ValueError:
             print("[SIMULATION] Error: Cycle does not exist in data.")
 
-    def init_display(self, num_cells=1):
+    def init_display(self, num_cells=1, cycle_start=0, cycle_end=0, time_step=1):
         """
-        init_display
+        init_display TODO: manage num_cells to extend bounds
         sets up the display window. Call once (globally) before display.
 
         Args:
-            - None
-        
+            - num_cells
+            - cycle_start   (int): default 0 (the start of the simulation). left independent axis limit of the plot.
+            - cycle_end     (int): default 0 (the start of the simulation). right independent axis limit of the plot.
+            - time_step     (int): default 1 the interval of data to be shown. I.e. a time_step of 2 will hide every other data point.
+                
         Return:
             - None
         """
-        # our predictions of max voltage and current
-        MAX_VOLTAGE = .8
-        MAX_CURRENT = 6
-        SCALING = .8
-        source_lim = 7
-        if num_cells > 2:
-            source_lim += ((num_cells-1) * MAX_VOLTAGE * MAX_CURRENT) * SCALING
-        power_lim = 7 
-        if num_cells > 2:
-            power_lim += num_cells * MAX_VOLTAGE * MAX_CURRENT * SCALING
 
-        self.fig, self.axs = plt.subplots(2, 2)
-        self.fig.set_size_inches(9, 10)
 
-        self.axs[0, 0].set_xlabel('Cycle')
-        self.axs[0, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[0, 0].set_ylim([0, source_lim])
-        self.twin_ax = self.axs[0, 0].twinx()
-        self.twin_ax.set_ylabel('Irradiance (10s of W/m^2), Temp (C)')
-        self.twin_ax.set_ylim([0, 150])
-        self.axs[0, 0].set_title('Source Characteristics Over Time')
+        # widget 1 - source characteristics
+        self.plt = self.layout.addPlot(
+            title="Source Characteristics Over Time",
+            row=0,
+            col=0,
+            rowspan=1,
+            colspan=1
+        )
+        self.plt.addLegend()
+        self.voltage1 = self.plt.plot(
+            x=self.cycles, 
+            y=self.voltages,
+            pen=pg.mkPen((255, 0, 0), width=2),
+            name="Voltage (V)"
+        )
+        self.current1 = self.plt.plot(
+            x=self.cycles, 
+            y=self.currents,
+            pen=pg.mkPen((0, 255, 0), width=2),
+            name="Current (A)"
+        )
+        self.power1 = self.plt.plot(
+            x=self.cycles, 
+            y=self.powers,
+            pen=pg.mkPen((0, 0, 255), width=2),
+            name="Power (W)"
+        )
+        self.irrad1 = self.plt.plot(
+            x=self.cycles, 
+            y=self.irradiances,
+            pen=pg.mkPen((255, 0, 122), width=2),
+            name="Irradiance (G/1000)"
+        )
+        self.temp1 = self.plt.plot(
+            x=self.cycles, 
+            y=self.temps,
+            pen=pg.mkPen((255, 122, 0), width=2),
+            name="Temperature (C/100)"
+        )
+        self.plt.setLabel('left', "Characteristics")
+        self.plt.setLabel('bottom', "Cycle")
 
-        self.axs[1, 0].set_xlabel('Cycle')
-        self.axs[1, 0].set_ylabel('Volt. (V), Curr (A), and Pwr. (W)')
-        self.axs[1, 0].set_ylim([0, power_lim])
-        self.axs[1, 0].set_title('MPPT Characteristics Over Time')
 
-        self.axs[0, 1].set_xlabel('Cycle')
-        self.axs[0, 1].set_ylabel('Max Pwr (W) and Actual Pwr (W)')
-        self.axs[0, 1].set_ylim([0, power_lim])
-        self.axs[0, 1].set_title('Power Comparison Over Time')
+        # widget 2 - mppt v_ref overlayed on source IV curve
+        self.plt2 = self.layout.addPlot(
+            title="MPPT V_REF Over Source IV/PV Curve",
+            row=0,
+            col=1,
+            rowspan=1,
+            colspan=2
+        )
+        self.plt2.addLegend()
+        self.iv_curve1 = self.plt2.plot(
+            x=self.iv_curve[0],
+            y=self.iv_curve[1],
+            pen=pg.mkPen((255, 0, 0), width=2),
+            name="Source IV Curve"
+        )
+        self.iv_curve2 = self.plt2.plot(
+            x=self.iv_curve[0],
+            y=self.iv_curve[2],
+            pen=pg.mkPen((0, 255, 0), width=2),
+            name="Source PV Curve"
+        )
+        self.scatter1 = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255))
+        self.scatter1.addPoints([{'pos': [self.iv_curve[3][0], self.iv_curve[3][1]], 'data': 1}])
+        self.plt2.addItem(self.scatter1)
+        self.scatter2 = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255))
+        self.scatter2.addPoints([{'pos': [self.iv_curve[3][0], self.iv_curve[3][2]], 'data': 1}])
+        self.plt2.addItem(self.scatter2)
+        self.plt2.setLabel('left', "Current (A)")
+        self.plt2.setLabel('bottom', "Voltage (V)")
 
-        self.axs[1, 1].set_xlabel('Cycle')
-        self.axs[1, 1].set_ylabel('% Diff from Max Pwr, % Ratio Diff, Tracking Eff.')
-        self.axs[1, 1].set_ylim([0, 1])
-        self.axs[1, 1].set_title('Power Comparison Over Time')
 
-        self.fig.suptitle(self.mppt_name)
-        plt.tight_layout()
+        # widget 3 - mppt characteristics
+        self.plt3 = self.layout.addPlot(
+            title="MPPT Characteristics Over Time",
+            row=1,
+            col=0,
+            rowspan=1,
+            colspan=1
+        )
+        self.plt3.addLegend()
+        self.voltage2 = self.plt3.plot(
+            x=self.cycles,
+            y=self.voltages2,
+            pen=pg.mkPen((255, 0, 0), width=2),
+            name="Voltage (V)"
+        )
+        self.current2 = self.plt3.plot(
+            x=self.cycles, 
+            y=self.currents2,
+            pen=pg.mkPen((0, 255, 0), width=2),
+            name="Current (A)"
+        )
+        self.power2 = self.plt3.plot(
+            x=self.cycles, 
+            y=self.powers2,
+            pen=pg.mkPen((0, 0, 255), width=2),
+            name="Power (W)"
+        )
+        self.plt3.setLabel('left', "Characteristics")
+        self.plt3.setLabel('bottom', "Cycle")
 
-        self.fig_num = plt.gcf().number
-        print("[SIMULATION] Fig num:", self.fig_num)
 
-    def display(self, cycle_start=0, cycle_end=0, time_step=1):
+        # widget 4 - Power Comparison
+        self.plt4 = self.layout.addPlot(
+            title="Power Comparison Over Time",
+            row=1,
+            col=1,
+            rowspan=1,
+            colspan=1
+        )
+        self.plt4.addLegend()
+        self.power3 = self.plt4.plot(
+            x=self.cycles,
+            y=self.powers,
+            pen=pg.mkPen((255, 0, 0), width=2),
+            name="Max Power (W)"
+        )
+        self.power4 = self.plt4.plot(
+            x=self.cycles, 
+            y=self.powers2,
+            pen=pg.mkPen((0, 255, 0), width=2),
+            name="MPPT Power (W)"
+        )
+        self.plt4.setLabel('left', "Power (W)")
+        self.plt4.setLabel('bottom', "Cycle")
+
+        # widget 5 - Tracking Efficiency
+        self.plt5 = self.layout.addPlot(
+            title="Efficiency Characteristics Over Time",
+            row=1,
+            col=2,
+            rowspan=1,
+            colspan=1
+        )
+        self.plt5.addLegend()
+        self.eff1 = self.plt5.plot(
+            x=self.cycles,
+            y=self.disp_pDiff,
+            pen=pg.mkPen((255, 0, 0), width=2),
+            name="% Max Diff"
+        )
+        self.eff2 = self.plt5.plot(
+            x=self.cycles, 
+            y=self.disp_pDiffA,
+            pen=pg.mkPen((0, 255, 0), width=2),
+            name="% Cycles Above Threshold"
+        )
+        self.eff3 = self.plt5.plot(
+            x=self.cycles, 
+            y=self.disp_pEff,
+            pen=pg.mkPen((0, 0, 255), width=2),
+            name="% Tracking Efficiency"
+        )
+        self.plt5.setLabel('left', "Efficiency (%)")
+        self.plt5.setLabel('bottom', "Cycle")
+
+    def update_display(self, cycle_start=0, cycle_end=0, time_step=1):
         """
-        display TODO: implement time_step
-        displays a matplotlib display based on the mode and current simulation values.
+        update_display
+        displays a pyqtgraph display based on the mode and current simulation values.
         
         Modes:
             - source    - voltage/current/power of the source
@@ -243,54 +420,49 @@ class Simulation:
         Returns:
             - None
         """
-        t_cycle     = self.disp_cycle[cycle_start:cycle_end]
+        # widget 1
+        self.voltage1.setData(y=self.voltages[cycle_start:cycle_end:time_step])
+        self.current1.setData(y=self.currents[cycle_start:cycle_end:time_step])
+        self.power1.setData(y=self.powers[cycle_start:cycle_end:time_step])
+        self.irrad1.setData(y=self.irradiances[cycle_start:cycle_end:time_step])
+        self.temp1.setData(y=self.temps[cycle_start:cycle_end:time_step])
 
-        t_disp_vsrc = self.disp_vsrc[cycle_start:cycle_end]
-        t_disp_isrc = self.disp_isrc[cycle_start:cycle_end]
-        t_disp_psrc = self.disp_psrc[cycle_start:cycle_end]
+        # widget 2
+        self.iv_curve1.setData(
+            x=self.iv_curve[0],
+            y=self.iv_curve[1]
+        )
+        self.iv_curve2.setData(
+            x=self.iv_curve[0],
+            y=self.iv_curve[2]
+        )
+        self.scatter1.setData([{'pos': [self.iv_curve[3][0], self.iv_curve[3][1]], 'data': 1}])
+        self.scatter2.setData([{'pos': [self.iv_curve[3][0], self.iv_curve[3][2]], 'data': 1}])
 
-        t_disp_vmppt = self.disp_vmppt[cycle_start:cycle_end]
-        t_disp_imppt = self.disp_imppt[cycle_start:cycle_end]
-        t_disp_pmppt = self.disp_pmppt[cycle_start:cycle_end]
+        # widget 3
+        self.voltage2.setData(
+            x=self.cycles[cycle_start:cycle_end:time_step], 
+            y=self.voltages2[cycle_start:cycle_end:time_step],
+        )
+        self.current2.setData(
+            x=self.cycles[cycle_start:cycle_end:time_step], 
+            y=self.currents2[cycle_start:cycle_end:time_step],
+        )
+        self.power2.setData(
+            x=self.cycles[cycle_start:cycle_end:time_step], 
+            y=self.powers2[cycle_start:cycle_end:time_step],
+        )
 
-        t_disp_pDiff    = self.disp_pDiff[cycle_start:cycle_end]
-        t_disp_pDiffA   = self.disp_pDiffA[cycle_start:cycle_end]
-        t_disp_teff     = self.disp_pEff[cycle_start:cycle_end]
+        # widget 4
+        self.power3.setData(y=self.powers)
+        self.power4.setData(y=self.powers2)
 
-        t_disp_temp     = self.disp_temp[cycle_start:cycle_end]
-        t_disp_irrad    = self.disp_irrad[cycle_start:cycle_end]
-        # check if figure still exists
-        if not plt.fignum_exists(self.fig_num):
-            self.__init__()
+        # widget 5
+        self.eff1.setData(y=self.disp_pDiff)
+        self.eff2.setData(y=self.disp_pDiffA)
+        self.eff3.setData(y=self.disp_pEff)
 
-        # source
-        self.axs[0, 0].plot(t_cycle, t_disp_vsrc, color='r', marker='o', markersize=1)
-        self.axs[0, 0].plot(t_cycle, t_disp_isrc, color='g', marker='v', markersize=1)
-        self.axs[0, 0].plot(t_cycle, t_disp_psrc, color='b', marker='D', markersize=1)
-        self.axs[0, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
-        self.twin_ax.plot(t_cycle, t_disp_irrad, color='y', marker='>', markersize=1)
-        self.twin_ax.plot(t_cycle, t_disp_temp, color='k', marker='1', markersize=1)
-        self.twin_ax.legend(labels=('Irradiance', 'Temp'), loc="upper right")
-
-        # mppt
-        self.axs[1, 0].plot(t_cycle, t_disp_vmppt, color='r', marker='o', markersize=1)
-        self.axs[1, 0].plot(t_cycle, t_disp_imppt, color='g', marker='v', markersize=1)
-        self.axs[1, 0].plot(t_cycle, t_disp_pmppt, color='b', marker='D', markersize=1)
-        self.axs[1, 0].legend(labels=('Voltage', 'Current', 'Power'), loc="upper left")
-
-        # power
-        self.axs[0, 1].plot(t_cycle, t_disp_psrc, color='r', marker='o', markersize=1)
-        self.axs[0, 1].plot(t_cycle, t_disp_pmppt, color='b', marker='D', markersize=1)
-        self.axs[0, 1].legend(labels=('Max', 'Actual'), loc="upper left")
-
-        # cycle stats
-        self.axs[1, 1].plot(t_cycle, t_disp_pDiff, color='r', marker='o', markersize=1)
-        self.axs[1, 1].plot(t_cycle, t_disp_pDiffA, color='b', marker='D', markersize=1)
-        self.axs[1, 1].plot(t_cycle, t_disp_teff, color='g', marker='v', markersize=1)
-        self.axs[1, 1].legend(labels=('% Max Diff', '% Cycles Above Threshold', '% Eff'), loc="upper left")
-
-        plt.tight_layout()
-        plt.show()
+        QtGui.QApplication.processEvents()
 
     def display_source_model(self, mode="Temperature"):
         """
