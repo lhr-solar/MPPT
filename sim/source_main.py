@@ -3,7 +3,7 @@ source_main.py
 
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
-Created: 8/15/20
+Created: 5/31/20
 Last Modified: 8/20/20
 Description: This file emulates a single cell source IV curve across multiple dimensions.
 
