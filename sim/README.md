@@ -13,6 +13,9 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * numpy
 * bisect
 * math
+* pyqtgraph
+
+
 
 ## Feature Request and Bug list
 
