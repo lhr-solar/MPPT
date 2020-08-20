@@ -4,7 +4,7 @@ source_main.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 8/15/20
-Last Modified: 8/15/20
+Last Modified: 8/20/20
 Description: This file emulates a single cell source IV curve across multiple dimensions.
 
 """
@@ -17,14 +17,13 @@ from src.source_file import SourceFile
 def main():
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
+    print("Suggested save parameters are: v=0.01, i=50, t=.5.")
+    print("Suggested display parameters are: v=0.01, i=50, t=5.")
+
     string_source_model_type = input("Source Model type (see src docs): ['Default'/'Nonideal']|'Ideal': ")
-    cell = Cell(string_source_model_type, use_file=False)
-
-    simulation = Simulation(cell.get_model_type())
-
     step_size_v = .01
-    step_size_t = .5
     step_size_i = 50
+    step_size_t = .5
 
     # voltage step size
     string_step_size_v = input("Voltage Step Size ['" + str(step_size_v) + "']: ")
@@ -55,11 +54,17 @@ def main():
     if string_disp_sim == "YES":
         disp_sim = True
     
-    string_save_sim = input("Save output model [YES]|NO: ")
-    save_sim = True
-    if string_save_sim == "NO":
-        save_sim = False
+    string_save_sim = input("Save output model [NO]|YES: ")
+    save_sim = False
+    use_file = True
+    if string_save_sim == "YES":
+        save_sim = True
+        use_file = False
 
+    print(use_file)
+    cell = Cell(string_source_model_type, use_file=use_file)
+    simulation = Simulation(cell.get_model_type())
+    source_file = SourceFile()
 
     # -------------- SIMULATION START --------------
     MAX_VOLTAGE     = 0.8
@@ -71,7 +76,6 @@ def main():
     load = 0
 
     # set up output file results
-    source_file = SourceFile()
     num_bins = int(MAX_VOLTAGE/step_size_v)+1 # add one just to make sure we always have more bins than characteristics
     results = []
     for bin in range(num_bins):
@@ -88,7 +92,7 @@ def main():
             [characteristics, [v_mpp, i_mpp, p_mpp]] = cell.get_cell_IV(step_size_v)
 
             bin_num = 0
-            for characteristic in characteristics[:-1]:
+            for characteristic in characteristics:
                 # we want the voltage to be on the very outside, so we sort by bins
                 results[bin_num].append([
                     round(characteristic[0], 3), 
@@ -123,7 +127,11 @@ def main():
     print("Build time: ", (end - start))
 
     if disp_sim:
-        simulation.display_source_model(mode="Both")
+        print("Showing display.")
+        simulation.init_display_source_model()
+        simulation.update_display_source_model()
+    
+    input("Waiting.")
 
 if __name__=="__main__":
     if sys.version_info[0] < 3:

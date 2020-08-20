@@ -32,7 +32,7 @@ def main():
 
     # NOTE: Modify these values
     max_cycle = 200
-    refresh_rate = 30 # FPS
+    refresh_rate = 60 # FPS
     sample_rate = 1
     stride = .05
     v_ref = 0

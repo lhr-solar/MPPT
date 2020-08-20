@@ -289,7 +289,7 @@ class Cell:
                             - q = electron charge
                                 ~ 1.602 * 10^-19 C
         """
-        if self.use_file:
+        if self.use_file and self.model_type == "Nonideal":
             return(float(self.source_file.retrieve_source([round(v_in, 2), irr_in, t_in])))
         else:
             threshold = .005
@@ -436,6 +436,7 @@ class Cell:
             v_in += step_size
             if round(v_in, 4) > self.MAX_VOLTAGE: # round to prevent E-5 float being larger than self.MAX_VOLTAGE
                 break
+
 
         return [output, [v_mpp, i_mpp, p_mpp]]
 

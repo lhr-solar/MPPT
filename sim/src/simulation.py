@@ -4,16 +4,11 @@ simulation.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/27/20
-Last Modified: 8/15/20
+Last Modified: 8/20/20
 Description: This Simulation class contains the state of the simulation. 
     It  1) collects data from the source and mppt
     and 2) displays it using matplotlib.
 """
-# deprecating
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import cm
-
 # used for primary display and realtime update
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
@@ -26,30 +21,8 @@ import numpy as np
 import math
 
 class Simulation:
-    disp_cycle  = []
-    # source output
-    disp_vsrc   = []
-    disp_isrc   = []
-    disp_psrc   = []
-    disp_vmpp   = []
-    disp_impp   = []
-
-    # mppt output
-    disp_vmppt  = []
-    disp_imppt  = []
-    disp_pmppt  = []
-    # tunable parameters
-    disp_temp   = []
-    disp_irrad  = []
-    disp_load   = []
-    # stats
-    disp_pDiff  = [] # % diff from max power for cycle x
-    disp_pDiffA = [] # % of cycles > % diff from max power by cycle x
-    disp_pEff   = [] # tracking efficiency
-
-
     cycles = []
-    irradiances = []
+    irrads = []
     temps = []
     voltages = []
     currents = []
@@ -60,6 +33,11 @@ class Simulation:
     voltages2 = []
     currents2 = []
     powers2 = []
+
+    # stats
+    disp_pDiff  = [] # % diff from max power for cycle x
+    disp_pDiffA = [] # % of cycles > % diff from max power by cycle x
+    disp_pEff   = [] # tracking efficiency
 
     mppt_name = ""
     fig = None
@@ -86,11 +64,6 @@ class Simulation:
             background=pg.mkColor(0, 0, 0),
             foreground=pg.mkColor(255, 255, 255)
         )
-
-        # display window
-        self.view.show()
-        self.view.setWindowTitle('MPPT Simulator')
-        self.view.resize(1200, 600)
 
     def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
@@ -124,8 +97,8 @@ class Simulation:
         (v_mppt, i_mppt, p_mppt) = mppt
         # widget 1
         self.cycles.append(cycle)
-        self.irradiances.append(env_conditions[0]/1000) # to get this in a visible range
-        self.temps.append(env_conditions[1]/100) # to get this in a visible range
+        self.irrads.append(env_conditions[0]/250) # to get this in a visible range
+        self.temps.append(env_conditions[1]/25) # to get this in a visible range
         self.voltages.append(source[1][0])
         self.currents.append(source[1][1])
         self.powers.append(source[1][2])
@@ -166,8 +139,8 @@ class Simulation:
         else:
             p_diffA = (prev_p_diffA*(insert_index))/(insert_index + 1) # 1 index insert_index
 
-        s_act_pwr = sum(self.disp_pmppt[1:insert_index])
-        s_max_pwr = sum(self.disp_psrc[1:insert_index])
+        s_act_pwr = sum(self.powers2[1:insert_index])
+        s_max_pwr = sum(self.powers[1:insert_index])
         tracking_eff = 0
         if s_max_pwr > 0:
             tracking_eff = s_act_pwr/s_max_pwr
@@ -194,37 +167,12 @@ class Simulation:
         # calculate secondary results
         p_src = v_src * i_src
 
-        self.disp_vsrc.append(v_src)
-        self.disp_isrc.append(i_src)
-        self.disp_psrc.append(p_src)
+        self.voltages.append(v_src)
+        self.currents.append(i_src)
+        self.powers.append(p_src)
 
-        self.disp_temp.append(temp)
-        self.disp_irrad.append(irrad)
-        self.disp_load.append(load)
-
-    def get_datapoint(self, cycle):
-        """
-        printDatapoint
-        Gets a datapoint given a cycle in time.
-
-        Args:
-            - cycle     (int): simulation cycle that points should be retrieved from
-        
-        Returns: 
-            - [cycle, v_src, i_src, p_src, v_mppt, i_mppt, p_mppt, temp,
-                irrad, load, pDiff, pDiffA]
-        """
-        try:
-            idx = self.disp_cycle.index(cycle)
-            data = [self.disp_cycle[idx], 
-                self.disp_vsrc[idx],    self.disp_isrc[idx],    self.disp_psrc[idx],
-                self.disp_vmppt[idx],   self.disp_imppt[idx],   self.disp_pmppt[idx],
-                self.disp_temp[idx],    self.disp_irrad[idx],   self.disp_load[idx],
-                self.disp_pDiff[idx],   self.disp_pDiffA[idx]
-            ]
-            return data
-        except ValueError:
-            print("[SIMULATION] Error: Cycle does not exist in data.")
+        self.temps.append(round(temp/100, 4))
+        self.irrads.append(round(irrad/1000, 2))
 
     def init_display(self, num_cells=1, cycle_start=0, cycle_end=0, time_step=1):
         """
@@ -240,7 +188,10 @@ class Simulation:
         Return:
             - None
         """
-
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('MPPT Simulator')
+        self.view.resize(1200, 600)
 
         # widget 1 - source characteristics
         self.plt = self.layout.addPlot(
@@ -271,15 +222,15 @@ class Simulation:
         )
         self.irrad1 = self.plt.plot(
             x=self.cycles, 
-            y=self.irradiances,
+            y=self.irrads,
             pen=pg.mkPen((255, 0, 122), width=2),
-            name="Irradiance (G/1000)"
+            name="Irradiance (G/250)"
         )
         self.temp1 = self.plt.plot(
             x=self.cycles, 
             y=self.temps,
             pen=pg.mkPen((255, 122, 0), width=2),
-            name="Temperature (C/100)"
+            name="Temperature (C/25)"
         )
         self.plt.setLabel('left', "Characteristics")
         self.plt.setLabel('bottom', "Cycle")
@@ -401,6 +352,111 @@ class Simulation:
         self.plt5.setLabel('left', "Efficiency (%)")
         self.plt5.setLabel('bottom', "Cycle")
 
+    def init_display_source_model(self):
+        """
+        init_display_source_model
+        sets up the display window. Call once (globally) before display.
+
+        Args:
+            - None
+
+        Return:
+            - None
+        """
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('Source Simulator')
+        self.view.resize(1200, 600)
+
+        # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
+        self.plt = self.layout.addPlot(
+            title="IV Characteristic Dependence on Temperature @ 1000 G",
+            row=0,
+            col=0,
+            rowspan=1,
+            colspan=1
+        )
+        # need to split the voltage/current pairs by temperature
+        cur_temp = 0.0000
+        self.sets_temps = []
+        cur_set = [[], [], [], [], []]
+        idx = 0
+        for voltage in self.voltages:
+            if round(self.irrads[idx],1) != 1.0: # we only want to see temp curves when irradiance is at STD (1000/1000)
+                pass
+            else:
+                if self.temps[idx] != cur_temp:
+                    cur_temp = self.temps[idx]
+                    # append existing set to sets_temp and make a new set
+                    self.sets_temps.append(cur_set)
+                    cur_set = [[], [], [], [], []]
+                cur_set[0].append(voltage)                                  # voltage
+                cur_set[1].append(self.currents[idx])                       # current
+                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
+                cur_set[3].append(self.temps[idx])                          # temp
+                cur_set[4].append(self.irrads[idx])                         # irradiance
+            idx += 1
+        # plot the various series
+        self.plots = []
+        idx = 0
+        for set_temp in self.sets_temps:
+            self.plots.append(self.plt.plot(
+                x=set_temp[0], 
+                y=set_temp[1],
+                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+            ))
+            self.plots.append(self.plt.plot(
+                x=set_temp[0], 
+                y=set_temp[2],
+                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+            ))
+            idx += 1
+
+        # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
+        self.plt2 = self.layout.addPlot(
+            title="IV Characteristic Dependence on Irradiance @ 25 C",
+            row=0,
+            col=1,
+            rowspan=1,
+            colspan=1
+        )
+        # need to split the voltage/current pairs by irradiance
+        cur_irrad = 0.00
+        self.sets_irrads = []
+        cur_set = [[], [], [], [], []]
+        idx = 0
+        for voltage in self.voltages:
+            if round(self.temps[idx],2) != 0.25: # we only want to see irrad curves when temperature is at STD (25/100)
+                pass
+            else:
+                if self.irrads[idx] != cur_irrad:
+                    cur_irrad = self.irrads[idx]
+                    # append existing set to sets_temp and make a new set
+                    self.sets_irrads.append(cur_set)
+                    cur_set = [[], [], [], [], []]
+                cur_set[0].append(voltage)                                  # voltage
+                cur_set[1].append(self.currents[idx])                       # current
+                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
+                cur_set[3].append(self.temps[idx])                          # temp
+                cur_set[4].append(self.irrads[idx])                         # irradiance
+            idx += 1
+
+        # plot the various series
+        self.plots = []
+        idx = 0
+        for set_irrad in self.sets_irrads:
+            self.plots.append(self.plt2.plot(
+                x=set_irrad[0], 
+                y=set_irrad[1],
+                pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+            ))
+            self.plots.append(self.plt2.plot(
+                x=set_irrad[0], 
+                y=set_irrad[2],
+                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+            ))
+            idx += 1
+
     def update_display(self, cycle_start=0, cycle_end=0, time_step=1):
         """
         update_display
@@ -424,7 +480,7 @@ class Simulation:
         self.voltage1.setData(y=self.voltages[cycle_start:cycle_end:time_step])
         self.current1.setData(y=self.currents[cycle_start:cycle_end:time_step])
         self.power1.setData(y=self.powers[cycle_start:cycle_end:time_step])
-        self.irrad1.setData(y=self.irradiances[cycle_start:cycle_end:time_step])
+        self.irrad1.setData(y=self.irrads[cycle_start:cycle_end:time_step])
         self.temp1.setData(y=self.temps[cycle_start:cycle_end:time_step])
 
         # widget 2
@@ -464,87 +520,18 @@ class Simulation:
 
         QtGui.QApplication.processEvents()
 
-    def display_source_model(self, mode="Temperature"):
+    def update_display_source_model(self):
         """
-        display_source_model
+        update_display_source_model
         sets up the display window for the source model.
 
         Args:
-            - mode (String): What sort of model dependency should be displayed.
-                Irradiance | Temperature | Both
+            - None
         
         Return:
             - None
         """
-
-        fig = plt.figure(figsize=plt.figaspect(0.5))
-        ax  = fig.add_subplot(1,2,1, projection='3d')
-        ax2 = fig.add_subplot(1,2,2, projection='3d')
-
-        if mode == "Irradiance":
-            idx = 0
-            for obj in self.disp_vsrc:
-                X = self.disp_vsrc[idx]
-                Y = self.disp_irrad[idx]
-                Z = self.disp_isrc[idx]
-                Z2= self.disp_psrc[idx]
-                idx += 1
-                ax.scatter(X, Y, Z, marker='o', color=[X/1, Y/1000, Z/10.0])
-                ax2.scatter(X, Y, Z2, marker='o', color=[X/1, Y/1000, Z/10.0])
-            
-            ax.set_xlabel('Voltage (V)')
-            ax.set_ylabel('Irradiance (W/m^2)')
-            ax.set_zlabel('Current (I)')
-            ax2.set_xlabel('Voltage (V)')
-            ax2.set_ylabel('Irradiance (W/m^2)')
-            ax2.set_zlabel('Power (W)')
-
-        elif mode == "Temperature": # default temp
-            idx = 0
-            for obj in self.disp_vsrc:
-                X = self.disp_vsrc[idx]
-                Y = self.disp_temp[idx]
-                Z = self.disp_isrc[idx]
-                Z2= self.disp_psrc[idx]
-                idx += 1
-                ax.scatter(X, Y, Z, marker='o', color=[X/1, Y/120, Z/10.0])
-                ax2.scatter(X, Y, Z2, marker='o', color=[X/1, Y/120, Z/10.0])
-            
-            ax.set_xlabel('Voltage (V)')
-            ax.set_ylabel('Temperature (C)')
-            ax.set_zlabel('Current (I)')
-            ax2.set_xlabel('Voltage (V)')
-            ax2.set_ylabel('Temperature (C)')
-            ax2.set_zlabel('Power (W)')
-        
-        else:
-            idx = 0
-            for obj in self.disp_vsrc:
-                X = self.disp_vsrc[idx]
-                Y = self.disp_temp[idx]
-                Z = self.disp_irrad[idx]
-                ax.scatter(X, Y, Z, marker='o', color=[
-                    X/1, 
-                    Y/120,
-                    Z/1200
-                ], alpha=self.disp_isrc[idx]/10.0)
-                ax2.scatter(X, Y, Z, marker='o', color=[
-                    X/1, 
-                    Y/120,
-                    Z/1200
-                ], alpha=self.disp_psrc[idx]/10.0)
-                idx += 1
-
-            ax.set_xlabel('Voltage (V)')
-            ax.set_ylabel('Temperature (C)')
-            ax.set_zlabel('Irradiance (G)')
-
-            ax2.set_xlabel('Voltage (V)')
-            ax2.set_ylabel('Temperature (C)')
-            ax2.set_zlabel('Irradiance (G)')
-
-        fig.suptitle(self.mppt_name) # but this is actually source model name
-        plt.show()
+        # TODO: make some sort of refresh method for this.
 
     def save_model(self):
         with open("results.csv", "ab") as f:
