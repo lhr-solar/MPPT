@@ -41,11 +41,6 @@ while True:
     line = f.readline()
     line = f.readline()
     line = f.readline()
-    line = f.readline()
-    line = f.readline()
-    line = f.readline()
-    line = f.readline()
-    line = f.readline()
 
 fig, ax = plt.subplots(2, 1)
 fig.set_size_inches(9, 10)
