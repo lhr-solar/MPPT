@@ -139,7 +139,7 @@ class Source:
                         module_type = SINGLE
                     elif module['module_type'] == '1x2':
                         module_type = DOUBLE
-                    elif module['module_type'] == '2x2':
+                    elif module['module_type'] == '2x2' or module['module_type'] == '1x4':
                         module_type = QUAD
                     elif module['module_type'] == '2x4':
                         module_type = OCT

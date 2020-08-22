@@ -149,9 +149,9 @@ class Simulation:
         if s_max_pwr > 0:
             tracking_eff = s_act_pwr/s_max_pwr
 
-        self.disp_pDiff.insert(insert_index, p_diff)
-        self.disp_pDiffA.insert(insert_index, p_diffA)
-        self.disp_pEff.insert(insert_index, tracking_eff)
+        self.disp_pDiff.insert(insert_index, p_diff) # percentage difference
+        self.disp_pDiffA.insert(insert_index, p_diffA) # % of cycles below threshold
+        self.disp_pEff.insert(insert_index, tracking_eff) # tracking efficiency of the total power generated
 
     def add_datapoint_source_model(self, irrad, temp, load, v_src, i_src):
         """
@@ -335,13 +335,13 @@ class Simulation:
             x=self.cycles,
             y=self.disp_pDiff,
             pen=pg.mkPen((255, 0, 0), width=2),
-            name="% Max Diff"
+            name="% Difference"
         )
         self.eff2 = self.plt5.plot(
             x=self.cycles, 
             y=self.disp_pDiffA,
             pen=pg.mkPen((0, 255, 0), width=2),
-            name="% Cycles Above Threshold"
+            name="% Cycles Above 5% Difference Threshold"
         )
         self.eff3 = self.plt5.plot(
             x=self.cycles, 

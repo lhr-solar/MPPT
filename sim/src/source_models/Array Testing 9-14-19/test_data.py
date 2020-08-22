@@ -37,10 +37,10 @@ while True:
     except Exception as e:
         print(e)
     
-    line = f.readline()
-    line = f.readline()
-    line = f.readline()
-    line = f.readline()
+    # number of lines to skip
+    for i in range(30):
+        line = f.readline()
+        
 
 fig, ax = plt.subplots(2, 1)
 fig.set_size_inches(9, 10)
