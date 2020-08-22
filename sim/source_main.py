@@ -61,7 +61,12 @@ def main():
         save_sim = True
         use_file = False
 
-    print(use_file)
+    is_overlay = ""
+    if disp_sim:
+        string_is_overlay = input("Load irradiance data? File format should be 'V,C,R,G,B', ... - [NO]|FILE_PATH: ")
+        if string_is_overlay != "NO":
+            is_overlay = string_is_overlay
+
     source = Source(string_source_model_type, use_file=use_file)
     simulation = Simulation(source.get_model_type())
     source_file = SourceFile()
@@ -123,8 +128,6 @@ def main():
             irradiance = 0
         irradiance += step_size_i
 
-    if disp_sim:
-        simulation.init_display_source_model()
     for bin in results:
         for entry in bin:
             source_file.add_source(entry)
@@ -136,6 +139,7 @@ def main():
 
     if disp_sim:
         print("Showing display.")
+        simulation.init_display_source_model(file=is_overlay)
         simulation.update_display_source_model()
     
     input("Waiting.")

@@ -4,13 +4,14 @@ ni_cell_data.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 7/10/20
-Last Modified: 7/10/20
+Last Modified: 8/22/20
 Description: Parses, cleans, and displays cell data collected from the EER Labview test setup.
 """
 import sys
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
 
 # 1 light
@@ -115,3 +116,11 @@ plt.tight_layout()
 
 fig.savefig("test.png")
 plt.show()
+
+# save into a file
+with open("model.csv", "w", newline='\n') as csv_file:
+    writer = csv.writer(csv_file)
+    for idx in range(len(voltages1)):
+        writer.writerow([voltages1[idx], currents1[idx], 255, 0, 0])
+        writer.writerow([voltages2[idx], currents2[idx], 0, 255, 0])
+        writer.writerow([voltages3[idx], currents3[idx], 0, 0, 255])

@@ -14,7 +14,7 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 import sys
-
+import csv
 
 from bisect import bisect
 import numpy as np
@@ -352,13 +352,13 @@ class Simulation:
         self.plt5.setLabel('left', "Efficiency (%)")
         self.plt5.setLabel('bottom', "Cycle")
 
-    def init_display_source_model(self):
+    def init_display_source_model(self, file=""):
         """
         init_display_source_model
         sets up the display window. Call once (globally) before display.
 
         Args:
-            - None
+            - file - name of file with data to plot against, if any
 
         Return:
             - None
@@ -463,6 +463,20 @@ class Simulation:
                 ))
         self.plt2.setLabel('left', "Current (A)")
         self.plt2.setLabel('bottom', "Voltage (V)")
+
+        if file != "":
+            array = []
+            with open(file, "r", newline='\n') as csv_file:
+                reader = csv.reader(csv_file)
+                for row in reader:
+                    array.append(row)
+            array_formatted = []
+            for item in array:
+                item2 = {'pos': [float(item[0]), float(item[1])], 'brush': pg.mkBrush(int(item[2]), int(item[3]), int(item[4]))}
+                array_formatted.append(item2)
+            scatterPoints = pg.ScatterPlotItem(size=2, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255))
+            scatterPoints.addPoints(array_formatted)
+            self.plt2.addItem(scatterPoints)
 
     def update_display(self, cycle_start=0, cycle_end=0, time_step=1):
         """
