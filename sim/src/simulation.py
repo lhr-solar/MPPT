@@ -64,10 +64,6 @@ class Simulation:
             background=pg.mkColor(0, 0, 0),
             foreground=pg.mkColor(255, 255, 255)
         )
-        # display window
-        self.view.show()
-        self.view.setWindowTitle('MPPT Simulator')
-        self.view.resize(1200, 600)
 
     def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
@@ -192,6 +188,10 @@ class Simulation:
         Return:
             - None
         """
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('MPPT Simulator')
+        self.view.resize(1200, 600)
 
         # widget 1 - source characteristics
         self.plt = self.layout.addPlot(
@@ -363,25 +363,14 @@ class Simulation:
         Return:
             - None
         """
-        # display window
-        self.view.show()
-        self.view.setWindowTitle('Source Simulator')
-        self.view.resize(1200, 600)
+        self.index = 0
 
-        # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
-        self.plt = self.layout.addPlot(
-            title="IV Characteristic Dependence on Temperature @ 1000 G",
-            row=0,
-            col=0,
-            rowspan=1,
-            colspan=1
-        )
         # need to split the voltage/current pairs by temperature
         cur_temp = 0.0000
-        self.sets_temps = []
-        cur_set = [[], [], [], [], []]
-        idx = 0
-        for voltage in self.voltages:
+        self.sets_temps = [[[], [], [], [], []]]
+        cur_set = self.sets_temps[0]
+        idx = self.index
+        for voltage in self.voltages[idx::]:
             if round(self.irrads[idx],1) != 1.0: # we only want to see temp curves when irradiance is at STD (1000/1000)
                 pass
             else:
@@ -396,38 +385,13 @@ class Simulation:
                 cur_set[3].append(self.temps[idx])                          # temp
                 cur_set[4].append(self.irrads[idx])                         # irradiance
             idx += 1
-        # plot the various series
-        self.plots = []
-        idx = 0
-        for set_temp in self.sets_temps:
-            self.plots.append(self.plt.plot(
-                x=set_temp[0], 
-                y=set_temp[1],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
-            ))
-            self.plots.append(self.plt.plot(
-                x=set_temp[0], 
-                y=set_temp[2],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
-            ))
-            idx += 1
-        self.plt.setLabel('left', "Current (A)")
-        self.plt.setLabel('bottom', "Voltage (V)")
-        
-        # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
-        self.plt2 = self.layout.addPlot(
-            title="IV Characteristic Dependence on Irradiance @ 25 C",
-            row=0,
-            col=1,
-            rowspan=1,
-            colspan=1
-        )
+
         # need to split the voltage/current pairs by irradiance
         cur_irrad = 0.00
-        self.sets_irrads = []
-        cur_set = [[], [], [], [], []]
-        idx = 0
-        for voltage in self.voltages:
+        self.sets_irrads = [[[], [], [], [], []]]
+        cur_set = self.sets_irrads[0]
+        idx = self.index
+        for voltage in self.voltages[idx::]:
             if round(self.temps[idx],2) != 0.25: # we only want to see irrad curves when temperature is at STD (25/100)
                 pass
             else:
@@ -443,21 +407,60 @@ class Simulation:
                 cur_set[4].append(self.irrads[idx])                         # irradiance
             idx += 1
 
+        self.index = idx # save back later
+
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('Source Simulator')
+        self.view.resize(1200, 600)
+
+        # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
+        self.plt = self.layout.addPlot(
+            title="IV Characteristic Dependence on Temperature @ 1000 G",
+            row=0,
+            col=0,
+            rowspan=1,
+            colspan=1
+        )
         # plot the various series
         self.plots = []
-        idx = 0
-        for set_irrad in self.sets_irrads:
-            self.plots.append(self.plt2.plot(
-                x=set_irrad[0], 
-                y=set_irrad[1],
-                pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
-            ))
-            self.plots.append(self.plt2.plot(
-                x=set_irrad[0], 
-                y=set_irrad[2],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_irrad[4][0]*255), width=2),
-            ))
-            idx += 1
+        if self.sets_temps != [[[], [], [], [], []]]:
+            for set_temp in self.sets_temps:
+                self.plots.append(self.plt.plot(
+                    x=set_temp[0], 
+                    y=set_temp[1],
+                    pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                ))
+                self.plots.append(self.plt.plot(
+                    x=set_temp[0], 
+                    y=set_temp[2],
+                    pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                ))
+        self.plt.setLabel('left', "Current (A)")
+        self.plt.setLabel('bottom', "Voltage (V)")
+        
+        # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
+        self.plt2 = self.layout.addPlot(
+            title="IV Characteristic Dependence on Irradiance @ 25 C",
+            row=0,
+            col=1,
+            rowspan=1,
+            colspan=1
+        )
+        # plot the various series
+        self.plots2 = []
+        if self.sets_irrads != [[[], [], [], [], []]]:
+            for set_irrad in self.sets_irrads:
+                self.plots2.append(self.plt2.plot(
+                    x=set_irrad[0], 
+                    y=set_irrad[1],
+                    pen=pg.mkPen((255, 255-set_irrad[3][0]*255, set_irrad[4][0]*255), width=2),
+                ))
+                self.plots2.append(self.plt2.plot(
+                    x=set_irrad[0], 
+                    y=set_irrad[2],
+                    pen=pg.mkPen((255, 255-set_irrad[3][0]*255, set_irrad[4][0]*255), width=2),
+                ))
         self.plt2.setLabel('left', "Current (A)")
         self.plt2.setLabel('bottom', "Voltage (V)")
 
@@ -535,7 +538,117 @@ class Simulation:
         Return:
             - None
         """
-        # TODO: make some sort of refresh method for this.
+        return
+        # need to split the voltage/current pairs by temperature
+        temp_set_length = len(self.sets_temps)
+        cur_set = self.sets_temps[temp_set_length-1] # get the most recent set
+        cur_temp = 0
+        if self.sets_temps[temp_set_length-1][3] != []: # get the most recent temp
+            cur_temp = self.sets_temps[temp_set_length-1][3][0]
+        idx = self.index
+        for voltage in self.voltages[idx::]:
+            if False: #round(self.irrads[idx],1) != 1.0: # we only want to see temp curves when irradiance is at STD (1000/1000)
+                pass
+            else:
+                print(self.temps[idx], cur_temp)
+                if self.temps[idx] != cur_temp:
+                    print("hi")
+                    cur_temp = self.temps[idx]
+                    # append existing set to sets_temp and make a new set
+                    self.sets_temps.append(cur_set)
+                    cur_set = [[], [], [], [], []]
+                cur_set[0].append(voltage)                                  # voltage
+                cur_set[1].append(self.currents[idx])                       # current
+                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
+                cur_set[3].append(self.temps[idx])                          # temp
+                cur_set[4].append(self.irrads[idx])                         # irradiance
+            idx += 1
+
+        # need to split the voltage/current pairs by irradiance
+        irrad_set_length = len(self.sets_irrads)
+        cur_set = self.sets_irrads[irrad_set_length-1] # get the most recent set
+        cur_irrad = 0
+        if self.sets_irrads[irrad_set_length-1][3] != []:
+            cur_irrad = self.sets_irrads[irrad_set_length-1][3][0] # get the most recent irrad
+        idx = self.index
+        for voltage in self.voltages[idx::]:
+            if False: #round(self.temps[idx],2) != 0.25: # we only want to see irrad curves when temperature is at STD (25/100)
+                pass
+            else:
+                if self.irrads[idx] != cur_irrad:
+                    cur_irrad = self.irrads[idx]
+                    # append existing set to sets_temp and make a new set
+                    self.sets_irrads.append(cur_set)
+                    cur_set = [[], [], [], [], []]
+                cur_set[0].append(voltage)                                  # voltage
+                cur_set[1].append(self.currents[idx])                       # current
+                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
+                cur_set[3].append(self.temps[idx])                          # temp
+                cur_set[4].append(self.irrads[idx])                         # irradiance
+            idx += 1
+
+        self.index = idx # save back later
+
+
+        # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
+        # plot the various series
+        first = True
+        print("temp", self.sets_temps)
+        if self.sets_temps != [[[], [], [], [], []]]: # may not have anything inside for the first set of calls
+            for set_temp in self.sets_temps[temp_set_length::]:
+                if first: # modify the current one
+                    self.plots[temp_set_length].setData(
+                        x=set_temp[0], 
+                        y=set_temp[1],
+                        pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                    )
+                    self.plots[temp_set_length+1].setData(
+                        x=set_temp[0], 
+                        y=set_temp[2],
+                        pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                    )
+                    first = False
+                else: # add any new ones
+                    self.plots.append(self.plt.plot(
+                        x=set_temp[0], 
+                        y=set_temp[1],
+                        pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                    ))
+                    self.plots.append(self.plt.plot(
+                        x=set_temp[0], 
+                        y=set_temp[2],
+                        pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
+                    ))
+        
+        # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
+        # plot the various series
+        first = True
+        print("irrad", self.sets_irrads)
+        if self.sets_irrads != [[[], [], [], [], []]]: # may not have anything inside for the first set of calls
+            for set_irrad in self.sets_irrads[irrad_set_length::]:
+                if first: # modify the current one
+                    self.plots2[irrad_set_length].setData(
+                        x=set_irrad[0], 
+                        y=set_irrad[1],
+                        pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+                    )
+                    self.plots2[irrad_set_length].setData(
+                        x=set_irrad[0], 
+                        y=set_irrad[2],
+                        pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+                    )
+                    first = False
+                else: # add any new ones
+                    self.plots2.append(self.plt2.plot(
+                        x=set_irrad[0], 
+                        y=set_irrad[1],
+                        pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+                    ))
+                    self.plots2.append(self.plt2.plot(
+                        x=set_irrad[0], 
+                        y=set_irrad[2],
+                        pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
+                    ))
 
     def save_model(self):
         with open("results.csv", "ab") as f:

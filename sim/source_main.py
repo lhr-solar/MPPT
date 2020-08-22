@@ -84,6 +84,7 @@ def main():
     print("Start model generation.")
     start = time.time()
     source.setup("Impulse", impulse=(irradiance, temperature))
+
     # cycle outside through inside
     while irradiance <= MAX_IRRADIANCE:
         temperature = 0.001
@@ -111,6 +112,8 @@ def main():
                         round(characteristic[0], 3), 
                         round(characteristic[1], 3)
                     )
+                    # simulation.update_display_source_model()
+
                 bin_num += 1
 
             if temperature == 0.001:
@@ -120,6 +123,8 @@ def main():
             irradiance = 0
         irradiance += step_size_i
 
+    if disp_sim:
+        simulation.init_display_source_model()
     for bin in results:
         for entry in bin:
             source_file.add_source(entry)
@@ -131,7 +136,6 @@ def main():
 
     if disp_sim:
         print("Showing display.")
-        simulation.init_display_source_model()
         simulation.update_display_source_model()
     
     input("Waiting.")
