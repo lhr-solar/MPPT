@@ -123,7 +123,6 @@ class Source:
             return cell.setup(setup_type, impulse=impulse)
 
         elif setup_type == "File":
-            # TODO: check to see if we can find file
             with open(SOURCE_MODEL_PATH + file_name) as f:
                 data = json.load(f)
 

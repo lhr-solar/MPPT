@@ -64,6 +64,10 @@ class Simulation:
             background=pg.mkColor(0, 0, 0),
             foreground=pg.mkColor(255, 255, 255)
         )
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('MPPT Simulator')
+        self.view.resize(1200, 600)
 
     def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
@@ -188,10 +192,6 @@ class Simulation:
         Return:
             - None
         """
-        # display window
-        self.view.show()
-        self.view.setWindowTitle('MPPT Simulator')
-        self.view.resize(1200, 600)
 
         # widget 1 - source characteristics
         self.plt = self.layout.addPlot(
@@ -411,7 +411,9 @@ class Simulation:
                 pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
             ))
             idx += 1
-
+        self.plt.setLabel('left', "Current (A)")
+        self.plt.setLabel('bottom', "Voltage (V)")
+        
         # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
         self.plt2 = self.layout.addPlot(
             title="IV Characteristic Dependence on Irradiance @ 25 C",
@@ -456,6 +458,8 @@ class Simulation:
                 pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_irrad[4][0]*255), width=2),
             ))
             idx += 1
+        self.plt2.setLabel('left', "Current (A)")
+        self.plt2.setLabel('bottom', "Voltage (V)")
 
     def update_display(self, cycle_start=0, cycle_end=0, time_step=1):
         """

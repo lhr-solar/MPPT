@@ -10,7 +10,7 @@ Description: This file emulates a single cell source IV curve across multiple di
 """
 import sys
 import time
-from src.cell import Cell
+from src.source import Source
 from src.simulation import Simulation
 from src.source_file import SourceFile
 
@@ -62,8 +62,8 @@ def main():
         use_file = False
 
     print(use_file)
-    cell = Cell(string_source_model_type, use_file=use_file)
-    simulation = Simulation(cell.get_model_type())
+    source = Source(string_source_model_type, use_file=use_file)
+    simulation = Simulation(source.get_model_type())
     source_file = SourceFile()
 
     # -------------- SIMULATION START --------------
@@ -83,13 +83,16 @@ def main():
 
     print("Start model generation.")
     start = time.time()
+    source.setup("Impulse", impulse=(irradiance, temperature))
     # cycle outside through inside
     while irradiance <= MAX_IRRADIANCE:
         temperature = 0.001
         while temperature <= MAX_TEMPERATURE:
-            cell.setup("Impulse", impulse=(irradiance, temperature))
+            modules = source.get_modules()
+            for module in modules:
+                module[2].setup("Impulse", impulse=(irradiance, temperature))
             # source gets the IV curve for current conditions
-            [characteristics, [v_mpp, i_mpp, p_mpp]] = cell.get_cell_IV(step_size_v)
+            [characteristics, [v_mpp, i_mpp, p_mpp]] = source.get_source_IV(step_size_v)
 
             bin_num = 0
             for characteristic in characteristics:
