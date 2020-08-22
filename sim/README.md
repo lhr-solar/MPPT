@@ -7,6 +7,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 
 ## Dependencies
 
+Install these dependencies or use the requirements.txt to install.
 * python3
 * sys
 * matplotlib
@@ -15,10 +16,7 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 * math
 * pyqtgraph
 
-
-
 ## Feature Request and Bug list
-
 * source
   * [x] source dependence on temperature
   * [x] source dependence on irradiance

@@ -48,7 +48,7 @@ class PT(MPPT):
         Ref:
             None
         """
-        if (cycle % self.sample_rate) is 0:
+        if (cycle % self.sample_rate) == 0:
             self.v_ref = self.calc_perturb_amt(self.v_ref, v_in, i_in, t_in)
             p_in = v_in * i_in
 

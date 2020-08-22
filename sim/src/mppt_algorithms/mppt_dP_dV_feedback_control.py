@@ -34,7 +34,7 @@ class FC(MPPT):
             2. Application of adaptive algorithm of solar cell battery charger (Hou et al.)
                 - Section B, Implement of the control algorithm
         """
-        if (cycle % self.sample_rate) is 0:
+        if (cycle % self.sample_rate) == 0:
             error = .05
             p_in = v_in * i_in
             dP = p_in - self.p_old
