@@ -15,7 +15,7 @@ from src.simulation import Simulation
 from src.source_file import SourceFile
 
 def main():
-    refresh_rate = 200 # FPS
+    refresh_rate = 2 # FPS
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
     print("Suggested save parameters are: v=0.01, i=50, t=.5.")
@@ -62,11 +62,11 @@ def main():
         save_sim = True
         use_file = False
 
-    is_overlay = ""
+    is_overlay = "./src/source_models/Cell_Measurements_7_10_20/model.csv"
     if disp_sim:
-        string_is_overlay = input("Load irradiance data? File format should be 'V,C,R,G,B', ... - [NO]|FILE_PATH: ")
-        if string_is_overlay != "NO":
-            is_overlay = string_is_overlay
+        string_is_overlay = input("Load irradiance data? File format should be 'V,C,R,G,B', ... - [NO]|YES: ")
+        if string_is_overlay == "NO":
+            is_overlay = ""
 
     source = Source(string_source_model_type, use_file=use_file)
     simulation = Simulation(source.get_model_type())
@@ -120,6 +120,7 @@ def main():
                         round(characteristic[0], 3), 
                         round(characteristic[1], 3)
                     )
+
                 bin_num += 1
 
             if temperature == 0.001:
@@ -128,6 +129,11 @@ def main():
         if irradiance == 0.001:
             irradiance = 0
         irradiance += step_size_i
+
+        # if disp_sim:
+            # simulation.update_display_source_model()
+            # input("Wait.")
+            # time.sleep(1/refresh_rate)
 
     for bin in results:
         for entry in bin:
@@ -141,7 +147,7 @@ def main():
     if disp_sim:
         print("Showing display.")
         simulation.update_display_source_model()
-        # simulation.overlay_data(file=use_file)
+        simulation.overlay_data(file=)
     
     input("Waiting.")
 
