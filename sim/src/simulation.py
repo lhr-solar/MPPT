@@ -4,7 +4,7 @@ simulation.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/27/20
-Last Modified: 8/20/20
+Last Modified: 8/22/20
 Description: This Simulation class contains the state of the simulation. 
     It  1) collects data from the source and mppt
     and 2) displays it using matplotlib.
