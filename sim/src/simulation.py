@@ -457,6 +457,7 @@ class Simulation:
                         pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
                     )
                 ])
+        self.plots_len = len(self.plots)
         self.plt.setLabel('left', "Current (A)")
         self.plt.setLabel('bottom', "Voltage (V)")
         
@@ -484,6 +485,7 @@ class Simulation:
                         pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
                     )
                 ])
+        self.plots2_len = len(self.plots2)
         self.plt2.setLabel('left', "Current (A)")
         self.plt2.setLabel('bottom', "Voltage (V)")
 
@@ -566,9 +568,18 @@ class Simulation:
 
         # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
         # plot the various series
-        if self.sets_temps != []:
-            idx = 0
-            for set_temp in self.sets_temps:
+        if len(self.sets_temps) > 0 and self.plots_len >= 0:
+            # data sets | plots
+            # 0 | 0, do nothing
+            # 1 | 0, add a plot
+            # 1 | 1, update plot [0, 1)
+            # 2 | 1, update plot [0, 1), add a plot
+            # 2 | 2, update plot [1, 2)
+            # 4 | 2, update plot [1, 2), add two plots
+            idx = self.plots_len -1
+            if idx < 0:
+                idx = 0
+            for set_temp in self.sets_temps[idx:]:
                 # modify existing
                 if idx < len(self.plots):
                     self.plots[idx][0].setData(
@@ -596,12 +607,15 @@ class Simulation:
                         )
                     ])
                 idx += 1
-        
+        self.plots_len = len(self.plots)
+
         # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
         # plot the various series
-        if self.sets_irrads != []:
-            idx = 0
-            for set_irrad in self.sets_irrads:
+        if len(self.sets_irrads) > 0 and self.plots2_len >= 0:
+            idx = self.plots2_len - 1
+            if idx < 0:
+                idx = 0
+            for set_irrad in self.sets_irrads[idx:]:
                 # modify existing
                 if idx < len(self.plots2):
                     self.plots2[idx][0].setData(
@@ -629,6 +643,9 @@ class Simulation:
                         )
                     ])
                 idx += 1
+        self.plots2_len = len(self.plots2)
+
+        QtGui.QApplication.processEvents()
 
     def overlay_data(self, file=""):
         if file != "":
