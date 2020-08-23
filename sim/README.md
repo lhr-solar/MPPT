@@ -7,17 +7,18 @@ Created on 5/24/20 by Matthew Yu, Solar Array Lead (2020) of the UT Solar Vehicl
 
 ## Dependencies
 
+Install these dependencies or use the requirements.txt to install.
 * python3
 * sys
 * matplotlib
 * numpy
 * bisect
 * math
+* pyqtgraph
 
 Install dependencies using `pip3 install -r requirements.txt`
 
 ## Feature Request and Bug list
-
 * source
   * [x] source dependence on temperature
   * [x] source dependence on irradiance
@@ -36,7 +37,7 @@ Install dependencies using `pip3 install -r requirements.txt`
     * [x] dP dV feedback control mppt algo
     * [ ] fuzzy logic mppt algo
     * [ ] ripple correlation control mppt algo
-    * [ ] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
+    * [x] update program structure to implement default method for each mppt algorithm, then give the option of using fixed and/or optimal.
   * [ ] modify simulation to match mppt hardware convert mppt v_ref to duty cycle
 * simulation
   * [ ] Profile mode: mppt power is greater than max array power by a cycle
