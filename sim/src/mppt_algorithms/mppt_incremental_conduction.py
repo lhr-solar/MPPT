@@ -28,7 +28,7 @@ class IC(MPPT):
             1. Incremental Conductance Based Maximum Power Point Tracking (MPPT) for Photovoltaic System (Lokanadham et Bhaskar)
                 - VI. Incremental Conductance MPPT Algorithm
         """
-        if (cycle % self.sample_rate) is 0: # sampling this run
+        if (cycle % self.sample_rate) == 0: # sampling this run
             # determine deltas
             dV = v_in - self.v_old
             dI = i_in - self.i_old

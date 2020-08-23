@@ -14,11 +14,19 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 import sys
-
+import csv
 
 from bisect import bisect
 import numpy as np
 import math
+
+VOLTAGE = 0
+CURRENT = 1
+POWER   = 2
+TEMP    = 3
+IRRAD   = 4
+STD_IRRAD = 1.0
+STD_TEMP = 0.25
 
 class Simulation:
     cycles = []
@@ -45,6 +53,9 @@ class Simulation:
     axs = None
     twin_ax = None
 
+    sets_temps = []     # set for each cluster of temps for source model
+    sets_irrads = []    # set for each cluster of irrad for source model
+
     def __init__(self, mppt_name=""):
         """
         init
@@ -64,10 +75,6 @@ class Simulation:
             background=pg.mkColor(0, 0, 0),
             foreground=pg.mkColor(255, 255, 255)
         )
-        # display window
-        self.view.show()
-        self.view.setWindowTitle('MPPT Simulator')
-        self.view.resize(1200, 600)
 
     def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
@@ -153,7 +160,7 @@ class Simulation:
         self.disp_pDiffA.insert(insert_index, p_diffA) # % of cycles below threshold
         self.disp_pEff.insert(insert_index, tracking_eff) # tracking efficiency of the total power generated
 
-    def add_datapoint_source_model(self, irrad, temp, load, v_src, i_src):
+    def add_datapoint_source_model(self, irrad, temp, v_src, i_src):
         """
         addDatapoint
         adds a datapoint to each data structure corresponding to the inputs.
@@ -161,7 +168,6 @@ class Simulation:
         Args:
             - irrad   (float): irradiance
             - temp    (float): temperature (C)
-            - load    (float): load on the system (W/s) NOTE: UNUSED
             - v_src   (float): source voltage (V)
             - i_src   (float): source current (A)
         
@@ -170,13 +176,68 @@ class Simulation:
         """
         # calculate secondary results
         p_src = v_src * i_src
+        temp = round(temp/100, 2)
+        irrad = round(irrad/1000, 2)
 
         self.voltages.append(v_src)
         self.currents.append(i_src)
         self.powers.append(p_src)
+        self.temps.append(temp)
+        self.irrads.append(irrad)
 
-        self.temps.append(round(temp/100, 4))
-        self.irrads.append(round(irrad/1000, 2))
+        # grab the latest temp set
+        # if we match add it, if we don't, make a new set
+        cur_temp = -1.00
+        if self.sets_temps != []:
+            cur_temp = self.sets_temps[len(self.sets_temps)-1][TEMP][0]
+        if irrad != STD_IRRAD:
+            pass
+        else:
+            # if we're in a different temperature regime, make a new set
+            if temp != cur_temp:
+                cur_set_temp = [[], [], [], [], []]
+                # Append data to the new set
+                cur_set_temp[VOLTAGE].append(v_src)
+                cur_set_temp[CURRENT].append(i_src)
+                cur_set_temp[POWER].append(round(v_src*i_src, 2))
+                cur_set_temp[TEMP].append(temp)
+                cur_set_temp[IRRAD].append(irrad)
+                self.sets_temps.append(cur_set_temp)
+            else:
+                cur_set_temp = self.sets_temps[len(self.sets_temps)-1]
+                # Append data to the existing set
+                cur_set_temp[VOLTAGE].append(v_src)
+                cur_set_temp[CURRENT].append(i_src)
+                cur_set_temp[POWER].append(round(v_src*i_src, 2))
+                cur_set_temp[TEMP].append(temp)
+                cur_set_temp[IRRAD].append(irrad)
+
+        # grab the latest irrad set
+        # if we match add it, if we don't, make a new set
+        cur_irrad = -1.0
+        if self.sets_irrads != []:
+            cur_irrad = self.sets_irrads[len(self.sets_irrads)-1][IRRAD][0]
+        if temp != STD_TEMP:
+            pass
+        else:
+            # if we're in a different irradiance regime, make a new set
+            if irrad != cur_irrad:
+                cur_set_irrad = [[], [], [], [], []]
+                # Append data to the new set
+                cur_set_irrad[VOLTAGE].append(v_src)
+                cur_set_irrad[CURRENT].append(i_src)
+                cur_set_irrad[POWER].append(round(v_src*i_src, 2))
+                cur_set_irrad[TEMP].append(temp)
+                cur_set_irrad[IRRAD].append(irrad)
+                self.sets_irrads.append(cur_set_irrad)
+            else:
+                cur_set_irrad = self.sets_irrads[len(self.sets_irrads)-1]
+                # Append data to the existing set
+                cur_set_irrad[VOLTAGE].append(v_src)
+                cur_set_irrad[CURRENT].append(i_src)
+                cur_set_irrad[POWER].append(round(v_src*i_src, 2))
+                cur_set_irrad[TEMP].append(temp)
+                cur_set_irrad[IRRAD].append(irrad)
 
     def init_display(self, num_cells=1, cycle_start=0, cycle_end=0, time_step=1):
         """
@@ -192,6 +253,10 @@ class Simulation:
         Return:
             - None
         """
+        # display window
+        self.view.show()
+        self.view.setWindowTitle('MPPT Simulator')
+        self.view.resize(1200, 600)
 
         # widget 1 - source characteristics
         self.plt = self.layout.addPlot(
@@ -376,41 +441,23 @@ class Simulation:
             rowspan=1,
             colspan=1
         )
-        # need to split the voltage/current pairs by temperature
-        cur_temp = 0.0000
-        self.sets_temps = []
-        cur_set = [[], [], [], [], []]
-        idx = 0
-        for voltage in self.voltages:
-            if round(self.irrads[idx],1) != 1.0: # we only want to see temp curves when irradiance is at STD (1000/1000)
-                pass
-            else:
-                if self.temps[idx] != cur_temp:
-                    cur_temp = self.temps[idx]
-                    # append existing set to sets_temp and make a new set
-                    self.sets_temps.append(cur_set)
-                    cur_set = [[], [], [], [], []]
-                cur_set[0].append(voltage)                                  # voltage
-                cur_set[1].append(self.currents[idx])                       # current
-                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
-                cur_set[3].append(self.temps[idx])                          # temp
-                cur_set[4].append(self.irrads[idx])                         # irradiance
-            idx += 1
         # plot the various series
         self.plots = []
-        idx = 0
-        for set_temp in self.sets_temps:
-            self.plots.append(self.plt.plot(
-                x=set_temp[0], 
-                y=set_temp[1],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
-            ))
-            self.plots.append(self.plt.plot(
-                x=set_temp[0], 
-                y=set_temp[2],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_temp[4][0]*255), width=2),
-            ))
-            idx += 1
+        if self.sets_temps != []:
+            for set_temp in self.sets_temps:
+                self.plots.append([
+                    self.plt.plot(
+                        x=set_temp[VOLTAGE], 
+                        y=set_temp[CURRENT],
+                        pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                    ),
+                    self.plt.plot(
+                        x=set_temp[VOLTAGE], 
+                        y=set_temp[POWER],
+                        pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                    )
+                ])
+        self.plots_len = len(self.plots)
         self.plt.setLabel('left', "Current (A)")
         self.plt.setLabel('bottom', "Voltage (V)")
         
@@ -422,42 +469,23 @@ class Simulation:
             rowspan=1,
             colspan=1
         )
-        # need to split the voltage/current pairs by irradiance
-        cur_irrad = 0.00
-        self.sets_irrads = []
-        cur_set = [[], [], [], [], []]
-        idx = 0
-        for voltage in self.voltages:
-            if round(self.temps[idx],2) != 0.25: # we only want to see irrad curves when temperature is at STD (25/100)
-                pass
-            else:
-                if self.irrads[idx] != cur_irrad:
-                    cur_irrad = self.irrads[idx]
-                    # append existing set to sets_temp and make a new set
-                    self.sets_irrads.append(cur_set)
-                    cur_set = [[], [], [], [], []]
-                cur_set[0].append(voltage)                                  # voltage
-                cur_set[1].append(self.currents[idx])                       # current
-                cur_set[2].append(round(voltage*self.currents[idx], 2))     # power
-                cur_set[3].append(self.temps[idx])                          # temp
-                cur_set[4].append(self.irrads[idx])                         # irradiance
-            idx += 1
-
         # plot the various series
-        self.plots = []
-        idx = 0
-        for set_irrad in self.sets_irrads:
-            self.plots.append(self.plt2.plot(
-                x=set_irrad[0], 
-                y=set_irrad[1],
-                pen=pg.mkPen((255, 255-set_irrad[3][0]*255, 255-set_irrad[4][0]*255), width=2),
-            ))
-            self.plots.append(self.plt2.plot(
-                x=set_irrad[0], 
-                y=set_irrad[2],
-                pen=pg.mkPen((255, 255-set_temp[3][0]*255, 255-set_irrad[4][0]*255), width=2),
-            ))
-            idx += 1
+        self.plots2 = []
+        if self.sets_irrads != []:
+            for set_irrad in self.sets_irrads:
+                self.plots2.append([
+                    self.plt2.plot(
+                        x=set_irrad[VOLTAGE], 
+                        y=set_irrad[CURRENT],
+                        pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                    ),
+                    self.plt2.plot(
+                        x=set_irrad[VOLTAGE], 
+                        y=set_irrad[POWER],
+                        pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                    )
+                ])
+        self.plots2_len = len(self.plots2)
         self.plt2.setLabel('left', "Current (A)")
         self.plt2.setLabel('bottom', "Voltage (V)")
 
@@ -535,10 +563,106 @@ class Simulation:
         Return:
             - None
         """
-        # TODO: make some sort of refresh method for this.
+        # we should just check the most recent set
+        # if it's not plotted, plot it, otherwise edit the existing one.
+
+        # widget 1 - Effect of Temperature on IV and PV curve; IRRAD is set to 1000
+        # plot the various series
+        if len(self.sets_temps) > 0 and self.plots_len >= 0:
+            # data sets | plots
+            # 0 | 0, do nothing
+            # 1 | 0, add a plot
+            # 1 | 1, update plot [0, 1)
+            # 2 | 1, update plot [0, 1), add a plot
+            # 2 | 2, update plot [1, 2)
+            # 4 | 2, update plot [1, 2), add two plots
+            idx = self.plots_len -1
+            if idx < 0:
+                idx = 0
+            for set_temp in self.sets_temps[idx:]:
+                # modify existing
+                if idx < len(self.plots):
+                    self.plots[idx][0].setData(
+                        x=set_temp[VOLTAGE], 
+                        y=set_temp[CURRENT],
+                        pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                    )
+                    self.plots[idx][1].setData(
+                        x=set_temp[VOLTAGE], 
+                        y=set_temp[POWER],
+                        pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                    )
+                # add new
+                else:
+                    self.plots.append([
+                        self.plt.plot(
+                            x=set_temp[VOLTAGE], 
+                            y=set_temp[CURRENT],
+                            pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                        ),
+                        self.plt.plot(
+                            x=set_temp[VOLTAGE], 
+                            y=set_temp[POWER],
+                            pen=pg.mkPen((255, 255-set_temp[TEMP][0]*255, 255-set_temp[IRRAD][0]*255), width=2),
+                        )
+                    ])
+                idx += 1
+        self.plots_len = len(self.plots)
+
+        # widget 2 - Effect of Irradiance on IV and PV curve; TEMP is set to 25
+        # plot the various series
+        if len(self.sets_irrads) > 0 and self.plots2_len >= 0:
+            idx = self.plots2_len - 1
+            if idx < 0:
+                idx = 0
+            for set_irrad in self.sets_irrads[idx:]:
+                # modify existing
+                if idx < len(self.plots2):
+                    self.plots2[idx][0].setData(
+                        x=set_irrad[VOLTAGE], 
+                        y=set_irrad[CURRENT],
+                        pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                    )
+                    self.plots2[idx][1].setData(
+                        x=set_irrad[VOLTAGE], 
+                        y=set_irrad[POWER],
+                        pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                    )
+                # add new
+                else:
+                    self.plots2.append([
+                        self.plt2.plot(
+                            x=set_irrad[VOLTAGE], 
+                            y=set_irrad[CURRENT],
+                            pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                        ),
+                        self.plt2.plot(
+                            x=set_irrad[VOLTAGE], 
+                            y=set_irrad[POWER],
+                            pen=pg.mkPen((255, 255-set_irrad[TEMP][0]*255, set_irrad[IRRAD][0]*255), width=2),
+                        )
+                    ])
+                idx += 1
+        self.plots2_len = len(self.plots2)
+
+        QtGui.QApplication.processEvents()
+
+    def overlay_data(self, file=""):
+        if file != "":
+            array = []
+            with open(file, "r", newline='\n') as csv_file:
+                reader = csv.reader(csv_file)
+                for row in reader:
+                    array.append(row)
+            array_formatted = []
+            for item in array:
+                item2 = {'pos': [float(item[0]), float(item[1])], 'brush': pg.mkBrush(int(item[2]), int(item[3]), int(item[4]))}
+                array_formatted.append(item2)
+            scatterPoints = pg.ScatterPlotItem(size=2, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255))
+            scatterPoints.addPoints(array_formatted)
+            self.plt2.addItem(scatterPoints)
 
     def save_model(self):
         with open("results.csv", "ab") as f:
             a = np.transpose(np.asarray([self.disp_cycle, self.disp_pDiff]))
             np.savetxt(f, a, delimiter=",", fmt='%.4f')
-
