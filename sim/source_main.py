@@ -10,11 +10,12 @@ Description: This file emulates a single cell source IV curve across multiple di
 """
 import sys
 import time
-from src.source import Source
+from src.source import Source, CELL
 from src.simulation import Simulation
 from src.source_file import SourceFile
 
 def main():
+    refresh_rate = 200 # FPS
     # --------------PARAMETER PROMPTS--------------
     # source input dialogue
     print("Suggested save parameters are: v=0.01, i=50, t=.5.")
@@ -73,7 +74,7 @@ def main():
 
     # -------------- SIMULATION START --------------
     MAX_VOLTAGE     = 0.8
-    MAX_IRRADIANCE  = 1000  # W/M^2
+    MAX_IRRADIANCE  = 1001  # W/M^2
     MAX_TEMPERATURE = 80    # C
     MAX_LOAD        = 0     # W
     irradiance = 0.001
@@ -89,6 +90,8 @@ def main():
     print("Start model generation.")
     start = time.time()
     source.setup("Impulse", impulse=(irradiance, temperature))
+    if disp_sim:
+        simulation.init_display_source_model()
 
     # cycle outside through inside
     while irradiance <= MAX_IRRADIANCE:
@@ -96,7 +99,7 @@ def main():
         while temperature <= MAX_TEMPERATURE:
             modules = source.get_modules()
             for module in modules:
-                module[2].setup("Impulse", impulse=(irradiance, temperature))
+                module[CELL].setup("Impulse", impulse=(irradiance, temperature))
             # source gets the IV curve for current conditions
             [characteristics, [v_mpp, i_mpp, p_mpp]] = source.get_source_IV(step_size_v)
 
@@ -109,16 +112,14 @@ def main():
                     round(temperature, 3), 
                     round(characteristic[1], 3)
                 ])
+                # if we're displaying the model, add datapoint to the simulation
                 if disp_sim:
                     simulation.add_datapoint_source_model(
                         round(irradiance, 3), 
                         round(temperature, 3), 
-                        0,
                         round(characteristic[0], 3), 
                         round(characteristic[1], 3)
                     )
-                    # simulation.update_display_source_model()
-
                 bin_num += 1
 
             if temperature == 0.001:
@@ -139,8 +140,8 @@ def main():
 
     if disp_sim:
         print("Showing display.")
-        simulation.init_display_source_model(file=is_overlay)
         simulation.update_display_source_model()
+        # simulation.overlay_data(file=use_file)
     
     input("Waiting.")
 
