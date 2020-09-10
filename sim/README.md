@@ -16,6 +16,8 @@ Install these dependencies or use the requirements.txt to install.
 * math
 * pyqtgraph
 
+Install dependencies using `pip3 install -r requirements.txt`
+
 ## Feature Request and Bug list
 * source
   * [x] source dependence on temperature

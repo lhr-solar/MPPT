@@ -4,7 +4,7 @@ main.py
 Author: Matthew Yu, Array Lead (2020).
 Contact: matthewjkyu@gmail.com
 Created: 5/24/20
-Last Modified: 8/16/20
+Last Modified: 8/22/20
 Description: This is the main handler for the mppt simulator. 
     The simulator has three main components:
       1. Source simulator - The program simulates a solar cell or set of solar cells by taking in static parameters or a datafile of input values over time.

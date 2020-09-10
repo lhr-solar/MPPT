@@ -4,7 +4,7 @@ Source.py
 Author: Matthew Yu, Array Lead (2020). 
 Contact: matthewjkyu@gmail.com 
 Created: 5/24/20 
-Last Modified: 8/9/20 
+Last Modified: 8/22/20 
 
 Description: This file describes the Source class, which generates input values
 for the Display and MPPT. The Source does not do any modelling, but it
