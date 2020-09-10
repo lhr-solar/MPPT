@@ -457,15 +457,15 @@ class Cell:
     def get_env_conditions(self):
         """
         get_env_conditions
-        Returns source conditions for data analysis.
+        Returns cell conditions for the most recent cycle for data analysis.
 
         Args:
             - None
 
         Returns:
-            - [(irradiance, temperature, load), ...] (list of tuples)
+            - (irradiance, temperature, load) (tuple)
         """
-        return [module.get_env_conditions() for module in modules]
+        return (self.irradiance, self.temperature, self.load)
 
     def get_model_type(self):
         """
