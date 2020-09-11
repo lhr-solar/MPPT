@@ -35,11 +35,14 @@ across the PV.
 This is our basic feedback loop.
 */
 
+#include <chrono>
 #include "mbed.h"
 #include "sensor/currentSensor.h"
 #include "sensor/voltageSensor.h"
 #include "mppt/PandO.h"
 
+
+void manage_pipeline();
 
 // TODO: initialize CAN
 
@@ -77,7 +80,7 @@ int main(void) {
     
     // startup the rest of the pipeline to manage data movement
     Ticker pipeline;
-    pipeline.attach_us(manage_pipeline, 25000); // 25 ms
+    pipeline.attach(manage_pipeline, std::chrono::microseconds(25000)); // 25 ms
 
     // main process loop
     while (running) {

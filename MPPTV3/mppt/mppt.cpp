@@ -22,6 +22,48 @@ void Mppt::update_tracking_LED() {
 }
 
 /**
+ * determines the amount to travel from the current array voltage position to
+ * reach the mppt.
+ * TODO: implement the adaptive and default modes according to
+ * TODO: sim/src/mppt_algorithms/mppt.py -> calc_perturb_amt()
+ * 
+ * @param arrayVoltage (float)
+ *      array voltage
+ * @param arrayCurrent (float)
+ *      array current
+ * @param irradiance (float)
+ *      array irradiance
+ * @param temperature (float)
+ *      array temperature
+ * 
+ * @return expected voltage applied over the array (float)
+ */
+float Mppt::calculate_perturb_amount(Mode mode, float arrayVoltage, float arrayCurrent, float irradiance, float temperature) {
+    switch (mode) {
+        ADAPTIVE:
+            return 0.0;
+        default:
+        DEFAULT:
+            // fixed stride
+            return 0.1;
+    }
+}
+
+/**
+ * converts the expected voltage applied over the array into a pulse width for
+ * the DC-DC converter to use.
+ * TODO: implement this translation function
+ * 
+ * @param arrayVoltageNew (float)
+ *      expected voltage applied across the array. In other terms, the load.
+ * 
+ * @return pulseWidth (double)
+ */
+double Mppt::convert_into_pulse_width(float arrayVoltageNew) {
+    return 0.0;
+}
+
+/**
  * sets the inputs for the MPPT algorithm to process at the next interrupt.
  * 
  * @param arrayVoltage (float)

@@ -16,6 +16,11 @@
 #include <chrono>
 
 
+enum Mode {
+    DEFAULT,
+    ADAPTIVE
+};
+
 /**
  * Definition of a base implementation for mppt algorithms.
  * 
@@ -48,7 +53,17 @@ class Mppt {
         void update_tracking_LED();
 
         virtual void process() = 0;
+
+        float calculate_perturb_amount(
+            Mode mode,
+            float arrayVoltage, 
+            float arrayCurrent, 
+            float irradiance, 
+            float temperature
+        );
     
+        double convert_into_pulse_width(float arrayVoltageNew);
+
     public:
         /**
          * constructor for a Mppt object.

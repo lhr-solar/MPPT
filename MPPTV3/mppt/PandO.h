@@ -23,6 +23,9 @@ class PandO: public Mppt {
          * the DC-DC converter to run at.
          */
         void process() {
+            static float arrVoltOld = 0.0;
+            static float arrPowerOld = 0.0; 
+
             while (inputLock);
             inputLock = true;
             float arrVolt = arrayVoltage;
@@ -30,8 +33,41 @@ class PandO: public Mppt {
             float battVolt = battVoltage;
             float battCurr = battCurrent;
             inputLock = false;
-            // run the algorithm...
+
+            // run the algorithm
+            // generate the differences
+            float arrVoltDiff = arrVolt - arrVoltOld;
+            float arrPowerDiff = arrVolt * arrCurr - arrPowerOld;
+
+            // get the voltage perturb stride
+            double dVoltRef = calculate_perturb_amount(DEFAULT, arrVolt, arrCurr, 0.0, 0.0);
+            // get the new array applied voltage
+            float arrVoltNew = arrVolt;
+            if (arrPowerDiff > 0.0) {
+                if (arrVoltDiff > 0.0) {
+                    arrVoltNew += dVoltRef;
+                } else {
+                    arrVoltNew -= dVoltRef;
+                }
+            } else {
+                if (arrVoltDiff > 0.0) {
+                    arrVoltNew -= dVoltRef;
+                } else {
+                    arrVoltNew += dVoltRef;
+                }
+            }
+
+            // adjust the pulse width
+            double pulseWidthClone = convert_into_pulse_width(arrVoltNew);
+            PWLock = true;
+            pulseWidth = pulseWidthClone;
+            PWLock = false;
+
+            // assign old variables
+            arrVoltOld = arrVolt;
+            arrPowerOld = arrVolt * arrCurr;
         }
+        
     public:
         /**
          * constructor for a PandO object.
