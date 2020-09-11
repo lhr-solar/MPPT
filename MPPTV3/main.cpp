@@ -1,10 +1,19 @@
 /**
  * Maximum Power Point Tracker Project
  * 
+ * File: main.cpp
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/20/20
+ * Last Modified: 10/11/20
+ * 
+ * Program Discription: This program is meant to run on the STM32 L432KC Nucleo
+ * uC that controls the MPPT board. It manages the power parameters of the
+ * subarray, seeking to optimize power transfer to the BMS (Battery Management
+ * System).
+ * 
+ * This program is designed to test and use various MPPT algorithms. These are
+ * further described in their respective files in the mppt/ folder.
  */
 
 /*
@@ -17,9 +26,11 @@ A couple of things here. Our MPPT takes in the following inputs:
 At the moment, we don't really need to touch the battery side of things for now.
 
 The MPPT provides the following output:
-- Pulse Width as a function of output voltage.
-This goes into our DC-DC Converter, which also needs to be maintained by the Nucleo.
-The DC-DC converter shifts our pulse width input into a voltage output across the PV.
+- Pulse Width as a function of output voltage. 
+
+This goes into our DC-DC Converter, which also needs to be maintained by the
+Nucleo. The DC-DC converter shifts our pulse width input into a voltage output
+across the PV.
 
 This is our basic feedback loop.
 */
@@ -29,47 +40,79 @@ This is our basic feedback loop.
 #include "sensor/voltageSensor.h"
 #include "mppt/PandO.h"
 
+
+// TODO: initialize CAN
+
+// initialize LEDs
+DigitalOut boardLED(LED1); // D13 i think
+DigitalOut trackingLED(D11);
+DigitalOut batteryFullLED(D12);
+
+// initialize voltage and current sensors
+VoltageSensor sensorArrayVoltage(PA_0);
+VoltageSensor sensorBattVoltage(PA_0);
+CurrentSensor sensorArrayCurrent(PA_0);
+CurrentSensor sensorBattCurrent(PA_0);
+// initialize MPPT
+PandO mppt(PA_0);
+// TODO: initialize DC-DC converter
+
+
 int main(void) {
     // this running boolean can be shut down in various events.
     bool running = true;
 
-    // setup buffer
-    // setup CAN bus
+    // TODO: startup CAN
 
-    // setup LEDs
-    DigitalOut boardLED(LED1); // D13 i think
-    DigitalOut trackingLED(D11);
-    DigitalOut batteryFullLED(D12);
-
-    // initialize voltage and current sensors
-    VoltageSensor sensorArrayVoltage(PA_0);
-    VoltageSensor sensorBattVoltage(PA_0);
-    CurrentSensor sensorArrayCurrent(PA_0);
-    CurrentSensor sensorBattCurrent(PA_0);
-    // initialize MPPT algorithm
-    PandO mppt(PA_0);
-
-    // setup timer interrupts
+    // startup sensor interrupts
     sensorArrayVoltage.start(200000); // 200 ms
     sensorBattVoltage.start(200000);
     sensorArrayCurrent.start(200000);
     sensorBattCurrent.start(200000);
     
-    // setup MPPT polling - every trigger MPPT generates a pulse width that goes to the DC-DC converter that sets it
-    mppt.enableTracking(50000); // 50 ms
+    // startup MPPT
+    mppt.enable_tracking(50000); // 50 ms
     
+    // TODO: startup DC-DC converter
+    
+    // startup the rest of the pipeline to manage data movement
+    Ticker pipeline;
+    pipeline.attach_us(manage_pipeline, 25000); // 25 ms
+
+    // main process loop
     while (running) {
         // read in CAN bus buffer to see if we have any messages
         // send out CAN bus messages if needed
         // look for conditions that main cause failure
     }
-
-    // detach tickers for sensors
+    
+    // shutdown sensor
     sensorArrayVoltage.stop();
     sensorBattVoltage.stop();
     sensorArrayCurrent.stop();
     sensorBattCurrent.stop();
-    // detach ticker for MPPT
-    mppt.disableTracking();
-    // shutdown CAN
+    // TODO: shutdown DC-DC converter
+
+    // shutdown MPPT
+    mppt.disable_tracking();
+    // shutdown pipeline
+    pipeline.detach();
+    // TODO: shutdown CAN
+}
+
+
+/**
+ * manage_pipeline routes data changes from each step in the pipeline (sensor ->
+ * mppt -> dc-dc converter).
+ */
+void manage_pipeline() {
+    // grab the sensor data
+    float vArr = sensorArrayVoltage.get_value();
+    float vBatt = sensorBattVoltage.get_value();
+    float cArr = sensorArrayCurrent.get_value();
+    float cBatt = sensorBattCurrent.get_value();
+    // pipe it into the MPPT
+    mppt.set_inputs(vArr, cArr, vBatt, cBatt);
+    // pipe MPPT output into the DC-DC converter
+    double pulseWidth = mppt.get_pulse_width();
 }
