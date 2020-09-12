@@ -41,8 +41,8 @@ class Mppt {
         bool PWLock;
         bool inputLock;
 
-        // pulse width result value for the DC-DC converter.
-        double pulseWidth;
+        // target voltage value for the DC-DC converter.
+        float targetVoltage;
 
         // input conditions for the MPPT to process
         float arrayVoltage;
@@ -62,8 +62,6 @@ class Mppt {
             float temperature
         );
     
-        double convert_into_pulse_width(float arrayVoltageNew);
-
     public:
         /**
          * constructor for a Mppt object.
@@ -79,7 +77,7 @@ class Mppt {
             PWLock = false;
             inputLock = false;
 
-            pulseWidth = 0.0;
+            targetVoltage = 0.0;
 
             arrayVoltage = 0.0;
             arrayCurrent = 0.0;
@@ -94,7 +92,7 @@ class Mppt {
             float battCurrent
         );
 
-        double get_pulse_width();
+        float get_target_voltage();
 
         void enable_tracking(int interval);
         

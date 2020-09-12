@@ -19,7 +19,7 @@ using std::string;
 class PandO: public Mppt {
     protected:
         /**
-         * processes internal inputs and determines an optimal pulse width for
+         * processes internal inputs and determines an optimal target voltage for
          * the DC-DC converter to run at.
          */
         void process() {
@@ -57,10 +57,9 @@ class PandO: public Mppt {
                 }
             }
 
-            // adjust the pulse width
-            double pulseWidthClone = convert_into_pulse_width(arrVoltNew);
+            // adjust the target voltage
             PWLock = true;
-            pulseWidth = pulseWidthClone;
+            targetVoltage = arrVoltNew;
             PWLock = false;
 
             // assign old variables

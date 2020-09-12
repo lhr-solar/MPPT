@@ -50,20 +50,6 @@ float Mppt::calculate_perturb_amount(Mode mode, float arrayVoltage, float arrayC
 }
 
 /**
- * converts the expected voltage applied over the array into a pulse width for
- * the DC-DC converter to use.
- * TODO: implement this translation function
- * 
- * @param arrayVoltageNew (float)
- *      expected voltage applied across the array. In other terms, the load.
- * 
- * @return pulseWidth (double)
- */
-double Mppt::convert_into_pulse_width(float arrayVoltageNew) {
-    return 0.0;
-}
-
-/**
  * sets the inputs for the MPPT algorithm to process at the next interrupt.
  * 
  * @param arrayVoltage (float)
@@ -86,16 +72,16 @@ void Mppt::set_inputs(float arrayVoltage, float arrayCurrent, float battVoltage,
 }
 
 /**
- * returns the latest pulse width output of the Mppt algorithm.
+ * returns the latest target voltage of the Mppt algorithm.
  * 
  * @note This method may stall until the lock on the variable is released, which
  * means the Mppt has uploaded the new value into it.
  * 
- * @return pulse width value (double)
+ * @return target voltage (float)
  */
-double Mppt::get_pulse_width() {
+float Mppt::get_target_voltage() {
     while (PWLock);
-    return pulseWidth;
+    return targetVoltage;
 }
 
 /**
@@ -104,6 +90,8 @@ double Mppt::get_pulse_width() {
  * 
  * @param interval (int)
  *      interval for the interrupt to trigger, in microseconds
+ * 
+ * @note: the interval should be at least 1% of the 
  */
 void Mppt::enable_tracking(int interval) {
     tick.attach(callback(this, &Mppt::process), std::chrono::microseconds(interval));
@@ -112,7 +100,7 @@ void Mppt::enable_tracking(int interval) {
 }
 
 /**
- * disables the timed interrupt and the Mppt algorithm stops iterating. Also
+ * disables the timed interrupt and the Dc-dc converter pulse stops iterating. Also
  * turns off the tracking LED.
  */
 void Mppt::disable_tracking() {

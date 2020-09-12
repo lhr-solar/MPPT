@@ -40,6 +40,7 @@ This is our basic feedback loop.
 #include "sensor/currentSensor.h"
 #include "sensor/voltageSensor.h"
 #include "mppt/PandO.h"
+#include "dcdcconverter/DcDcConverter.h"
 
 
 void manage_pipeline();
@@ -58,8 +59,8 @@ CurrentSensor sensorArrayCurrent(PA_0);
 CurrentSensor sensorBattCurrent(PA_0);
 // initialize MPPT
 PandO mppt(PA_0);
-// TODO: initialize DC-DC converter
-
+// initialize DC-DC converter
+Dcdcconverter converter(PA_0);
 
 int main(void) {
     // this running boolean can be shut down in various events.
@@ -77,7 +78,8 @@ int main(void) {
     mppt.enable_tracking(50000); // 50 ms
     
     // TODO: startup DC-DC converter
-    
+    converter.start(25000); // 25 ms
+
     // startup the rest of the pipeline to manage data movement
     Ticker pipeline;
     pipeline.attach(manage_pipeline, std::chrono::microseconds(25000)); // 25 ms
@@ -94,7 +96,8 @@ int main(void) {
     sensorBattVoltage.stop();
     sensorArrayCurrent.stop();
     sensorBattCurrent.stop();
-    // TODO: shutdown DC-DC converter
+    // shutdown DC-DC converter
+    converter.stop();
 
     // shutdown MPPT
     mppt.disable_tracking();
@@ -117,5 +120,6 @@ void manage_pipeline() {
     // pipe it into the MPPT
     mppt.set_inputs(vArr, cArr, vBatt, cBatt);
     // pipe MPPT output into the DC-DC converter
-    double pulseWidth = mppt.get_pulse_width();
+    double targetVoltage = mppt.get_target_voltage();
+    converter.set_pulse_width(targetVoltage);
 }
