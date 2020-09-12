@@ -33,7 +33,7 @@ class Sensor {
         bool lock;
 
         // adc output result value.
-        float adcValue;
+        double adcValue;
 
         virtual void measure() = 0;
 
@@ -51,7 +51,7 @@ class Sensor {
 
         void set_reference_voltage(float voltageReference);
 
-        float get_value();
+        double get_value();
 
         void start(int interval);
 

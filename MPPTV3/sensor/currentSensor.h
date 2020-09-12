@@ -34,7 +34,7 @@ class CurrentSensor: public Sensor {
          * reads and processes the value obtained from the AnalogIn pin.
          */
         void measure() {
-            float tempValue = sensor.read_voltage();
+            double tempValue = sensor.read_voltage();
             // do some processing on the temporary value, maybe even some SW filtering
             lock = true;
             adcValue = tempValue;

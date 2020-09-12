@@ -42,24 +42,24 @@ class Mppt {
         bool inputLock;
 
         // target voltage value for the DC-DC converter.
-        float targetVoltage;
+        double targetVoltage;
 
         // input conditions for the MPPT to process
-        float arrayVoltage;
-        float arrayCurrent; 
-        float battVoltage;
-        float battCurrent;
+        double arrayVoltage;
+        double arrayCurrent; 
+        double battVoltage;
+        double battCurrent;
 
         void update_tracking_LED();
 
         virtual void process() = 0;
 
-        float calculate_perturb_amount(
+        double calculate_perturb_amount(
             Mode mode,
-            float arrayVoltage, 
-            float arrayCurrent, 
-            float irradiance, 
-            float temperature
+            double arrayVoltage, 
+            double arrayCurrent, 
+            double irradiance, 
+            double temperature
         );
     
     public:
@@ -86,13 +86,13 @@ class Mppt {
         }
 
         void set_inputs(
-            float arrayVoltage, 
-            float arrayCurrent, 
-            float battVoltage, 
-            float battCurrent
+            double arrayVoltage, 
+            double arrayCurrent, 
+            double battVoltage, 
+            double battCurrent
         );
 
-        float get_target_voltage();
+        double get_target_voltage();
 
         void enable_tracking(int interval);
         

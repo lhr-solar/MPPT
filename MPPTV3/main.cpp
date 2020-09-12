@@ -40,12 +40,13 @@ This is our basic feedback loop.
 #include "sensor/currentSensor.h"
 #include "sensor/voltageSensor.h"
 #include "mppt/PandO.h"
+#include "CAN/CAN.h"
 #include "dcdcconverter/DcDcConverter.h"
-
 
 void manage_pipeline();
 
-// TODO: initialize CAN
+// initialize CAN
+CANDevice can(PA_0, PA_0);
 
 // initialize LEDs
 DigitalOut boardLED(LED1); // D13 i think
@@ -66,20 +67,17 @@ int main(void) {
     // this running boolean can be shut down in various events.
     bool running = true;
 
-    // TODO: startup CAN
-
+    // startup CAN
+    can.start(50000);
     // startup sensor interrupts
     sensorArrayVoltage.start(200000); // 200 ms
     sensorBattVoltage.start(200000);
     sensorArrayCurrent.start(200000);
     sensorBattCurrent.start(200000);
-    
     // startup MPPT
     mppt.enable_tracking(50000); // 50 ms
-    
-    // TODO: startup DC-DC converter
+    // startup DC-DC converter
     converter.start(25000); // 25 ms
-
     // startup the rest of the pipeline to manage data movement
     Ticker pipeline;
     pipeline.attach(manage_pipeline, std::chrono::microseconds(25000)); // 25 ms
@@ -98,12 +96,12 @@ int main(void) {
     sensorBattCurrent.stop();
     // shutdown DC-DC converter
     converter.stop();
-
     // shutdown MPPT
     mppt.disable_tracking();
     // shutdown pipeline
     pipeline.detach();
-    // TODO: shutdown CAN
+    // shutdown CAN
+    can.stop();
 }
 
 

@@ -7,7 +7,7 @@
  * Created on: September 11th, 2020
  * Last Modified: 10/11/20
  * 
- * File Discription: This file implements functions defined for the
+ * File Discription: This file defines functions defined for the
  * Dcdcconverter class.
  */
 #pragma once

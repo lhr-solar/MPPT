@@ -30,9 +30,9 @@ void Sensor::set_reference_voltage(float voltageReference) {
  * @note This method may stall until the lock on the variable is released, which
  * means the sensor has uploaded the new value into it.
  * 
- * @return sensor value (float)
+ * @return sensor value (double)
  */
-float Sensor::get_value() {
+double Sensor::get_value() {
     while (lock);
     return adcValue;
 }

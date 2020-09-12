@@ -23,26 +23,26 @@ class PandO: public Mppt {
          * the DC-DC converter to run at.
          */
         void process() {
-            static float arrVoltOld = 0.0;
-            static float arrPowerOld = 0.0; 
+            static double arrVoltOld = 0.0;
+            static double arrPowerOld = 0.0; 
 
             while (inputLock);
             inputLock = true;
-            float arrVolt = arrayVoltage;
-            float arrCurr = arrayCurrent;
-            float battVolt = battVoltage;
-            float battCurr = battCurrent;
+            double arrVolt = arrayVoltage;
+            double arrCurr = arrayCurrent;
+            double battVolt = battVoltage;
+            double battCurr = battCurrent;
             inputLock = false;
 
             // run the algorithm
             // generate the differences
-            float arrVoltDiff = arrVolt - arrVoltOld;
-            float arrPowerDiff = arrVolt * arrCurr - arrPowerOld;
+            double arrVoltDiff = arrVolt - arrVoltOld;
+            double arrPowerDiff = arrVolt * arrCurr - arrPowerOld;
 
             // get the voltage perturb stride
             double dVoltRef = calculate_perturb_amount(DEFAULT, arrVolt, arrCurr, 0.0, 0.0);
             // get the new array applied voltage
-            float arrVoltNew = arrVolt;
+            double arrVoltNew = arrVolt;
             if (arrPowerDiff > 0.0) {
                 if (arrVoltDiff > 0.0) {
                     arrVoltNew += dVoltRef;

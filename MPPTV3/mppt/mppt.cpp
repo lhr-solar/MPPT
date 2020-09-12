@@ -27,18 +27,18 @@ void Mppt::update_tracking_LED() {
  * TODO: implement the adaptive and default modes according to
  * TODO: sim/src/mppt_algorithms/mppt.py -> calc_perturb_amt()
  * 
- * @param arrayVoltage (float)
+ * @param arrayVoltage (double)
  *      array voltage
- * @param arrayCurrent (float)
+ * @param arrayCurrent (double)
  *      array current
- * @param irradiance (float)
+ * @param irradiance (double)
  *      array irradiance
- * @param temperature (float)
+ * @param temperature (double)
  *      array temperature
  * 
- * @return expected voltage applied over the array (float)
+ * @return expected voltage applied over the array (double)
  */
-float Mppt::calculate_perturb_amount(Mode mode, float arrayVoltage, float arrayCurrent, float irradiance, float temperature) {
+double Mppt::calculate_perturb_amount(Mode mode, double arrayVoltage, double arrayCurrent, double irradiance, double temperature) {
     switch (mode) {
         ADAPTIVE:
             return 0.0;
@@ -52,16 +52,16 @@ float Mppt::calculate_perturb_amount(Mode mode, float arrayVoltage, float arrayC
 /**
  * sets the inputs for the MPPT algorithm to process at the next interrupt.
  * 
- * @param arrayVoltage (float)
+ * @param arrayVoltage (double)
  *      array voltage
- * @param arrayCurrent (float)
+ * @param arrayCurrent (double)
  *      array current
- * @param battVoltage (float)
+ * @param battVoltage (double)
  *      battery voltage
- * @param battCurrent (float)
+ * @param battCurrent (double)
  *      battery current
  */
-void Mppt::set_inputs(float arrayVoltage, float arrayCurrent, float battVoltage, float battCurrent) {
+void Mppt::set_inputs(double arrayVoltage, double arrayCurrent, double battVoltage, double battCurrent) {
     while (inputLock);
     inputLock = true;
     this->arrayVoltage = arrayVoltage;
@@ -77,9 +77,9 @@ void Mppt::set_inputs(float arrayVoltage, float arrayCurrent, float battVoltage,
  * @note This method may stall until the lock on the variable is released, which
  * means the Mppt has uploaded the new value into it.
  * 
- * @return target voltage (float)
+ * @return target voltage (double)
  */
-float Mppt::get_target_voltage() {
+double Mppt::get_target_voltage() {
     while (PWLock);
     return targetVoltage;
 }
