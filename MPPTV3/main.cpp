@@ -39,9 +39,17 @@ This is our basic feedback loop.
 #include "mbed.h"
 #include "sensor/currentSensor.h"
 #include "sensor/voltageSensor.h"
+#include "mppt/mppt.h"
 #include "mppt/PandO.h"
+#include "mppt/IC.h"
 #include "CAN/CAN.h"
 #include "dcdcconverter/DcDcConverter.h"
+
+#define CAN_INT_PERIOD 50000        // 50 ms
+#define SENSOR_INT_PERIOD 200000    // 200 ms
+#define MPPT_INT_PERIOD 50000       // 50 ms
+#define DC_DC_INT_PERIOD 50000      // 50 ms
+#define PIPELINE_PERIOD 25000       // 25 ms
 
 void manage_pipeline();
 
@@ -49,7 +57,7 @@ void manage_pipeline();
 CANDevice can(PA_0, PA_0);
 
 // initialize LEDs
-DigitalOut boardLED(LED1); // D13 i think
+DigitalOut boardLED(LED1); // D13 I think
 DigitalOut trackingLED(D11);
 DigitalOut batteryFullLED(D12);
 
@@ -59,7 +67,9 @@ VoltageSensor sensorBattVoltage(PA_0);
 CurrentSensor sensorArrayCurrent(PA_0);
 CurrentSensor sensorBattCurrent(PA_0);
 // initialize MPPT
-PandO mppt(PA_0);
+PandO pando(PA_0);
+IC ic(PA_0);
+Mppt* mppt;
 // initialize DC-DC converter
 Dcdcconverter converter(PA_0);
 
@@ -68,25 +78,59 @@ int main(void) {
     bool running = true;
 
     // startup CAN
-    can.start(50000);
+    can.start(CAN_INT_PERIOD);
     // startup sensor interrupts
-    sensorArrayVoltage.start(200000); // 200 ms
-    sensorBattVoltage.start(200000);
-    sensorArrayCurrent.start(200000);
-    sensorBattCurrent.start(200000);
-    // startup MPPT
-    mppt.enable_tracking(50000); // 50 ms
+    sensorArrayVoltage.start(SENSOR_INT_PERIOD);
+    sensorBattVoltage.start(SENSOR_INT_PERIOD);
+    sensorArrayCurrent.start(SENSOR_INT_PERIOD);
+    sensorBattCurrent.start(SENSOR_INT_PERIOD);
+    // startup MPPT - we assign the reference to the derived class to avoid possible object slicing
+    mppt = &pando;
+    mppt->enable_tracking(MPPT_INT_PERIOD);
     // startup DC-DC converter
-    converter.start(25000); // 25 ms
+    converter.start(DC_DC_INT_PERIOD);
     // startup the rest of the pipeline to manage data movement
     Ticker pipeline;
-    pipeline.attach(manage_pipeline, std::chrono::microseconds(25000)); // 25 ms
+    pipeline.attach(manage_pipeline, std::chrono::microseconds(PIPELINE_PERIOD));
 
     // main process loop
     while (running) {
         // read in CAN bus buffer to see if we have any messages
-        // send out CAN bus messages if needed
-        // look for conditions that main cause failure
+        char* msg = can.getMessage();
+        if (strcmp(msg, "") != 0) {
+            // check for start and stop commands
+            if (strcmp(msg, "MPPT_START") == 0) {
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_STOP") == 0) {
+                mppt->disable_tracking();
+            }
+
+            // TESTING
+            // check for algorithm change 
+            else if (strcmp(msg, "MPPT_PANDO") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // swap reference
+                mppt = &pando;
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_IC") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // swap reference
+                mppt = &ic;
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_FC") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // TODO: swap reference
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            }
+        }
+        // TODO: send out CAN bus messages if needed
+        // TODO: look for conditions that may cause failure
     }
     
     // shutdown sensor
@@ -97,13 +141,12 @@ int main(void) {
     // shutdown DC-DC converter
     converter.stop();
     // shutdown MPPT
-    mppt.disable_tracking();
+    mppt->disable_tracking();
     // shutdown pipeline
     pipeline.detach();
     // shutdown CAN
     can.stop();
 }
-
 
 /**
  * manage_pipeline routes data changes from each step in the pipeline (sensor ->
@@ -116,8 +159,8 @@ void manage_pipeline() {
     float cArr = sensorArrayCurrent.get_value();
     float cBatt = sensorBattCurrent.get_value();
     // pipe it into the MPPT
-    mppt.set_inputs(vArr, cArr, vBatt, cBatt);
+    mppt->set_inputs(vArr, cArr, vBatt, cBatt);
     // pipe MPPT output into the DC-DC converter
-    double targetVoltage = mppt.get_target_voltage();
+    double targetVoltage = mppt->get_target_voltage();
     converter.set_pulse_width(targetVoltage);
 }

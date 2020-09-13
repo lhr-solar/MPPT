@@ -28,7 +28,6 @@ class Dcdcconverter {
 
         // locks to prevent read/modification of shared resources
         bool PWLock;
-        bool arrVoltageLock;
         bool battVoltageLock;
 
         // pulse width result value for the DC-DC converter.
@@ -47,7 +46,6 @@ class Dcdcconverter {
          */
         Dcdcconverter(PinName pin) : pwm(pin) {            
             PWLock = false;
-            arrVoltageLock = false;
             battVoltageLock = false;
             pulseWidth = 0.0;
             arrVoltage = 0.0;

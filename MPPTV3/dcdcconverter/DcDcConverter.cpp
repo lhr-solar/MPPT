@@ -21,11 +21,10 @@ void Dcdcconverter::signal() {
 }
 
 void Dcdcconverter::set_pulse_width(double arrVoltage) {
-    arrVoltageLock = true;
     this->arrVoltage = arrVoltage;
-    arrVoltageLock = false;
 
     // convert voltage into pulse width
+    while (battVoltageLock);
     double pulseWidthRes = 0.0;
     if (this->battVoltage > 0.0) {
         pulseWidthRes = 1 - this->battVoltage / this->arrVoltage;
@@ -43,6 +42,7 @@ void Dcdcconverter::set_batt_voltage(double battVoltage) {
 }
 
 double Dcdcconverter::get_pulse_width() {
+    while (PWLock);
     return pulseWidth;
 }
 

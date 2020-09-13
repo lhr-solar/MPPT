@@ -12,9 +12,10 @@
  * among its children.
  */
 #pragma once
-#include "mbed.h"
 #include <chrono>
-
+#include "mbed.h"
+#include "string"
+using std::string;
 
 enum Mode {
     DEFAULT,
@@ -52,7 +53,7 @@ class Mppt {
 
         void update_tracking_LED();
 
-        virtual void process() = 0;
+        void process();
 
         double calculate_perturb_amount(
             Mode mode,
@@ -97,4 +98,6 @@ class Mppt {
         void enable_tracking(int interval);
         
         void disable_tracking();
+
+        string get_name();
 };

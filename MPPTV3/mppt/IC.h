@@ -1,20 +1,20 @@
 /**
  * Maximum Power Point Tracker Project
  * 
- * File: PandO.h
+ * File: IC.h
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
  * Last Modified: 10/11/20
  * 
- * File Discription: This header file implements the PandO class, which
+ * File Discription: This header file implements the IC class, which
  * is a derived class from the abstract Mppt class.
  */
 #pragma once
 #include "mppt.h"
 
 
-class PandO: public Mppt {
+class IC: public Mppt {
     protected:
         /**
          * processes internal inputs and determines an optimal target voltage for
@@ -22,7 +22,7 @@ class PandO: public Mppt {
          */
         void process() {
             static double arrVoltOld = 0.0;
-            static double arrPowerOld = 0.0; 
+            static double arrCurrOld = 0.0; 
 
             while (inputLock);
             inputLock = true;
@@ -35,23 +35,23 @@ class PandO: public Mppt {
             // run the algorithm
             // generate the differences
             double arrVoltDiff = arrVolt - arrVoltOld;
-            double arrPowerDiff = arrVolt * arrCurr - arrPowerOld;
+            double arrCurrDiff = arrCurr - arrCurrOld;
 
             // get the voltage perturb stride
             double dVoltRef = calculate_perturb_amount(DEFAULT, arrVolt, arrCurr, 0.0, 0.0);
             // get the new array applied voltage
             double arrVoltNew = arrVolt;
-            if (arrPowerDiff > 0.0) {
-                if (arrVoltDiff > 0.0) {
-                    arrVoltNew += dVoltRef;
-                } else {
+            if (arrVoltDiff == 0.0) {
+                if (arrCurrDiff > 0.0) {
                     arrVoltNew -= dVoltRef;
+                } else if (arrCurrDiff < 0.0) {
+                    arrVoltNew += dVoltRef;
                 }
             } else {
-                if (arrVoltDiff > 0.0) {
-                    arrVoltNew -= dVoltRef;
-                } else {
+                if (-arrCurr * arrVoltDiff > arrCurrDiff * arrVolt) {
                     arrVoltNew += dVoltRef;
+                } else if (-arrCurr * arrVoltDiff < arrCurrDiff * arrVolt) {
+                    arrVoltNew -= dVoltRef;
                 }
             }
 
@@ -62,23 +62,23 @@ class PandO: public Mppt {
 
             // assign old variables
             arrVoltOld = arrVolt;
-            arrPowerOld = arrVolt * arrCurr;
+            arrCurrOld = arrCurr;
         }
         
     public:
         /**
-         * constructor for a PandO object.
+         * constructor for a IC object.
          * 
          * @param pin (PinName)
          *      pin to attach DigitalOut (tracking LED) to.
          */
-        PandO(PinName pin) : Mppt(pin) {}
+        IC(PinName pin) : Mppt(pin) {}
 
         /**
          * returns the name of the MPPT algorithm being run.
          * 
-         * @return PandO (string)
+         * @return IC (string)
          */
-        string get_name() { return "PandO"; }
+        string get_name() { return "IC"; }
 
 };

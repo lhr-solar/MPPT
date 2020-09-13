@@ -22,6 +22,12 @@ void Mppt::update_tracking_LED() {
 }
 
 /**
+ * placeholder process function which is inherited and implemented by children classes.
+ */
+void Mppt::process() {}
+
+
+/**
  * determines the amount to travel from the current array voltage position to
  * reach the mppt.
  * TODO: implement the adaptive and default modes according to
@@ -94,9 +100,11 @@ double Mppt::get_target_voltage() {
  * @note: the interval should be at least 1% of the 
  */
 void Mppt::enable_tracking(int interval) {
-    tick.attach(callback(this, &Mppt::process), std::chrono::microseconds(interval));
-    trackingLED = 1;
-    tracking = true;
+    if (!tracking) {
+        tick.attach(callback(this, &Mppt::process), std::chrono::microseconds(interval));
+        trackingLED = 1;
+        tracking = true;
+    }
 }
 
 /**
@@ -108,3 +116,8 @@ void Mppt::disable_tracking() {
     trackingLED = 0;
     tracking = false;
 }
+
+/**
+ * returns the name of the mppt algorithm.
+ */
+string Mppt::get_name() { return "None"; }
