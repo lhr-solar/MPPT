@@ -10,6 +10,9 @@
  * File Discription: This header file implements the SMAFilter class, which
  * is a derived class from the parent Filter class. SMA stands for Simple Moving
  * Average.
+ * 
+ * Sources:
+ * https://hackaday.com/2019/09/06/sensor-filters-for-coders/
  */
 #pragma once
 #include "filter.h"
