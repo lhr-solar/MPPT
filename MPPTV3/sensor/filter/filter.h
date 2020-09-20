@@ -63,4 +63,4 @@ class Filter {
          * Deallocates constructs in the filter for shutdown.
          */
         void shutdown() { return; }
-}
+};

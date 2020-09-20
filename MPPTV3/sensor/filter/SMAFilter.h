@@ -15,6 +15,7 @@
 #include "filter.h"
 #include <new>
 
+
 /**
  * Definition of a derived implementation for a SMA filter.
  * 
@@ -38,8 +39,7 @@ class SMAFilter: public Filter{
          *      one time.
          * @precondition maxSamples is a positive number.
          */
-        SMAFilter(int maxSamples) {
-            Filter(maxSamples);
+        SMAFilter(int maxSamples) : Filter(maxSamples) {
             // setup the data buffer
             _dataBuffer = new (std::nothrow) double [_maxSamples];
             _idx = 0;
@@ -58,7 +58,7 @@ class SMAFilter: public Filter{
             if (_dataBuffer == nullptr) { return; }
             
             // saturate counter at max samples
-            if ((_numSamples + 1) <= _maxSamples) {
+            if (_numSamples < _maxSamples) {
                 _numSamples ++;
                 _sum += sample;
             } else {
@@ -80,6 +80,7 @@ class SMAFilter: public Filter{
         double getResult() { 
             // check for exception
             if (_dataBuffer == nullptr) { return 0.0; }
+
             return _sum / _numSamples;
         }
 
