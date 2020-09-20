@@ -14,7 +14,15 @@
 #include "filter.h"
 #include <new>
 #include <limits>
+#include <bits/stdc++.h>
+#include <cmath>
 
+/**
+ * Definition of a derived implementation for a Rolling Median filter.
+ * 
+ * The MedianFilter class create objects that can be used to smooth data
+ * measurements provided in a stream format.
+ */
 /**
  * Definition of a derived implementation for a Rolling Median filter.
  * 
@@ -28,10 +36,34 @@ class MedianFilter: public Filter{
         int _idx;
 
         double _getMedian(int startIdx, int endIdx) { 
-            // naive solution is to sort the data and pick (_numSamples + 1) / 2
-            // index
-            return 0.0; // TODO: fix this
+            // naive solution is to sort the data and pick the n/2 index
+            double * tempBuffer = new (std::nothrow) double [_numSamples];
+            if (tempBuffer != nullptr) {
+                for (int i = 0; i < _numSamples; i++) {
+                    tempBuffer[i] = _dataBuffer[(i + startIdx) % _maxSamples];
+                }
+                
+                // sort the buffer
+                std::sort(tempBuffer, tempBuffer + _numSamples);
+                
+                // get the correct index value
+                double val = 0.0;
+                if (_numSamples == 0) { 
+                    return 0.0;
+                } else if (_numSamples%2 == 0) {
+                    // even, split the median between two values
+                    val = (tempBuffer[_numSamples/2] + tempBuffer[_numSamples/2 - 1]) / 2.0;
+                } else {
+                    val = tempBuffer[(int) floor(_numSamples/2)];
+                }
+                
+                delete[] tempBuffer;
+                return val;
+            } else {
+                return 0.0;
+            }
          }
+
 
     public:
         MedianFilter() { MedianFilter(10); } // default implementation
