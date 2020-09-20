@@ -26,13 +26,13 @@ void CANDevice::handler() {
     bufferLock = false;
 }
 
-char* CANDevice::getMessage() {
+std::string CANDevice::getMessage() {
     while (bufferLock);
     CANMessage canMsg = mailbox[getIdx];
     getIdx = (getIdx + 1) % CAN_BUS_SIZE;
-    if (canMsg.id != MPPT_CAN_ID) { return ""; }
+    if (canMsg.id != MPPT_CAN_ID) { return std::string(""); }
 
-    return (char*) canMsg.data;
+    return std::string(reinterpret_cast<char*>(canMsg.data));
 }
 
 void CANDevice::start(int interval) {

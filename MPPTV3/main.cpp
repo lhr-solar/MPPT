@@ -96,32 +96,32 @@ int main(void) {
     // main process loop
     while (running) {
         // read in CAN bus buffer to see if we have any messages
-        char* msg = can.getMessage();
-        if (strcmp(msg, "") != 0) {
+        std::string msg = can.getMessage();
+        if (msg.compare("") != 0) {
             // check for start and stop commands
-            if (strcmp(msg, "MPPT_START") == 0) {
+            if (msg.compare("MPPT_START") == 0) {
                 mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_STOP") == 0) {
+            } else if (msg.compare("MPPT_STOP") == 0) {
                 mppt->disable_tracking();
             }
 
             // TESTING
             // check for algorithm change 
-            else if (strcmp(msg, "MPPT_PANDO") == 0) {
+            else if (msg.compare("MPPT_PANDO") == 0) {
                 // shut down current algorithm
                 mppt->disable_tracking();
                 // swap reference
                 mppt = &pando;
                 // start up new algorithm
                 mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_IC") == 0) {
+            } else if (msg.compare("MPPT_IC") == 0) {
                 // shut down current algorithm
                 mppt->disable_tracking();
                 // swap reference
                 mppt = &ic;
                 // start up new algorithm
                 mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_FC") == 0) {
+            } else if (msg.compare("MPPT_FC") == 0) {
                 // shut down current algorithm
                 mppt->disable_tracking();
                 // TODO: swap reference

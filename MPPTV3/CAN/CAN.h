@@ -14,6 +14,7 @@
 #pragma once
 #include "mbed.h"
 #include <chrono>
+#include <string>
 
 #define MPPT_CAN_ID 100
 #define CAN_BUS_SIZE 200
@@ -56,7 +57,7 @@ class CANDevice {
             getIdx = 0;
         }
 
-        char* getMessage();
+        std::string getMessage();
 
         void start(int interval);
         
