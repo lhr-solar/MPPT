@@ -14,7 +14,6 @@
 #pragma once
 #include "mbed.h"
 #include <chrono>
-#include <string>
 
 #define MPPT_CAN_ID 100
 #define CAN_BUS_SIZE 200
@@ -38,6 +37,7 @@ class CANDevice {
         bool bufferLock;
 
         int getIdx;
+        int messageLen;
 
         void handler();
 
@@ -55,9 +55,10 @@ class CANDevice {
         CANDevice(PinName pinRx, PinName pinTx) : can(pinRx, pinTx, CAN_BUS_BAUD) {            
             bufferLock = false;
             getIdx = 0;
+            messageLen = 32;
         }
 
-        std::string getMessage();
+        char* getMessage();
 
         void start(int interval);
         

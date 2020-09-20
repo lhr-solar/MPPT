@@ -26,13 +26,37 @@ void CANDevice::handler() {
     bufferLock = false;
 }
 
-std::string CANDevice::getMessage() {
+/**
+ * returns a pointer to the current message from the mailbox.
+ * Upon calling the getMessage() function again, previous pointers now point to 
+ * a new value and should be invalidated.
+ *
+ * @return char*
+ *      current message to be read from the CAN mailbox.
+ */
+char* CANDevice::getMessage() {
+    static char* currentMessage = nullptr;
+    
+    // dealloc the previous message, if any
+    if (currentMessage == nullptr) {
+        delete[] currentMessage;
+    }
+    
     while (bufferLock);
     CANMessage canMsg = mailbox[getIdx];
     getIdx = (getIdx + 1) % CAN_BUS_SIZE;
-    if (canMsg.id != MPPT_CAN_ID) { return std::string(""); }
+    if (canMsg.id != MPPT_CAN_ID) { 
+        currentMessage = new char[2] {};
+    } else {
+        // TODO: test to see if we read complete messages
+        char* msg = new char[messageLen] {};
+        for (int i = 0; i < messageLen; i++) {
+            msg[i] = canMsg.data[i];
+        }
+        currentMessage = msg;
+    }
 
-    return std::string(reinterpret_cast<char*>(canMsg.data));
+    return currentMessage;
 }
 
 void CANDevice::start(int interval) {

@@ -31,7 +31,7 @@ class SMAFilter: public Filter{
         double _sum;
 
     public:
-        SMAFilter() { Filter(10); } // default implementation
+        SMAFilter() { SMAFilter(10); } // default implementation
         /**
          * constructor for a SMAFilter object.
          * 
