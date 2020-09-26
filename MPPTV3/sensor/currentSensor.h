@@ -31,10 +31,13 @@ class CurrentSensor: public Sensor {
 
         /**
          * Reads and processes the value obtained from the AnalogIn pin.
-         */
-        void measure() {
-            double tempValue = sensor.read_voltage();
-            // do some processing on the temporary value, maybe even some SW filtering
+         * constructor for a current sensor object.
+         * @param pin (PinName)
+
+            // filter it
+            filter.addSample(tempValue);
+            tempValue = filter.getResult();
+
             lock = true;
             adcValue = tempValue;
             lock = false;

@@ -13,7 +13,6 @@
 #pragma once
 #include "mppt.h"
 
-
 class IC: public Mppt {
     public:
         /**

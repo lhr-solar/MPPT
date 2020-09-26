@@ -19,7 +19,6 @@
 #define CAN_BUS_SIZE 200
 #define CAN_BUS_BAUD 25000
 
-
 /**
  * Definition of an implementation for the CAN abstraction layer.
  * 

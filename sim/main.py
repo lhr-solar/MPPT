@@ -6,10 +6,12 @@ Contact: matthewjkyu@gmail.com
 Created: 5/24/20
 Last Modified: 8/22/20
 Description: This is the main handler for the mppt simulator. 
-    The simulator has three main components:
-      1. Source simulator - The program simulates a solar cell or set of solar cells by taking in static parameters or a datafile of input values over time.
-      2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
-      3. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
+    The simulator has four main components:
+        1. Source simulator - The program simulates a solar cell or set of solar cells by taking in static parameters or a datafile of input values over time.
+        2. MPPT Algorithm - A black box that manages algorithms (PandO, Incr. Conduction, RCC, Fuzzy Logic, etc) to maximize power on the load.
+        3. DC-DC Converter - Converts the MPPT output into a voltage that goes back into
+            the source simulator. May have it's own little black box adjustment algorithm.
+        4. Simulator - The outputs of the MPPT and the source are calculated, stored, and graphed. Data over time will be evaluated to determine and compare efficiencies between algorithms.
 """
 import sys
 import time

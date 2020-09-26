@@ -33,8 +33,12 @@ class VoltageSensor: public Sensor{
          */
         void handler() {
             double tempValue = sensor.read_voltage();
-            // do some processing on the temporary value, maybe even some SW
-            // filtering
+            // TODO: do some processing to convert it into a meaningful vaue
+
+            // filter it
+            filter.addSample(tempValue);
+            tempValue = filter.getResult();
+
             lock = true;
             adcValue = tempValue;
             lock = false;

@@ -14,6 +14,7 @@
 #pragma once
 #include "mbed.h"
 #include <chrono>
+#include "filter/filter.h"
 
 /**
  * Definition of a base implementation for sensors using the uC ADC.
@@ -61,18 +62,16 @@ class Sensor {
 
         /**
          * Stops interrupt execution of the private handler function given the interval.
-         */
         void stop();
-
-    private:
-        /**
-         * Measures the sensor ADC input and converts it and filters it.
+         * constructor for a sensor object.
+         * By default, we'll have a pass through filter object. This can be
+         * swapped out for a SMAFilter or another child object class.
+         * 
+         * @param pin (PinName)
+         *      pin to attach AnalogIn (sensor ADC pin) to.
+         * 
+         * @note default to a sample width of 10.
          */
-        virtual void handler() = 0;
-
-    private:
-        AnalogIn sensor;
-        Ticker tick;
 
         /** Lock to prevent read/modification of shared resources. */
         bool lock;
