@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 9/11/20
  * 
  * Program Discription: This program is meant to run on the STM32 L432KC Nucleo
  * uC that controls the MPPT board. It manages the power parameters of the

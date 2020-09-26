@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 9/11/20
  * 
  * File Discription: This header file describes the Mppt class, which is an
  * abstract parent class that defines and implements most of the shared methods

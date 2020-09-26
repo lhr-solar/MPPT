@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 12th, 2020
- * Last Modified: 10/12/20
+ * Last Modified: 9/12/20
  * 
  * File Discription: This file manages the CAN class, abstracting away
  * implementation logic to send and receive messages via the CAN lines and
@@ -37,6 +37,7 @@ class CANDevice {
         bool bufferLock;
 
         int getIdx;
+        int messageLen;
 
         void handler();
 
@@ -54,6 +55,7 @@ class CANDevice {
         CANDevice(PinName pinRx, PinName pinTx) : can(pinRx, pinTx, CAN_BUS_BAUD) {            
             bufferLock = false;
             getIdx = 0;
+            messageLen = 32;
         }
 
         char* getMessage();
