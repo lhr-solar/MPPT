@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 09/26/20
  * 
  * File Discription: This header file implements the IC class, which
  * is a derived class from the abstract Mppt class.
@@ -15,16 +15,33 @@
 
 
 class IC: public Mppt {
-    protected:
+    public:
         /**
-         * processes internal inputs and determines an optimal target voltage for
-         * the DC-DC converter to run at.
+         * Constructor for a IC object.
+         * 
+         * @param[in] pin Pin to attach DigitalOut (tracking LED) to.
+         */
+        IC(PinName pin) : Mppt(pin) {}
+
+        /**
+         * Returns the name of the MPPT algorithm.
+         * 
+         * @return Pointer to the name of the MPPT algorithm. Does not need 
+         * to freed.
+         */
+        const char* get_name() { return "IC"; }
+
+    private:
+        /**
+         * Processes internal inputs and determines an optimal target voltage
+         * for the DC-DC converter to run at.
          */
         void process() {
             static double arrVoltOld = 0.0;
             static double arrCurrOld = 0.0; 
 
-            while (inputLock);
+            if (inputLock) return;
+
             inputLock = true;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -64,21 +81,4 @@ class IC: public Mppt {
             arrVoltOld = arrVolt;
             arrCurrOld = arrCurr;
         }
-        
-    public:
-        /**
-         * constructor for a IC object.
-         * 
-         * @param pin (PinName)
-         *      pin to attach DigitalOut (tracking LED) to.
-         */
-        IC(PinName pin) : Mppt(pin) {}
-
-        /**
-         * returns the name of the MPPT algorithm being run.
-         * 
-         * @return IC (string)
-         */
-        string get_name() { return "IC"; }
-
 };

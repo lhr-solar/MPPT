@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 09/26/20
  * 
  * File Discription: This header file describes the Sensor class, which is an
  * abstract parent class that defines and implements most of the shared methods
@@ -14,7 +14,6 @@
 #pragma once
 #include "mbed.h"
 #include <chrono>
-
 
 /**
  * Definition of a base implementation for sensors using the uC ADC.
@@ -25,35 +24,59 @@
  * latest value and to write implementation code to tune the output value.
  */
 class Sensor {
-    protected:
+    public:
+        /**
+         * Constructor for a sensor object.
+         * 
+         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
+         */
+        Sensor(const PinName pin) : sensor(pin);
+
+        /**
+         * Sets the reference voltage for the AnalogIn data member. You can read more
+         * about it here:
+         * https://os.mbed.com/docs/mbed-os/v6.2/mbed-os-api-doxy/classmbed_1_1_analog_in.html#a9f0645e8673d582b544afba07253a424
+         * 
+         * @param[in] voltageReference Reference voltage for the AnalogIn data member.
+         */
+        void set_reference_voltage(const float voltageReference);
+
+        /**
+         * Returns the latest value of the sensor, scaled appropriately.
+         * 
+         * @note This method may stall until the lock on the variable is released, which
+         * means the sensor has uploaded the new value into it.
+         * 
+         * @return Sensor value.
+         */
+        const double get_value();
+
+        /**
+         * Starts interrupt execution of the private handler function given the 
+         * interval.
+         * 
+         * @param[in] interval Time, in microseconds, between each function call.
+         */
+        void start(const int interval);
+
+        /**
+         * Stops interrupt execution of the private handler function given the interval.
+         */
+        void stop();
+
+    private:
+        /**
+         * Measures the sensor ADC input and converts it and filters it.
+         */
+        virtual void handler() = 0;
+
+    private:
         AnalogIn sensor;
         Ticker tick;
 
-        // lock to prevent read/modification of shared resources
+        /** Lock to prevent read/modification of shared resources. */
         bool lock;
 
-        // adc output result value.
+        /** ADC output result value. */
         double adcValue;
-
-        virtual void measure() = 0;
-
-    public:
-        /**
-         * constructor for a sensor object.
-         * 
-         * @param pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
-         */
-        Sensor(PinName pin) : sensor(pin) {
-            adcValue = 0.0;
-            lock = false;
-        }
-
-        void set_reference_voltage(float voltageReference);
-
-        double get_value();
-
-        void start(int interval);
-
-        void stop();
 };

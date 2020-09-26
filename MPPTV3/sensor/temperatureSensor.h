@@ -1,32 +1,32 @@
 /**
  * Maximum Power Point Tracker Project
  * 
- * File: voltageSensor.h
+ * File: temperatureSensor.h
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
  * Last Modified: 09/26/20
  * 
- * File Discription: This header file implements the VoltageSensor class, which
+ * File Discription: This header file implements the TemperatureSensor class, which
  * is a derived class from the abstract Sensor class.
  */
 #pragma once
 #include "sensor.h"
 
 /**
- * Definition of a derived implementation for voltage sensors using the uC ADC.
+ * Definition of a derived implementation for temperature sensors using the uC ADC.
  * 
- * The VoltageSensor class create objects that can be used to measure voltage
+ * The TemperatureSensor class create objects that can be used to measure voltage
  * from analog in pins on the uC.
  */
-class VoltageSensor: public Sensor{
+class TemperatureSensor: public Sensor{
     public:
         /**
          * Constructor for a voltage sensor object.
          * 
          * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
          */
-        VoltageSensor(const PinName pin) : Sensor(pin) {}
+        TemperatureSensor(const PinName pin) : Sensor(pin) {}
 
         /**
          * Measures the sensor ADC input and converts it and filters it.

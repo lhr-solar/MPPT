@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 09/26/20
  * 
  * File Discription: This header file implements the PandO class, which
  * is a derived class from the abstract Mppt class.
@@ -14,17 +14,34 @@
 #include "mppt.h"
 
 
-class PandO: public Mppt {
-    protected:
+class PandO: public Mppt {        
+    public:
         /**
-         * processes internal inputs and determines an optimal target voltage for
-         * the DC-DC converter to run at.
+         * Constructor for a PandO object.
+         * 
+         * @param[in] pin Pin to attach DigitalOut (tracking LED) to.
          */
-        void process() {
+        PandO(const PinName pin) : Mppt(pin) {}
+
+        /**
+         * Returns the name of the MPPT algorithm.
+         * 
+         * @return Pointer to the name of the MPPT algorithm. Does not need 
+         * to freed.
+         */
+        const char* get_name() { return "PandO"; }
+
+    private:
+        /**
+         * Processes internal inputs and determines an optimal target voltage
+         * for the DC-DC converter to run at.
+         */
+        void handler() {
             static double arrVoltOld = 0.0;
             static double arrPowerOld = 0.0; 
 
-            while (inputLock);
+            if (inputLock) return;
+
             inputLock = true;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -64,21 +81,4 @@ class PandO: public Mppt {
             arrVoltOld = arrVolt;
             arrPowerOld = arrVolt * arrCurr;
         }
-        
-    public:
-        /**
-         * constructor for a PandO object.
-         * 
-         * @param pin (PinName)
-         *      pin to attach DigitalOut (tracking LED) to.
-         */
-        PandO(PinName pin) : Mppt(pin) {}
-
-        /**
-         * returns the name of the MPPT algorithm being run.
-         * 
-         * @return PandO (string)
-         */
-        string get_name() { return "PandO"; }
-
 };

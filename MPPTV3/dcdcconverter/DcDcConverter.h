@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 11th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 09/26/20
  * 
  * File Discription: This file defines functions defined for the
  * Dcdcconverter class.
@@ -22,43 +22,64 @@
  * switches 
  */
 class Dcdcconverter {
-    protected:
+    public:
+        /**
+         * Constructor for a Dcdcconverter object.
+         * 
+         * @param[in] pin Pin to attach AnalogOut (pwm pin) to.
+         */
+        Dcdcconverter(PinName pin) : pwm(pin);
+
+        /**
+         * Sets the pulse width of the DC-DC converter.
+         * 
+         * @param[in] arrVoltage Array voltage expectation from the MPPT.
+         */
+        void set_pulse_width(double arrVoltage);
+
+        /**
+         * Sets the load voltage for the DC-DC converter.
+         * 
+         * @param[in] battVoltage Battery voltage measurement of the MPPT.
+         */
+        void set_batt_voltage(double battVoltage);
+
+        /**
+         * Sets the load voltage for the DC-DC converter.
+         * 
+         * @return Get the pulse width of the dc-dc converter.
+         */
+        double get_pulse_width();
+
+        /**
+         * Starts interrupt execution of the private handler function given the 
+         * interval.
+         * 
+         * @param[in] interval Time, in microseconds, between each function call.
+         */
+        void start(int interval);
+        
+        /**
+         * Stops interrupt execution of the private handler function given the interval.
+         */
+        void stop();
+
+    private:
+        /**
+         * Writes the pulse width to the pwm output to set the array.
+         */
+        void handler();
+
+    private:
         AnalogOut pwm;
         Ticker tick;
 
-        // locks to prevent read/modification of shared resources
+        /** Locks to prevent read/modification of shared resources. */
         bool PWLock;
         bool battVoltageLock;
 
-        // pulse width result value for the DC-DC converter.
+        /** Pulse width result value for the DC-DC converter. */
         double pulseWidth;
         double arrVoltage;
         double battVoltage;
-    
-        void signal();
-
-    public:
-        /**
-         * constructor for a Dcdcconverter object.
-         * 
-         * @param pin (PinName)
-         *      pin to attach AnalogOut (pwm pin) to.
-         */
-        Dcdcconverter(PinName pin) : pwm(pin) {            
-            PWLock = false;
-            battVoltageLock = false;
-            pulseWidth = 0.0;
-            arrVoltage = 0.0;
-            battVoltage = 0.01;
-        }
-
-        void set_pulse_width(double arrVoltage);
-
-        void set_batt_voltage(double battVoltage);
-
-        double get_pulse_width();
-
-        void start(int interval);
-        
-        void stop();
 };

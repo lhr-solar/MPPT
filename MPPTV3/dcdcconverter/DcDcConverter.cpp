@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 09/26/20
  * 
  * File Discription: This file manages the Dcdcconverter class, which manages
  * the conversion of power from the array to the power management system.
@@ -15,16 +15,23 @@
  */
 #include "DcDcConverter.h"
 
-void Dcdcconverter::signal() {
-    while (PWLock);
-    pwm.write((float) pulseWidth);
+/** Public Methods. */
+
+Dcdcconverter::Dcdcconverter(PinName pin) : pwm(pin) {            
+    PWLock = false;
+    battVoltageLock = false;
+    pulseWidth = 0.0;
+    arrVoltage = 0.0;
+    battVoltage = 0.01;
 }
 
 void Dcdcconverter::set_pulse_width(double arrVoltage) {
     this->arrVoltage = arrVoltage;
 
-    // convert voltage into pulse width
+    // Okay since this isn't an interrupt. Plus the relevant lock code is very short.
     while (battVoltageLock);
+    
+    // convert voltage into pulse width
     double pulseWidthRes = 0.0;
     if (this->arrVoltage > 0.0) {
         pulseWidthRes = 1 - this->battVoltage / this->arrVoltage;
@@ -47,13 +54,16 @@ double Dcdcconverter::get_pulse_width() {
 }
 
 void Dcdcconverter::start(int interval) {
-    tick.attach(callback(this, &Dcdcconverter::signal), std::chrono::microseconds(interval));
+    tick.attach(callback(this, &Dcdcconverter::handler), std::chrono::microseconds(interval));
 }
 
-/**
- * disables the timed interrupt and the Mppt algorithm stops processing. Also
- * turns off the tracking LED.
- */
 void Dcdcconverter::stop() {
     tick.detach();
+}
+
+/** Private Methods. */
+
+void Dcdcconverter::handler() {
+    if (PWLock) return;
+    pwm.write((float) pulseWidth);
 }
