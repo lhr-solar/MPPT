@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 11th, 2020
- * Last Modified: 10/11/20
+ * Last Modified: 9/11/20
  * 
  * File Discription: This file defines functions defined for the
  * Dcdcconverter class.
