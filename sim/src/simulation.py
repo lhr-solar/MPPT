@@ -79,7 +79,7 @@ class Simulation:
 
     def add_datapoint(self, cycle, env_conditions, source, mppt):
         """
-        addDatapoint
+        add_datapoint
         adds a datapoint to each data structure corresponding to the inputs.
 
         Args:
@@ -167,7 +167,7 @@ class Simulation:
 
     def add_datapoint_source_model(self, irrad, temp, v_src, i_src):
         """
-        addDatapoint
+        add_datapoint_source_model
         adds a datapoint to each data structure corresponding to the inputs.
 
         Args:

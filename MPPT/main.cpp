@@ -1,142 +1,169 @@
-/*******************************************************************************
- * Maximum Power Point Tracker Project for EE 464H
- *
- * Perturb and Observe Algorithm (Revised for discrete pulsewidth incrementor)
- * 
- * Author: Juan Cortez, Angus Ranson
- * Team: Angus Ranson, Muhammad Bukhari, Rana Madkour, Josh Frazor, Zach Pavlich
- * Created on: September 14, 2015 at 14:26
- * Revised on: December 5, 2015 at 18:08
- *
- * Edited by: Kyle Grier, Samantha Guu
- * New Team: Samuel Chiu, Madeline Drake, Kyle Grier, Samantha Guu, 
- *           Rafael Ibanez, Chase Lansdale, Cobie Loper
- * New Team Mentor: Dr. Gary Hallock
- * Last Revised: November 14, 2017
- *
- * GitHub Repository: https://github.com/juancortez-ut/mppt
- *
- * Dependent Hardware: 
- *   - Microcontroller: Freescale FRDM-K64F
- *   - CAN_BUS: CAN-BUS Shield v.1.2 by SEEED Studios
- *
- * Dependent Libraries:
- *   - mbed Library: https://developer.mbed.org/users/mbed_official/code/mbed/
- *   - SEEEED_CAN_LIBRARY: /mppt/FRDM-K64F/CAN_BUS/SEEED_CAN/SEEED_CAN_LIBRARY
- *
- * FRDM-K64F Pinout: https://os.mbed.com/platforms/FRDM-K64F/#board-pinout
- *
- * Signal     | FRDM-K64F Pin   | Purpose
- * -----------------------------------------------------------------------
- * PwmOut     | PTC10           | Output PWM Signal to Boost Converter
- * DigitalOut | LED1            | Heartbeat LED
- * AnalogIn   | PTB3            | Input Hall Sensor
- * AnalogIn   | PTB11           | Output Hall Sensor
- * AnalogIn   | PTB2            | Input Voltage
- * AnalogIn   | PTB10           | Output Voltage
- * RawSerial  | USBTX, USBRX    | Serial Communication
- * 
- * Program Description: This program is written for the Freescale FRDM-K64F uC.
- * The description of the P&O algorithm is found below, in the comment section
- *   titled, 'Perturb & Observe Algorithm'.
- *
- *****************************************************************************************************/
-
 /**
-*                                   Perturb & Observe Algorithm
-*
-* The most widely used algorithm is the P&O algorithm. The P&O algorithm perturbs the duty cycle
-* which controls the power converter, in this way it takes steps over the p-v characteristic to 
-* find the MPPT. This perturbation causes a new operating point with a different output power. In 
-* case this output power is larger than the previous output power, this point is set as the new 
-* operating point. In case it is lower, the same power point is adjusted to a lower or higher working 
-* voltage, depending on the previous step direction. (http://bit.ly/1L73nzE)
-*
-*
-* Pulse Width (PW) is the elapsed time between the rising and falling edges of a single pulse.
-* 
-* Pulse Repetition Interval (PRI) is the time between sequential pulses.
-*
-* Pulse Repetition Frequency (PRF) is the reciprocal of PRI. The basic unit of measure for PRF
-* is hertz (Hz). 
-*
-* Duty Cycle describes the "On Time" for a pulsed signal. We can report duty cycle in units of time, 
-* but usually as a percentage. To calculate a signals' duty cycle, we need to know the signal's pulse
-* width and repetition frequency.
-*
-**/
+ * Maximum Power Point Tracker Project
+ * 
+ * File: main.cpp
+ * Author: Matthew Yu
+ * Organization: UT Solar Vehicles Team
+ * Created on: September 10th, 2020
+ * Last Modified: 9/26/20
+ * 
+ * Program Discription: This program is meant to run on the STM32 L432KC Nucleo
+ * uC that controls the MPPT board. It manages the power parameters of the
+ * subarray, seeking to optimize power transfer to the BMS (Battery Management
+ * System).
+ * 
+ * This program is designed to test and use various MPPT algorithms. These are
+ * further described in their respective files in the mppt/ folder.
+ */
 
-#include "FastPWM.h"
-#include "stdlib.h"
+/*
+A couple of things here. Our MPPT takes in the following inputs:
+- Voltage Sensor (Array Side)
+- Current Sensor (Array Side)
+- Voltage Sensor (Battery Side)
+- Current Sensor (Battery Side)
+
+At the moment, we don't really need to touch the battery side of things for now.
+
+The MPPT provides the following output:
+- Pulse Width as a function of output voltage. 
+
+This goes into our DC-DC Converter, which also needs to be maintained by the
+Nucleo. The DC-DC converter shifts our pulse width input into a voltage output
+across the PV.
+
+This is our basic feedback loop.
+*/
+
+#include <chrono>
 #include "mbed.h"
+#include "sensor/currentSensor.h"
+#include "sensor/voltageSensor.h"
+#include "mppt/mppt.h"
+#include "mppt/PandO.h"
+#include "mppt/IC.h"
+#include "CAN/CAN.h"
+#include "dcdcconverter/DcDcConverter.h"
 
-#include "PandO.h"
-#include "constants.h"
-#include "CAN_lib.h"
-#include "Serial_lib.h"
+#define CAN_INT_PERIOD 50000        // 50 ms
+#define SENSOR_INT_PERIOD 200000    // 200 ms
+#define MPPT_INT_PERIOD 50000       // 50 ms
+#define DC_DC_INT_PERIOD 50000      // 50 ms
+#define PIPELINE_PERIOD 25000       // 25 ms
 
-//Define Constants
-#define true                 1
-#define false                0
+void manage_pipeline();
 
-#define MESSAGE_LENGTH       8
-#define READING_COUNT        6
+// initialize CAN
+CANDevice can(PA_0, PA_0);
 
-void setup();
-//void getMessage();
-//void interruptFunction();
+// initialize LEDs
+DigitalOut boardLED(LED1); // D13 I think
+DigitalOut trackingLED(D11);
+DigitalOut batteryFullLED(D12);
 
-// A Ticker is used to call a function at a recurring interval
-// void Attach(T *tptr, void(T::*mptr)(void), float t)
-// Attach a member function to be called by the Ticker, specifying time in secs
-Ticker ticker;
-Ticker ticker2;
+// initialize voltage and current sensors
+VoltageSensor sensorArrayVoltage(PA_0);
+VoltageSensor sensorBattVoltage(PA_0);
+CurrentSensor sensorArrayCurrent(PA_0);
+CurrentSensor sensorBattCurrent(PA_0);
+// initialize MPPT
+PandO pando(PA_0);
+IC ic(PA_0);
+Mppt* mppt;
+// initialize DC-DC converter
+Dcdcconverter converter(PA_0);
 
-int main(void)
-{
-    pc.attach(&interruptFunction, Serial::RxIrq);
-    setup();
-    while(1)
-    {
-        if(changedFlag == true)
-        {
-            setup();
-            changedFlag = false;
-        }   
+int main(void) {
+    // this running boolean can be shut down in various events.
+    bool running = true;
+
+    // startup CAN
+    can.start(CAN_INT_PERIOD);
+    // startup sensor interrupts
+    sensorArrayVoltage.start(SENSOR_INT_PERIOD);
+    sensorBattVoltage.start(SENSOR_INT_PERIOD);
+    sensorArrayCurrent.start(SENSOR_INT_PERIOD);
+    sensorBattCurrent.start(SENSOR_INT_PERIOD);
+    // startup MPPT - we assign the reference to the derived class to avoid possible object slicing
+    mppt = &pando;
+    mppt->enable_tracking(MPPT_INT_PERIOD);
+    // startup DC-DC converter
+    converter.start(DC_DC_INT_PERIOD);
+    // startup the rest of the pipeline to manage data movement
+    Ticker pipeline;
+    pipeline.attach(manage_pipeline, std::chrono::microseconds(PIPELINE_PERIOD));
+
+    // main process loop
+    while (running) {
+        // read in CAN bus buffer to see if we have any messages
+        char* msg = can.getMessage();
+        if (strcmp(msg, "") != 0) {
+            // check for start and stop commands
+            if (strcmp(msg, "MPPT_START") == 0) {
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_STOP") == 0) {
+                mppt->disable_tracking();
+            }
+
+            // TESTING
+            // check for algorithm change 
+            else if (strcmp(msg, "MPPT_PANDO") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // swap reference
+                mppt = &pando;
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_IC") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // swap reference
+                mppt = &ic;
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            } else if (strcmp(msg, "MPPT_FC") == 0) {
+                // shut down current algorithm
+                mppt->disable_tracking();
+                // TODO: swap reference
+                // start up new algorithm
+                mppt->enable_tracking(MPPT_INT_PERIOD);
+            }
+        }
+        // TODO: send out CAN bus messages if needed
+        // TODO: look for conditions that may cause failure
+
+        // free the allocated CAN message.
+        delete[] msg;
     }
+    
+    // shutdown sensor
+    sensorArrayVoltage.stop();
+    sensorBattVoltage.stop();
+    sensorArrayCurrent.stop();
+    sensorBattCurrent.stop();
+    // shutdown DC-DC converter
+    converter.stop();
+    // shutdown MPPT
+    mppt->disable_tracking();
+    // shutdown pipeline
+    pipeline.detach();
+    // shutdown CAN
+    can.stop();
 }
 
-
-
-void setup()
-{
-    if(algorithm == 1)
-    {
-        algorithm = lastAlgorithm;
-    }
-    
-    if(algorithm == 0)
-    {
-        ticker.detach();
-    }
-    
-    if(algorithm == 2)
-    {
-        PandO_Init();
-        ticker.attach(&perturb_and_observe, SAMPLE_PERIOD);
-    }
-    
-    if(algorithm == 3)
-    {
-        //incrementalInit();
-        //ticker.attach(&incremental_conductance, SAMPLE_PERIOD) //Incremental conductance
-    }
-    
-    if(algorithm == 4)
-    {
-        //fuzzyInit();
-        //ticker.attach(&fuzzy_logic_control, SAMPLE_PERIOD)//Fuzzy Logic Control
-    }
-    
-    //add else ifs to add in more algorithms
+/**
+ * manage_pipeline routes data changes from each step in the pipeline (sensor ->
+ * mppt -> dc-dc converter).
+ */
+void manage_pipeline() {
+    // grab the sensor data
+    float vArr = sensorArrayVoltage.get_value();
+    float vBatt = sensorBattVoltage.get_value();
+    float cArr = sensorArrayCurrent.get_value();
+    float cBatt = sensorBattCurrent.get_value();
+    // pipe it into the MPPT
+    mppt->set_inputs(vArr, cArr, vBatt, cBatt);
+    // pipe MPPT output into the DC-DC converter
+    double targetVoltage = mppt->get_target_voltage();
+    converter.set_pulse_width(targetVoltage);
 }
