@@ -21,21 +21,27 @@
 Dcdcconverter::Dcdcconverter(const PinName pin) : pwm(pin) {            
     PWLock = false;
     battVoltageLock = false;
+    battVoltageLimLock = false;
     pulseWidth = 0.0;
     arrVoltage = 0.0;
-    battVoltage = 0.01;
+    battVoltage = 0.0;
+    battVoltageLim = 1000.0; // something out of range of possible battery voltage
 }
 
 void Dcdcconverter::set_pulse_width(const double arrVoltage) {
     this->arrVoltage = arrVoltage;
 
     // Okay since this isn't an interrupt. Plus the relevant lock code is very short.
-    while (battVoltageLock);
+    while (battVoltageLock || battVoltageLimLock);
     
     // convert voltage into pulse width
     double pulseWidthRes = 0.0;
     if (this->arrVoltage > 0.0) {
-        pulseWidthRes = 1 - this->battVoltage / this->arrVoltage;
+        if (this->battVoltage < this->battVoltageLim) {
+            pulseWidthRes = 1 - this->battVoltage / this->arrVoltage;
+        } else {
+            pulseWidthRes = 1 - this->battVoltageLim / this->arrVoltage;
+        }
     }
 
     PWLock = true;
@@ -47,6 +53,12 @@ void Dcdcconverter::set_batt_voltage(const double battVoltage) {
     battVoltageLock = true;
     this->battVoltage = battVoltage;
     battVoltageLock = false;
+}
+
+void Dcdcconverter::set_batt_voltage_limit(const double battVoltageLim) {
+    battVoltageLimLock = true;
+    this->battVoltageLim = battVoltageLim;
+    battVoltageLimLock = false;
 }
 
 double Dcdcconverter::get_pulse_width() const {

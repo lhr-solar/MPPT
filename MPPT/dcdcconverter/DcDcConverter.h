@@ -46,6 +46,21 @@ class Dcdcconverter {
         void set_batt_voltage(const double battVoltage);
 
         /**
+         * Sets the limit for what the minimum battery voltage should be.
+         * To limit power flow into the battery in the case of overheating,
+         * etc, the DC-DC converter sets the battery side voltage to above 
+         * the existing battery voltage measurement. This results in wasted
+         * energy not reaching the battery since the current is lowered bu. This
+         * wasted energy is converted into heat, which may be bad for the MPPT
+         * or Array. Experimental feature.
+         * 
+         * @param battVoltageLim Lowest voltage we should get the battery side
+         *      voltage to. This is only in effect if the battery voltage 
+         *      measurement is lower than the limit voltage.
+         */
+        void set_batt_voltage_limit(const double battVoltageLim);
+
+        /**
          * Sets the load voltage for the DC-DC converter.
          * 
          * @return Get the pulse width of the dc-dc converter.
@@ -78,9 +93,14 @@ class Dcdcconverter {
         /** Locks to prevent read/modification of shared resources. */
         bool PWLock;
         bool battVoltageLock;
+        bool battVoltageLimLock;
 
         /** Pulse width result value for the DC-DC converter. */
         double pulseWidth;
         double arrVoltage;
         double battVoltage;
+
+        /** Limiter value for the battery voltage. */
+        double battVoltageLim;
+
 };
