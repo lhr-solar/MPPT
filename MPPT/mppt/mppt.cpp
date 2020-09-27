@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 09/26/20
+ * Last Modified: 09/27/20
  * 
  * File Discription: This file implements functions defined for the Mppt
  * class.
@@ -60,16 +60,14 @@ void Mppt::disable_tracking() {
     tracking = false;
 }
 
-const double Mppt::get_target_voltage() {
+double Mppt::get_target_voltage() const {
     while (PWLock);
     return targetVoltage;
 }
 
 /** Private Methods. */
 
-const char* Mppt::get_name() { return "None"; }
-
-void Mppt::handler() {}
+const char* Mppt::get_name() const { return "None"; }
 
 void Mppt::update_tracking_LED() {
     if (tracking) {
@@ -77,12 +75,12 @@ void Mppt::update_tracking_LED() {
     }
 }
 
-const double Mppt::calculate_perturb_amount(
+double Mppt::calculate_perturb_amount(
     const Mode mode, 
     const double arrayVoltage, 
     const double arrayCurrent, 
     const double irradiance, 
-    const double temperature) 
+    const double temperature) const
 {
     switch (mode) {
         ADAPTIVE:

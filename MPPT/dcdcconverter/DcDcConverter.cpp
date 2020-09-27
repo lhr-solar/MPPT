@@ -18,7 +18,7 @@
 
 /** Public Methods. */
 
-Dcdcconverter::Dcdcconverter(PinName pin) : pwm(pin) {            
+Dcdcconverter::Dcdcconverter(const PinName pin) : pwm(pin) {            
     PWLock = false;
     battVoltageLock = false;
     pulseWidth = 0.0;
@@ -26,7 +26,7 @@ Dcdcconverter::Dcdcconverter(PinName pin) : pwm(pin) {
     battVoltage = 0.01;
 }
 
-void Dcdcconverter::set_pulse_width(double arrVoltage) {
+void Dcdcconverter::set_pulse_width(const double arrVoltage) {
     this->arrVoltage = arrVoltage;
 
     // Okay since this isn't an interrupt. Plus the relevant lock code is very short.
@@ -43,22 +43,22 @@ void Dcdcconverter::set_pulse_width(double arrVoltage) {
     PWLock = false;
 }
 
-void Dcdcconverter::set_batt_voltage(double battVoltage) {
+void Dcdcconverter::set_batt_voltage(const double battVoltage) {
     battVoltageLock = true;
     this->battVoltage = battVoltage;
     battVoltageLock = false;
 }
 
-double Dcdcconverter::get_pulse_width() {
+double Dcdcconverter::get_pulse_width() const {
     while (PWLock);
     return pulseWidth;
 }
 
-void Dcdcconverter::start(int interval) {
+void Dcdcconverter::start(const int interval) {
     tick.attach(callback(this, &Dcdcconverter::handler), std::chrono::microseconds(interval));
 }
 
-void Dcdcconverter::stop() {
+void Dcdcconverter::stop(){
     tick.detach();
 }
 

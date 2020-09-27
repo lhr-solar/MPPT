@@ -25,8 +25,7 @@ class TemperatureSensor: public Sensor{
         /**
          * Constructor for a temperature sensor object.
          * 
-         * @param[in] pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
          */
         TemperatureSensor(const PinName pin) : Sensor(pin) {}
 
@@ -36,7 +35,8 @@ class TemperatureSensor: public Sensor{
          * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
          * @param numFilterSamples Number of samples in our filter window
          */
-        TemperatureSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+        TemperatureSensor(const PinName pin, const int numFilterSamples) : 
+            Sensor(pin, numFilterSamples) {}
 
         /**
          * Measures the sensor ADC input and converts it and filters it.

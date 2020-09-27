@@ -37,7 +37,6 @@ char* CANDevice::getMessage() {
     if (bufferLock) return new char[1]();
 
     CANMessage canMsg = mailbox[getIdx];
-    if (canMsg.id != MPPT_CAN_ID) { return new char[1](); }
     char * msg = new char[canMsg.len];
     std::strcpy(msg, reinterpret_cast <char *>(canMsg.data));
 
@@ -60,9 +59,21 @@ void CANDevice::handler() {
     bufferLock = true;
     // if bus buffer is free, read a new byte
     if (((putIdx + 1) % CAN_BUS_SIZE) != getIdx) {
-        can.read(msg);
-        mailbox[putIdx] = msg;
-        putIdx = (putIdx + 1) % CAN_BUS_SIZE;
+        can.read(mailbox[putIdx]);
+        // check to see if id matches our accepted list
+        if (checkID(mailbox[putIdx].id)) {
+            // if we have a valid message we move to the next mailbox slot
+            putIdx = (putIdx + 1) % CAN_BUS_SIZE;
+        }
     }
     bufferLock = false;
+}
+
+bool CANDevice::checkID(const int id) {
+    switch (id) {
+        case MPPT_CAN_ID:
+            return true;
+        default:
+            return false;
+    }
 }

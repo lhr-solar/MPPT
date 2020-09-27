@@ -28,28 +28,24 @@
 class Sensor {
     public:
         /**
-         * constructor for a sensor object.
+         * Constructor for a sensor object.
          * By default, we'll have a pass through filter object. This can be
          * swapped out for a SMAFilter or another child object class.
          * 
-         * @param pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
-         * 
+         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
          * @note default to a sample width of 10.
          */
-        Sensor(PinName pin);
+        Sensor(const PinName pin);
 
         /**
-         * constructor for a sensor object.
+         * Constructor for a sensor object.
          * By default, we'll have a pass through filter object. This can be
          * swapped out for a SMAFilter or another child object class.
          * 
-         * @param pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
-         * @param numFilterSamples (int)
-         *      number of samples in our filter window
+         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param numFilterSamples Number of samples in our filter window.
          */
-        Sensor(PinName pin, int numFilterSamples);
+        Sensor(const PinName pin, const int numFilterSamples);
 
         /**
          * Sets the reference voltage for the AnalogIn data member. You can read more
@@ -65,10 +61,9 @@ class Sensor {
          * 
          * @note This method may stall until the lock on the variable is released, which
          * means the sensor has uploaded the new value into it.
-         * 
          * @return Sensor value.
          */
-        const double get_value();
+        double get_value() const;
 
         /**
          * Starts interrupt execution of the private handler function given the 
@@ -80,14 +75,6 @@ class Sensor {
 
         /**
          * Stops interrupt execution of the private handler function given the interval.
-         * constructor for a sensor object.
-         * By default, we'll have a pass through filter object. This can be
-         * swapped out for a SMAFilter or another child object class.
-         * 
-         * @param pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
-         * 
-         * @note default to a sample width of 10.
          */
         void stop();
 

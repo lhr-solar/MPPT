@@ -65,7 +65,7 @@ class MedianFilter: public Filter{
          * 
          * @return Filter output.
          */
-        const double getResult() { 
+        double getResult() const { 
             // check for exception
             if (_dataBuffer == nullptr) { return 0.0; }
 
@@ -89,7 +89,7 @@ class MedianFilter: public Filter{
          * @param[in] endIdx End index of the data buffer.
          * @return Median of the data buffer.
          */
-        const double _getMedian(const int startIdx, const int endIdx) { 
+        double _getMedian(const int startIdx, const int endIdx) const { 
             // naive solution is to sort the data and pick the n/2 index
             double * tempBuffer = new (std::nothrow) double [_numSamples];
             if (tempBuffer != nullptr) {

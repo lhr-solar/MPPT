@@ -96,7 +96,7 @@ class KalmanFilter: public Filter{
          * 
          * @return Filter output.
          */
-        const double getResult() { 
+        double getResult() const { 
             return estimate;
         }
 

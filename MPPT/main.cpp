@@ -42,6 +42,7 @@ This is our basic feedback loop.
 #include "mppt/mppt.h"
 #include "mppt/PandO.h"
 #include "mppt/IC.h"
+#include "mppt/FC.h"
 #include "CAN/CAN.h"
 #include "dcdcconverter/DcDcConverter.h"
 
@@ -69,6 +70,7 @@ CurrentSensor sensorBattCurrent(PA_0);
 // initialize MPPT
 PandO pando(PA_0);
 IC ic(PA_0);
+FC fc(PA_0);
 Mppt* mppt;
 // initialize DC-DC converter
 Dcdcconverter converter(PA_0);
@@ -89,9 +91,6 @@ int main(void) {
     mppt->enable_tracking(MPPT_INT_PERIOD);
     // startup DC-DC converter
     converter.start(DC_DC_INT_PERIOD);
-    // startup the rest of the pipeline to manage data movement
-    Ticker pipeline;
-    pipeline.attach(manage_pipeline, std::chrono::microseconds(PIPELINE_PERIOD));
 
     // main process loop
     while (running) {
@@ -124,7 +123,8 @@ int main(void) {
             } else if (strcmp(msg, "MPPT_FC") == 0) {
                 // shut down current algorithm
                 mppt->disable_tracking();
-                // TODO: swap reference
+                // swap reference
+                mppt = &fc;
                 // start up new algorithm
                 mppt->enable_tracking(MPPT_INT_PERIOD);
             }
@@ -134,6 +134,9 @@ int main(void) {
 
         // free the allocated CAN message.
         delete[] msg;
+
+        // run the pipeline
+        manage_pipeline();
     }
     
     // shutdown sensor
@@ -145,8 +148,6 @@ int main(void) {
     converter.stop();
     // shutdown MPPT
     mppt->disable_tracking();
-    // shutdown pipeline
-    pipeline.detach();
     // shutdown CAN
     can.stop();
 }

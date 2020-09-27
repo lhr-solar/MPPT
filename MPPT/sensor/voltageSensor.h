@@ -25,8 +25,7 @@ class VoltageSensor: public Sensor{
         /**
          * Constructor for a voltage sensor object.
          * 
-         * @param[in] pin (PinName)
-         *      pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
          */
         VoltageSensor(const PinName pin) : Sensor(pin) {}
 
@@ -36,7 +35,7 @@ class VoltageSensor: public Sensor{
          * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
          * @param numFilterSamples Number of samples in our filter window
          */
-        VoltageSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+        VoltageSensor(const PinName pin, const int numFilterSamples) : Sensor(pin, numFilterSamples) {}
 
         /**
          * Measures the sensor ADC input and converts it and filters it.

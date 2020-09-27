@@ -73,12 +73,11 @@ class SMAFilter: public Filter{
          * 
          * @return Filter output.
          */
-        double getResult() { 
+        double getResult() const { 
             // check for exception
             if (_dataBuffer == nullptr) { return 0.0; }
 
             return _sum / _numSamples;
-            printf("Hello world");
         }
 
         /**

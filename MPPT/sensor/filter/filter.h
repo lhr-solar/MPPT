@@ -50,7 +50,7 @@ class Filter {
          * 
          * @return Filter output.
          */
-        const double getResult() { return currentVal; }
+        double getResult() const { return currentVal; }
 
         /**
          * Deallocates constructs in the filter for shutdown.

@@ -13,12 +13,12 @@
 #include "sensor.h"
 
 
-Sensor::Sensor(PinName pin) : sensor(pin), filter(10) {
+Sensor::Sensor(const PinName pin) : sensor(pin), filter(10) {
     adcValue = 0.0;
     lock = false;
 }
 
-Sensor::Sensor(PinName pin, int numFilterSamples) : sensor(pin), filter(numFilterSamples) {
+Sensor::Sensor(const PinName pin, const int numFilterSamples) : sensor(pin), filter(numFilterSamples) {
     adcValue = 0.0;
     lock = false;
 }
@@ -27,7 +27,7 @@ void Sensor::set_reference_voltage(const float voltageReference) {
     sensor.set_reference_voltage(voltageReference);
 }
 
-const double Sensor::get_value() {
+double Sensor::get_value() const {
     while (lock);
     return adcValue;
 }

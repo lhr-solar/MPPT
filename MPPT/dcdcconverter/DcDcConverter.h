@@ -29,28 +29,28 @@ class Dcdcconverter {
          * 
          * @param[in] pin Pin to attach AnalogOut (pwm pin) to.
          */
-        Dcdcconverter(PinName pin);
+        Dcdcconverter(const PinName pin);
 
         /**
          * Sets the pulse width of the DC-DC converter.
          * 
          * @param[in] arrVoltage Array voltage expectation from the MPPT.
          */
-        void set_pulse_width(double arrVoltage);
+        void set_pulse_width(const double arrVoltage);
 
         /**
          * Sets the load voltage for the DC-DC converter.
          * 
          * @param[in] battVoltage Battery voltage measurement of the MPPT.
          */
-        void set_batt_voltage(double battVoltage);
+        void set_batt_voltage(const double battVoltage);
 
         /**
          * Sets the load voltage for the DC-DC converter.
          * 
          * @return Get the pulse width of the dc-dc converter.
          */
-        double get_pulse_width();
+        double get_pulse_width() const;
 
         /**
          * Starts interrupt execution of the private handler function given the 
@@ -58,7 +58,7 @@ class Dcdcconverter {
          * 
          * @param[in] interval Time, in microseconds, between each function call.
          */
-        void start(int interval);
+        void start(const int interval);
         
         /**
          * Stops interrupt execution of the private handler function given the interval.

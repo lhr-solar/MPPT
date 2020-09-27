@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 09/26/20
+ * Last Modified: 09/27/20
  * 
  * File Discription: This header file describes the Mppt class, which is an
  * abstract parent class that defines and implements most of the shared methods
@@ -75,7 +75,7 @@ class Mppt {
          * 
          * @return Target voltage.
          */
-        const double get_target_voltage();
+        double get_target_voltage() const;
 
         /**
          * Returns the name of the MPPT algorithm.
@@ -83,14 +83,14 @@ class Mppt {
          * @return Pointer to the name of the MPPT algorithm. Does not need 
          * to freed.
          */
-        const char* get_name();
+        const char* get_name() const;
 
     protected:
         /**
          * Processes internal inputs and determines an optimal target voltage
          * for the DC-DC converter to run at. Inherited and implemented by its children.
          */
-        void handler();
+        virtual void handler() = 0;
 
         /**
          * Toggles the tracking LED if we're currently running the MPPT.
@@ -110,13 +110,13 @@ class Mppt {
          * 
          * @return Expected voltage applied over the array.
          */
-        const double calculate_perturb_amount(
+        double calculate_perturb_amount(
             const Mode mode,
             const double arrayVoltage, 
             const double arrayCurrent, 
             const double irradiance, 
             const double temperature
-        );
+        ) const;
 
     protected:
         DigitalOut trackingLED;

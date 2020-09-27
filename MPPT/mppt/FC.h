@@ -1,27 +1,27 @@
 /**
  * Maximum Power Point Tracker Project
  * 
- * File: IC.h
+ * File: FC.h
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
- * Created on: September 10th, 2020
+ * Created on: September 27th, 2020
  * Last Modified: 09/27/20
  * 
- * File Discription: This header file implements the IC class, which
+ * File Discription: This header file implements the FC class, which
  * is a derived class from the abstract Mppt class.
  */
 #pragma once
 #include "mppt.h"
 
 
-class IC: public Mppt {
+class FC: public Mppt {
     public:
         /**
-         * Constructor for a IC object.
+         * Constructor for a FC object.
          * 
          * @param[in] pin Pin to attach DigitalOut (tracking LED) to.
          */
-        IC(PinName pin) : Mppt(pin) {}
+        FC(PinName pin) : Mppt(pin) {}
 
         /**
          * Returns the name of the MPPT algorithm.
@@ -29,7 +29,7 @@ class IC: public Mppt {
          * @return Pointer to the name of the MPPT algorithm. Does not need 
          * to freed.
          */
-        const char* get_name() const { return "IC"; }
+        const char* get_name() const { return "FC"; }
 
     private:
         /**
@@ -38,7 +38,7 @@ class IC: public Mppt {
          */
         void handler() {
             static double arrVoltOld = 0.0;
-            static double arrCurrOld = 0.0; 
+            static double arrPowerOld = 0.0; 
 
             if (inputLock) return;
 
@@ -52,25 +52,20 @@ class IC: public Mppt {
             // run the algorithm
             // generate the differences
             double arrVoltDiff = arrVolt - arrVoltOld;
-            double arrCurrDiff = arrCurr - arrCurrOld;
+            double arrPowerDiff = arrVolt * arrCurr - arrPowerOld;
 
             // get the voltage perturb stride
             double dVoltRef = calculate_perturb_amount(DEFAULT, arrVolt, arrCurr, 0.0, 0.0);
             // get the new array applied voltage
             double arrVoltNew = arrVolt;
-            if (arrVoltDiff == 0.0) {
-                if (arrCurrDiff > 0.0) {
-                    arrVoltNew -= dVoltRef;
-                } else if (arrCurrDiff < 0.0) {
+            // if voltage does not change we don't update our calc.
+            if (arrVoltDiff != 0) {
+                if (arrPowerDiff/arrVoltDiff) {
                     arrVoltNew += dVoltRef;
-                }
-            } else {
-                if (-arrCurr * arrVoltDiff > arrCurrDiff * arrVolt) {
-                    arrVoltNew += dVoltRef;
-                } else if (-arrCurr * arrVoltDiff < arrCurrDiff * arrVolt) {
+                } else {
                     arrVoltNew -= dVoltRef;
                 }
-            }
+            } 
 
             // adjust the target voltage
             PWLock = true;
@@ -79,6 +74,6 @@ class IC: public Mppt {
 
             // assign old variables
             arrVoltOld = arrVolt;
-            arrCurrOld = arrCurr;
+            arrPowerOld = arrVolt * arrCurr;
         }
 };

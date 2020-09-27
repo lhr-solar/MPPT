@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 09/26/20
+ * Last Modified: 09/27/20
  * 
  * File Discription: This header file implements the PandO class, which
  * is a derived class from the abstract Mppt class.
@@ -29,7 +29,7 @@ class PandO: public Mppt {
          * @return Pointer to the name of the MPPT algorithm. Does not need 
          * to freed.
          */
-        const char* get_name() { return "PandO"; }
+        const char* get_name() const { return "PandO"; }
 
     private:
         /**

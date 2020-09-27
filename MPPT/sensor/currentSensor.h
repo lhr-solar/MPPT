@@ -36,7 +36,7 @@ class CurrentSensor: public Sensor {
          * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
          * @param numFilterSamples Number of samples in our filter window
          */
-        CurrentSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+        CurrentSensor(const PinName pin, const int numFilterSamples) : Sensor(pin, numFilterSamples) {}
 
         /**
          * Measures the sensor ADC input and converts it and filters it.

@@ -66,6 +66,13 @@ class CANDevice {
          */
         void handler();
 
+        /**
+         * Checks the ID against a list of CAN ids. If it matches we return success.
+         * 
+         * @return True if ID matches our list, False otherwise.
+         */
+        bool checkID(const int id); 
+
     private:
         CAN can;
         CANMessage msg;

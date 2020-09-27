@@ -62,7 +62,7 @@ class EMAFilter: public Filter{
          * 
          * @return Filter output.
          */
-        const double getResult() { 
+        double getResult() const { 
             return avg;
         }
 
