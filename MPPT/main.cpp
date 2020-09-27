@@ -35,6 +35,7 @@ across the PV.
 This is our basic feedback loop.
 */
 
+
 #include <chrono>
 #include "mbed.h"
 #include "sensor/currentSensor.h"
@@ -46,11 +47,15 @@ This is our basic feedback loop.
 #include "CAN/CAN.h"
 #include "dcdcconverter/DcDcConverter.h"
 
-#define CAN_INT_PERIOD 50000        // 50 ms
-#define SENSOR_INT_PERIOD 200000    // 200 ms
-#define MPPT_INT_PERIOD 50000       // 50 ms
-#define DC_DC_INT_PERIOD 50000      // 50 ms
-#define PIPELINE_PERIOD 25000       // 25 ms
+/** Period between CAN getting messages */
+#define CAN_INT_PERIOD 50000    // 50 ms
+/** Period between all sensors getting values. */
+#define SENSOR_INT_PERIOD 20000 // 20 ms
+/** Period between MPPT calculating new setpoint. */
+#define MPPT_INT_PERIOD 200000  // 200 ms
+/** Period between when DC-DC Converter updates setpoint. */
+#define DC_DC_INT_PERIOD 20000  // 20 ms
+
 
 void manage_pipeline();
 
