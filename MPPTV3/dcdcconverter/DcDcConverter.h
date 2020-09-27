@@ -14,6 +14,7 @@
 #include "mbed.h"
 #include <chrono>
 
+
 /**
  * Definition of an implementation for the DC-DC converter.
  * 
@@ -28,7 +29,7 @@ class Dcdcconverter {
          * 
          * @param[in] pin Pin to attach AnalogOut (pwm pin) to.
          */
-        Dcdcconverter(PinName pin) : pwm(pin);
+        Dcdcconverter(PinName pin);
 
         /**
          * Sets the pulse width of the DC-DC converter.

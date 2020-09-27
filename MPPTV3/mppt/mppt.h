@@ -15,6 +15,7 @@
 #include <chrono>
 #include "mbed.h"
 
+
 enum Mode {
     DEFAULT,
     ADAPTIVE
@@ -31,11 +32,11 @@ enum Mode {
 class Mppt {
     public:
         /**
-         * constructor for a Mppt object.
+         * Constructor for a MPPT object.
          * 
          * @param[in] pin Pin to attach DigitalOut (tracking LED) to.
          */
-        Mppt(const PinName pin) : trackingLED(pin);
+        Mppt(const PinName pin);
 
         /**
          * Sets the inputs for the MPPT algorithm to process at the next interrupt.
@@ -84,7 +85,7 @@ class Mppt {
          */
         const char* get_name();
 
-    private:
+    protected:
         /**
          * Processes internal inputs and determines an optimal target voltage
          * for the DC-DC converter to run at. Inherited and implemented by its children.
@@ -117,7 +118,7 @@ class Mppt {
             const double temperature
         );
 
-    private:
+    protected:
         DigitalOut trackingLED;
         Ticker tick;
 

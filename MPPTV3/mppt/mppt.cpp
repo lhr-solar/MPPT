@@ -12,6 +12,7 @@
  */
 #include "mppt.h"
 
+
 /** Public Methods. */
 
 Mppt::Mppt(const PinName pin) : trackingLED(pin) {

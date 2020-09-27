@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 20th, 2020
- * Last Modified: 9/20/20
+ * Last Modified: 9/26/20
  * 
  * File Discription: This header file implements the KalmanFilter class, which
  * is a derived class from the parent Filter class.
@@ -25,24 +25,17 @@
  * measurements provided in a stream format.
  */
 class KalmanFilter: public Filter{
-    protected:
-        double estimate; // guess
-        double eu; // estimate uncertainty (variance)
-        double mu; // measurement uncertainty
-        double q; // process noise variance
-
     public:
         KalmanFilter() { KalmanFilter(10, 10.0, 225, 25, 0.15); } // default implementation
         
         /**
-         * constructor for a KalmanFilter object.
+         * Constructor for a KalmanFilter object.
          * 
-         * @param maxSamples (int)
-         *      number of samples that the filter should hold at maximum at any
-         *      one time.
+         * @param maxSamples Number of samples that the filter should hold at maximum 
+         *      at any one time.
          * @precondition maxSamples is a positive number.
          */
-        KalmanFilter(int maxSamples) : Filter(maxSamples) {
+        KalmanFilter(const int maxSamples) : Filter(maxSamples) {
             estimate = 10.0;
             eu = 225;
             mu = 25;
@@ -50,33 +43,28 @@ class KalmanFilter: public Filter{
         }
 
         /**
-         * constructor for a KalmanFilter object.
+         * Constructor for a KalmanFilter object.
          * 
-         * @param maxSamples (int)
-         *      number of samples that the filter should hold at maximum at any
-         *      one time.
-         * @param initialEstimate (double)
-         *      Initial guess of a sensor sample value. A best guess would be at
-         *      STC (i.e. Temp sensor: 25.0 C, 128 cell subarray - .65V each:
-         *      85.0 V, 5.5 A from a subarray)
-         * @param estimateUncertainty (double)
-         *      estimate uncertainty variance. Play around with this value.
-         *      Decreases over time by itself after initialization.
-         * @param measurementUncertainty (double)
-         *      Uncertainty of the input measurement. Typically listed on the
-         *      datasheet but may need to be determined for custom builds (i.e.
-         *      RTD to ADC).
-         * @param processNoiseVariance (double)
-         *      Measurement of how good we think our model is. Recommended range
-         *      is 0.15 to 0.001. Play around with this value.
+         * @param[in] maxSamples Number of samples that the filter should hold at 
+         *      maximum at any one time.
+         * @param[in] initialEstimate Initial guess of a sensor sample value. A 
+         *      best guess would be at STC (i.e. Temp sensor: 25.0 C, 128 cell 
+         *      subarray - .65V each: 85.0 V, 5.5 A from a subarray)
+         * @param[in] estimateUncertainty Estimate uncertainty variance. Play 
+         *      around with this value. Decreases over time by itself after initialization.
+         * @param[in] measurementUncertainty Uncertainty of the input measurement. 
+         *      Typically listed on the datasheet but may need to be determined for 
+         *      custom builds (i.e. RTD to ADC).
+         * @param[in] processNoiseVariance Measurement of how good we think our model 
+         *      is. Recommended range is 0.15 to 0.001. Play around with this value.
          * @precondition maxSamples is a positive number.
          */
         KalmanFilter(
-            int maxSamples, 
-            double initialEstimate,
-            double estimateUncertainty,
-            double measurementUncertainty,
-            double processNoiseVariance
+            const int maxSamples, 
+            const double initialEstimate,
+            const double estimateUncertainty,
+            const double measurementUncertainty,
+            const double processNoiseVariance
         ) : Filter(maxSamples) {
             estimate = initialEstimate;
             eu = estimateUncertainty;
@@ -85,12 +73,11 @@ class KalmanFilter: public Filter{
         }
 
         /**
-         * adds a sample to the filter and updates calculations.
+         * Adds a sample to the filter and updates calculations.
          * 
-         * @param sample (double)
-         *      input sample to calculate filter with.
+         * @param[in] sample Input sample to calculate filter with.
          */
-        void addSample(double sample) { 
+        void addSample(const double sample) { 
             // Kalman Gain
             double K = eu / (eu + mu);
             // estimate update (state update)
@@ -105,12 +92,11 @@ class KalmanFilter: public Filter{
         }
 
         /**
-         * returns the filtered result of the input data.
+         * Returns the filtered result of the input data.
          * 
-         * @return double
-         *      filter output.
+         * @return Filter output.
          */
-        double getResult() { 
+        const double getResult() { 
             return estimate;
         }
 
@@ -118,6 +104,19 @@ class KalmanFilter: public Filter{
          * Deallocates constructs in the filter for shutdown.
          */
         void shutdown() {}
+
+    private:
+        /** Guess. */
+        double estimate;
+
+        /** Estimate uncertainty (variance). */
+        double eu;
+
+        /** Measurement uncertainty. */
+        double mu;
+
+        /** Process noise variance. */
+        double q;
 };
 
 

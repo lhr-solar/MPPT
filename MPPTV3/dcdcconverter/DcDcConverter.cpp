@@ -15,6 +15,7 @@
  */
 #include "DcDcConverter.h"
 
+
 /** Public Methods. */
 
 Dcdcconverter::Dcdcconverter(PinName pin) : pwm(pin) {            

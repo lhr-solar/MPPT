@@ -5,7 +5,7 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 20th, 2020
- * Last Modified: 9/20/20
+ * Last Modified: 9/26/20
  * 
  * File Discription: This header file implements the EMAFilter class, which
  * is a derived class from the parent Filter class. EMA stands for Exponential
@@ -24,6 +24,7 @@
 #include <cmath>
 #include <stdio.h>
 
+
 /**
  * Definition of a derived implementation for an Exponential Moving Average filter.
  * 
@@ -31,44 +32,37 @@
  * measurements provided in a stream format.
  */
 class EMAFilter: public Filter{
-    protected:
-        double avg;
-        double alpha;
-
     public:
         EMAFilter() { EMAFilter(10, 0.2); } // default implementation
         /**
-         * constructor for a MedianFilter object.
+         * Constructor for a MedianFilter object.
          * 
-         * @param maxSamples (int)
-         *      number of samples that the filter should hold at maximum at any
-         *      one time.
-         * @param alpha (double)
-         *  
+         * @param[in] maxSamples Number of samples that the filter should hold at 
+         *      maximum at any one time.
+         * @param[in] alpha A constant from [0, 1] inclusive that indicates the
+         *      weight decline of each progressive sample.
          * @precondition maxSamples is a positive number.
          */
-        EMAFilter(int maxSamples, double alpha) : Filter(maxSamples) {
+        EMAFilter(const int maxSamples, const double alpha) : Filter(maxSamples) {
             avg = 0;
             this->alpha = alpha;
         }
 
         /**
-         * adds a sample to the filter and updates calculations.
+         * Adds a sample to the filter and updates calculations.
          * 
-         * @param sample (double)
-         *      input sample to calculate filter with.
+         * @param[in] sample Input sample to calculate filter with.
          */
-        void addSample(double sample) { 
+        void addSample(const double sample) { 
             avg = (1-alpha) * avg + alpha * sample;
         }
 
         /**
-         * returns the filtered result of the input data.
+         * Returns the filtered result of the input data.
          * 
-         * @return double
-         *      filter output.
+         * @return Filter output.
          */
-        double getResult() { 
+        const double getResult() { 
             return avg;
         }
 
@@ -76,6 +70,13 @@ class EMAFilter: public Filter{
          * Deallocates constructs in the filter for shutdown.
          */
         void shutdown() {}
+
+    private:
+        /** Weighted average of the data points. */
+        double avg;
+
+        /** Alpha constant for weight depreciation. */
+        double alpha;
 };
 
 void TEST() {

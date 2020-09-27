@@ -5,14 +5,20 @@
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
- * Last Modified: 9/11/20
+ * Last Modified: 9/26/20
  * 
  * File Discription: This file implements functions defined for the Sensor
  * class.
  */
 #include "sensor.h"
 
-Sensor::Sensor(const PinName pin) : sensor(pin) {
+
+Sensor::Sensor(PinName pin) : sensor(pin), filter(10) {
+    adcValue = 0.0;
+    lock = false;
+}
+
+Sensor::Sensor(PinName pin, int numFilterSamples) : sensor(pin), filter(numFilterSamples) {
     adcValue = 0.0;
     lock = false;
 }
@@ -32,4 +38,5 @@ void Sensor::start(const int interval) {
 
 void Sensor::stop() {
     tick.detach();
+    filter.shutdown();
 }

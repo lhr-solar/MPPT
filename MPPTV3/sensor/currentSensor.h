@@ -13,6 +13,7 @@
 #pragma once
 #include "sensor.h"
 
+
 /**
  * Definition of a derived implementation for current sensors using the uC ADC.
  * 
@@ -30,9 +31,19 @@ class CurrentSensor: public Sensor {
         CurrentSensor(const PinName pin) : Sensor(pin) {}
 
         /**
-         * Reads and processes the value obtained from the AnalogIn pin.
-         * constructor for a current sensor object.
-         * @param pin (PinName)
+         * Constructor for a current sensor object.
+         * 
+         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param numFilterSamples Number of samples in our filter window
+         */
+        CurrentSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+
+        /**
+         * Measures the sensor ADC input and converts it and filters it.
+         */
+        void measure() {
+            double tempValue = sensor.read_voltage();
+            // TODO: do some processing to convert it into a meaningful vaue
 
             // filter it
             filter.addSample(tempValue);

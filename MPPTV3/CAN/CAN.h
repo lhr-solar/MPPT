@@ -14,10 +14,13 @@
 #pragma once
 #include "mbed.h"
 #include <chrono>
+#include <string.h>
+
 
 #define MPPT_CAN_ID 100
 #define CAN_BUS_SIZE 200
 #define CAN_BUS_BAUD 25000
+
 
 /**
  * Definition of an implementation for the CAN abstraction layer.
@@ -34,9 +37,7 @@ class CANDevice {
          * @param[in] pinRx RX pin to attach CAN (pin) to.
          * @param[in] pinTx TX pin to attach cAN (pin) to.
          */
-        CANDevice(
-            const PinName pinRx, 
-            const PinName pinTx) : can(pinRx, pinTx, CAN_BUS_BAUD);
+        CANDevice(const PinName pinRx, const PinName pinTx);
 
         /**
          * Grabs a CAN message from the internal buffer, if any.
@@ -76,6 +77,6 @@ class CANDevice {
 
         /** Indices for traversing the mailbox. */
         int getIdx;
-        int putIdx
+        int putIdx;
 };
 

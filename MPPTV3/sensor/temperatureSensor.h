@@ -13,6 +13,7 @@
 #pragma once
 #include "sensor.h"
 
+
 /**
  * Definition of a derived implementation for temperature sensors using the uC ADC.
  * 
@@ -22,19 +23,32 @@
 class TemperatureSensor: public Sensor{
     public:
         /**
-         * Constructor for a voltage sensor object.
+         * Constructor for a temperature sensor object.
          * 
-         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] pin (PinName)
+         *      pin to attach AnalogIn (sensor ADC pin) to.
          */
         TemperatureSensor(const PinName pin) : Sensor(pin) {}
 
         /**
+         * Constructor for a temperature sensor object.
+         * 
+         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param numFilterSamples Number of samples in our filter window
+         */
+        TemperatureSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+
+        /**
          * Measures the sensor ADC input and converts it and filters it.
          */
-        void handler() {
+        void measure() {
             double tempValue = sensor.read_voltage();
-            // do some processing on the temporary value, maybe even some SW
-            // filtering
+            // TODO: do some processing to convert it into a meaningful vaue
+
+            // filter it
+            filter.addSample(tempValue);
+            tempValue = filter.getResult();
+
             lock = true;
             adcValue = tempValue;
             lock = false;

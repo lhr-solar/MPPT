@@ -16,6 +16,7 @@
 #include <chrono>
 #include "filter/filter.h"
 
+
 /**
  * Definition of a base implementation for sensors using the uC ADC.
  * 
@@ -27,11 +28,28 @@
 class Sensor {
     public:
         /**
-         * Constructor for a sensor object.
+         * constructor for a sensor object.
+         * By default, we'll have a pass through filter object. This can be
+         * swapped out for a SMAFilter or another child object class.
          * 
-         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param pin (PinName)
+         *      pin to attach AnalogIn (sensor ADC pin) to.
+         * 
+         * @note default to a sample width of 10.
          */
-        Sensor(const PinName pin) : sensor(pin);
+        Sensor(PinName pin);
+
+        /**
+         * constructor for a sensor object.
+         * By default, we'll have a pass through filter object. This can be
+         * swapped out for a SMAFilter or another child object class.
+         * 
+         * @param pin (PinName)
+         *      pin to attach AnalogIn (sensor ADC pin) to.
+         * @param numFilterSamples (int)
+         *      number of samples in our filter window
+         */
+        Sensor(PinName pin, int numFilterSamples);
 
         /**
          * Sets the reference voltage for the AnalogIn data member. You can read more
@@ -62,7 +80,6 @@ class Sensor {
 
         /**
          * Stops interrupt execution of the private handler function given the interval.
-        void stop();
          * constructor for a sensor object.
          * By default, we'll have a pass through filter object. This can be
          * swapped out for a SMAFilter or another child object class.
@@ -72,10 +89,18 @@ class Sensor {
          * 
          * @note default to a sample width of 10.
          */
+        void stop();
+
+    protected:
+        AnalogIn sensor;
+        Filter filter;
+        Ticker tick;
 
         /** Lock to prevent read/modification of shared resources. */
         bool lock;
 
         /** ADC output result value. */
         double adcValue;
+
+        virtual void measure() = 0;
 };

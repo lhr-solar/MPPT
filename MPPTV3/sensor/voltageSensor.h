@@ -13,6 +13,7 @@
 #pragma once
 #include "sensor.h"
 
+
 /**
  * Definition of a derived implementation for voltage sensors using the uC ADC.
  * 
@@ -24,14 +25,23 @@ class VoltageSensor: public Sensor{
         /**
          * Constructor for a voltage sensor object.
          * 
-         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] pin (PinName)
+         *      pin to attach AnalogIn (sensor ADC pin) to.
          */
         VoltageSensor(const PinName pin) : Sensor(pin) {}
 
         /**
+         * Constructor for a voltage sensor object.
+         * 
+         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param numFilterSamples Number of samples in our filter window
+         */
+        VoltageSensor(PinName pin, int numFilterSamples) : Sensor(pin, numFilterSamples) {}
+
+        /**
          * Measures the sensor ADC input and converts it and filters it.
          */
-        void handler() {
+        void measure() {
             double tempValue = sensor.read_voltage();
             // TODO: do some processing to convert it into a meaningful vaue
 

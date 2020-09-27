@@ -13,6 +13,7 @@
  */
 #include "CAN.h"
 
+
 /** Public Methods. */
 
 CANDevice::CANDevice(
@@ -37,8 +38,8 @@ char* CANDevice::getMessage() {
 
     CANMessage canMsg = mailbox[getIdx];
     if (canMsg.id != MPPT_CAN_ID) { return new char[1](); }
-    char * msg = new char[strlen(canMsg.data)];
-    strcpy(msg, canMsg.data);
+    char * msg = new char[canMsg.len];
+    std::strcpy(msg, reinterpret_cast <char *>(canMsg.data));
 
     getIdx = (getIdx + 1) % CAN_BUS_SIZE;
     return msg;
