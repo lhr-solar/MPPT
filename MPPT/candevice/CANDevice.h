@@ -1,7 +1,7 @@
 /**
  * Maximum Power Point Tracker Project
  * 
- * File: CAN.h
+ * File: CANDevice.h
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 12th, 2020

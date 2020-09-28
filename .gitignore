@@ -1,2 +1,9 @@
-BPS/BeVolt/BPS-master.uvguix.*
-BPS/BeVolt/Objects
+MPPT/.mbed
+MPPT/BUILD/
+MPPT/__pycache__/
+MPPT/mbed-os.lib
+MPPT/mbed-os/
+MPPT/mbed_app.json
+MPPT/mbed_settings.py
+*.directory
+.vscode/

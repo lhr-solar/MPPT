@@ -44,7 +44,7 @@ This is our basic feedback loop.
 #include "mppt/PandO.h"
 #include "mppt/IC.h"
 #include "mppt/FC.h"
-#include "CAN/CAN.h"
+#include "candevice/CANDevice.h"
 #include "dcdcconverter/DcDcConverter.h"
 
 /** Period between CAN getting messages */

@@ -1,7 +1,7 @@
 /**
  * Maximum Power Point Tracker Project
  * 
- * File: CAN.cpp
+ * File: CANDevice.cpp
  * Author: Matthew Yu
  * Organization: UT Solar Vehicles Team
  * Created on: September 10th, 2020
@@ -11,7 +11,7 @@
  * implementation logic to send and receive messages via the CAN lines and
  * providing an easy interface.
  */
-#include "CAN.h"
+#include "CANDevice.h"
 
 
 /** Public Methods. */
