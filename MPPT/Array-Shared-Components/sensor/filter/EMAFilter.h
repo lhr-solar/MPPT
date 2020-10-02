@@ -34,6 +34,7 @@
 class EMAFilter: public Filter{
     public:
         EMAFilter() { EMAFilter(10, 0.2); } // default implementation
+        
         /**
          * Constructor for a MedianFilter object.
          * 

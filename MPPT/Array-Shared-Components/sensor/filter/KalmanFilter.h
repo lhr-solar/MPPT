@@ -31,7 +31,7 @@ class KalmanFilter: public Filter{
         /**
          * Constructor for a KalmanFilter object.
          * 
-         * @param maxSamples Number of samples that the filter should hold at maximum 
+         * @param[in] maxSamples Number of samples that the filter should hold at maximum 
          *      at any one time.
          * @precondition maxSamples is a positive number.
          */

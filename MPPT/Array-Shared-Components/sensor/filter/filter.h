@@ -27,6 +27,7 @@
 class Filter {
     public:
         Filter() { Filter(10); } // default implementation
+        
         /**
          * constructor for a filter object.
          * 

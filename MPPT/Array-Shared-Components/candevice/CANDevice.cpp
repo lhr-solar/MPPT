@@ -25,14 +25,6 @@ CANDevice::CANDevice(
     putIdx = 0;
 }
 
-/**
- * returns a pointer to the current message from the mailbox.
- * Upon calling the getMessage() function again, previous pointers now point to 
- * a new value and should be invalidated.
- *
- * @return char*
- *      current message to be read from the CAN mailbox.
- */
 char* CANDevice::getMessage() {
     if (bufferLock) return new char[1]();
 
@@ -45,7 +37,8 @@ char* CANDevice::getMessage() {
 }
 
 void CANDevice::start(const int interval) {
-    tick.attach(callback(this, &CANDevice::handler), std::chrono::microseconds(interval));
+    tick.attach(callback(this, &CANDevice::handler), 
+        std::chrono::microseconds(interval));
 }
 
 void CANDevice::stop() {

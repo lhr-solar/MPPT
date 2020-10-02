@@ -33,7 +33,7 @@ class SMAFilter: public Filter{
         /**
          * Constructor for a SMAFilter object.
          * 
-         * @param maxSamples Number of samples that the filter should 
+         * @param[in] maxSamples Number of samples that the filter should 
          *      hold at maximum at any one time.
          * @precondition maxSamples is a positive number.
          */

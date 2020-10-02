@@ -32,7 +32,7 @@ class Sensor {
          * By default, we'll have a pass through filter object. This can be
          * swapped out for a SMAFilter or another child object class.
          * 
-         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
          * @note default to a sample width of 10.
          */
         Sensor(const PinName pin);
@@ -42,8 +42,8 @@ class Sensor {
          * By default, we'll have a pass through filter object. This can be
          * swapped out for a SMAFilter or another child object class.
          * 
-         * @param pin Pin to attach AnalogIn (sensor ADC pin) to.
-         * @param numFilterSamples Number of samples in our filter window.
+         * @param[in] pin Pin to attach AnalogIn (sensor ADC pin) to.
+         * @param[in] numFilterSamples Number of samples in our filter window.
          */
         Sensor(const PinName pin, const int numFilterSamples);
 

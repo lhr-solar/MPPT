@@ -38,14 +38,14 @@ This is our basic feedback loop.
 
 #include <chrono>
 #include "mbed.h"
-#include "sensor/currentSensor.h"
-#include "sensor/voltageSensor.h"
+#include "Array-Shared-Components/candevice/CANDevice.h"
+#include "Array-Shared-Components/sensor/currentSensor.h"
+#include "Array-Shared-Components/sensor/voltageSensor.h"
+#include "dcdcconverter/DcDcConverter.h"
 #include "mppt/mppt.h"
 #include "mppt/PandO.h"
 #include "mppt/IC.h"
 #include "mppt/FC.h"
-#include "candevice/CANDevice.h"
-#include "dcdcconverter/DcDcConverter.h"
 
 /** Period between CAN getting messages */
 #define CAN_INT_PERIOD 50000    // 50 ms

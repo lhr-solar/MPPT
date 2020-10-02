@@ -28,10 +28,11 @@
 class MedianFilter: public Filter{
     public:
         MedianFilter() { MedianFilter(10); } // default implementation
+
         /**
          * Constructor for a MedianFilter object.
          * 
-         * @param maxSamples Number of samples that the filter should 
+         * @param[in] maxSamples Number of samples that the filter should 
          *      hold at maximum at any one time.
          * @precondition maxSamples is a positive number.
          */

@@ -18,7 +18,8 @@ Sensor::Sensor(const PinName pin) : sensor(pin), filter(10) {
     lock = false;
 }
 
-Sensor::Sensor(const PinName pin, const int numFilterSamples) : sensor(pin), filter(numFilterSamples) {
+Sensor::Sensor(const PinName pin, const int numFilterSamples) : 
+    sensor(pin), filter(numFilterSamples) {
     adcValue = 0.0;
     lock = false;
 }
@@ -33,7 +34,8 @@ double Sensor::get_value() const {
 }
 
 void Sensor::start(const int interval) {
-    tick.attach(callback(this, &Sensor::measure), std::chrono::microseconds(interval));
+    tick.attach(callback(this, &Sensor::measure), 
+        std::chrono::microseconds(interval));
 }
 
 void Sensor::stop() {
