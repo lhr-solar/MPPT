@@ -1,18 +1,25 @@
 # MPPT
 
-Repo containing working code for the UTSVT MPPT and array simulation.
+Code for the UTSVT Maximum Power Point Trackers to be implemented on the STM32
+NUCLEO L432KC.
+
+---
 
 ## MPPT Board Software
 
 Located in the `MPPT/` root folder.
-The file structure is as follows:
-```
+The relevant file structure is as follows:
+
+```bash
 MPPT/
-  |-- CAN/
+  |-- Array-Shared-Components/
+  |     |-- src/
+  |         |-- CANDevice/
+  |         |-- Filter/
+  |         |-- Sensor/
+  |         |-- Serial/
   |-- dcdcconverter/
   |-- mppt/
-  |-- sensor/
-  |     |-- filter/
   |-- main.cpp
 ```
 
@@ -20,16 +27,7 @@ For reference, code developed by the senior design teams were last present in
 commit 2c36e87d72c7dfa2e403e846bccae883f6e5aa30.
 To access, try `git checkout 2c36e87d72c7dfa2e403e846bccae883f6e5aa30`.
 
-## Python Source and MPPT Simulator
-
-Located in the `sim/` root folder.
-
-## Run Simulator
-
-Navigate to the simulator directory with `cd sim` (assuming you are at the root folder of the repo.)
-To install dependencies, run `pip3 install -r requirements.txt`.
-To run the MPPT Simulator, call `python3 main.py`.
-To run the Solar cell model Simulator, call `python3 source_main.py`.
+---
 
 ## Development Instructions
 
