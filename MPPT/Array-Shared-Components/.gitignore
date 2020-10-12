@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# Any build directories
+BUILD/*
+TESTS/BUILD/*
+mbed-os/*
