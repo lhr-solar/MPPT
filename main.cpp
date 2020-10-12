@@ -38,9 +38,9 @@ This is our basic feedback loop.
 
 #include <chrono>
 #include "mbed.h"
-#include "Array-Shared-Components/candevice/CANDevice.h"
-#include "Array-Shared-Components/sensor/currentSensor.h"
-#include "Array-Shared-Components/sensor/voltageSensor.h"
+#include "Array-Shared-Components/src/CANDevice/CANDevice.h"
+#include "Array-Shared-Components/src/Sensor/CurrentSensor.h"
+#include "Array-Shared-Components/src/Sensor/VoltageSensor.h"
 #include "dcdcconverter/DcDcConverter.h"
 #include "mppt/mppt.h"
 #include "mppt/PandO.h"
