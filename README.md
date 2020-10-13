@@ -54,3 +54,25 @@ This will ensure consistent code for commits.
 We don't have an explicit style guide for C/C++ code, but you can generally take
 a look at some of the files we have to get a feel for it. For example, check
 `MPPT/mppt/mppt.h` and `MPPT/mppt/mppt.cpp`.
+
+---
+
+## Building
+
+Note that you need to set up the repo as an mbed project. Instructions on how to
+install mbed-cli can be found
+[here](https://os.mbed.com/docs/mbed-os/v6.3/build-tools/mbed-cli.html). You can
+do so to navigating to the root of this repo and calling
+
+`mbed new .`
+
+So far, the only build target these components were designed for in mind has
+been the STM32 L432KC Nucleos. However, these should be cross-compatible with
+other devices compatible with the mbed library.
+
+Since there is no main here, to see if everything compiles correctly for our
+target, run the following:
+
+`mbed compile -m NUCLEO_L432KC -t GCC_ARM -c --library`
+
+At the end you should see a build success message with the target.
