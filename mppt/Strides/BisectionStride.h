@@ -25,11 +25,11 @@ class BisectionStride: public Stride{
             minPowDiff = 0.01;
             minVoltDiff = 0.001;
         }
-        double getStride(){
-            inputLock = true;
+        double getStride(double arrayVoltage, double arrayCurrent){
+            // inputLock = true;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
-            inputLock = false;
+            // inputLock = false;
 
             double arrVoltDiff = arrVolt - arrVoltOld;
             double arrPowerDiff = arrVolt*arrCurr - arrPowerOld;

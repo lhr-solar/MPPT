@@ -19,10 +19,10 @@ class OptimalStride: public Stride{
         OptimalStride(): Stride(){}
         OptimalStride(double Vmpp, double error): Stride(Vmpp, error){}
         double getStride(double arrayVoltage, double arrayCurrent){
-            inputLock = true;
+            // inputLock = true;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
-            inputLock = false;
+            // inputLock = false;
             minStride = error*error*VMPP/(2*(1-error));
             double stride = abs(arrVolt - VMPP);
             arrPowerOld = arrVolt * arrCurr;

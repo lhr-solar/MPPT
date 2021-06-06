@@ -26,8 +26,6 @@ Stride::Stride(){
 }
 Stride::Stride(double Vmpp, double error){
     targetVoltage = 0.0;
-    arrayVoltage = 0.0;
-    arrayCurrent = 0.0;
     battVoltage = 0.0;
     battCurrent = 0.0;
     minStride = 0.01;
