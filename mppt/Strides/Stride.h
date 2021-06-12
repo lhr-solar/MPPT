@@ -25,7 +25,7 @@
         double minStride;
         static double arrVoltOld;
         static double arrPowerOld;
-        bool inputLock;
+        // bool inputLock;
         double error;
         double VMPP;
  };
