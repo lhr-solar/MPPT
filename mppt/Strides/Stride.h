@@ -18,6 +18,7 @@
         Stride(double Vmpp, double error);
         double getStride(double arrayVoltage, double arrayCurrent);
         const char* get_name() const;
+        void setup(double vmpp);
     protected: 
         double battVoltage;
         double battCurrent;

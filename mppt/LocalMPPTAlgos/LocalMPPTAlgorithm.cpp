@@ -53,11 +53,17 @@ const char* LocalMPPTAlgorithm::get_stride_type() const{
     return stride.get_name();
 }
 
-void LocalMPPTAlgorithm::handler(double arrayVoltage, double arrayCurrent){
+void LocalMPPTAlgorithm::getReferenceVoltage
+(double arrayVoltage, double arrayCurrent){
     return 0.0;
 }
 
 void LocalMPPTAlgorithm:: update_tracking_LED(){
     
+}
+void LocalMPPTAlgorithm::setup(double vmpp, double left, double right){
+    leftBound = left;
+    rightBound = right
+    stride.setup(vmpp);
 }
 

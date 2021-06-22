@@ -21,8 +21,7 @@ class Pando: public LocalMPPTAlgorithm{
             return "PandO";
         }
 
-    private:
-        void handler(double arrayVoltage, double arrayCurrent){
+        double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
             double arrVoltDiff = arrVolt - arrVoltOld;
@@ -48,5 +47,7 @@ class Pando: public LocalMPPTAlgorithm{
             targetVoltage = arrVoltNew;
             arrVoltOld = arrVolt;
             arrPowOld = arrVolt * arrCurr;
+            return targetVoltage;
         }
-}
+       
+};

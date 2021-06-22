@@ -23,11 +23,7 @@ class Bisection : public LocalMPPTAlgorithm{
         const char* get_name() const{
             return "Golden Search";
         }
-    
-    private:
-        int cycle;
-        const double error = 0.01;
-        void handler(double arrayVoltage, double arrayCurrent){
+        double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -54,5 +50,11 @@ class Bisection : public LocalMPPTAlgorithm{
                 arrVoltOld = arrVolt;
                 arrPowOld = pNew;
             }
+            return targetVoltage;
         }
+    
+    private:
+        int cycle;
+        const double error = 0.01;
+        
 };

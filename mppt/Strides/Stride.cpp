@@ -20,7 +20,7 @@ Stride::Stride(){
     minStride = 0.01;
     arrVoltOld = 0.0;
     arrPowerOld = 0.0;
-    inputLock = false;
+    // inputLock = false;
     error = 0.05;
     VMPP = 0.621;
 }
@@ -31,13 +31,18 @@ Stride::Stride(double Vmpp, double error){
     minStride = 0.01;
     arrVoltOld = 0.0;
     arrPowerOld = 0.0;
-    inputLock = false;
+    // inputLock = false;
     error = error;
     VMPP = Vmpp;
 }
 
 
+
+
 double Stride::getStride(double arrayVoltage, double arrayCurrent){
     return minStride;
+}
+void Stride::setup(double vmpp){
+    VMPP = vmpp;
 }
 const char*Stride::get_name() const{return "Fixed";}

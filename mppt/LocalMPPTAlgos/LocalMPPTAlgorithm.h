@@ -46,9 +46,13 @@
         const char* get_name() const;
 
         const char* get_stride_type() const;
-    protected:
-        virtual void handler(double arrayVoltage, double arrayCurrent) = 0;
 
+        void setup(double vmpp, double left, double right);
+
+        virtual void getReferenceVoltage(double arrayVoltage, double arrayCurrent) = 0;
+
+
+    protected:
         void update_tracking_LED();
 
      protected:

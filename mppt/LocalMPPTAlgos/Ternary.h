@@ -27,16 +27,7 @@ class Ternary : public LocalMPPTAlgorithm{
         return "Ternary Search";
     }
 
-    
-    private:
-        const double q = 0.33;
-        double l1;
-        double l2;
-        double powerL1;
-        double powerL2;
-        int cycle;
-
-        void handler(double arrayVoltage, double arrayCurrent){
+    double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -56,5 +47,16 @@ class Ternary : public LocalMPPTAlgorithm{
                 targetVoltage = l2;
                 cycle = 0;
             }
+            return targetVoltage;
         }
+    
+    private:
+        const double q = 0.33;
+        double l1;
+        double l2;
+        double powerL1;
+        double powerL2;
+        int cycle;
+
+        
 };

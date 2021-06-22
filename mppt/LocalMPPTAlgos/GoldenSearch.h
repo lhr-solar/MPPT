@@ -26,15 +26,7 @@ class GoldenSearch : public LocalMPPTAlgorithm{
         const char* get_name() const{
             return "Golden Search";
         }
-    private:
-        const double phi = (sqrt(5) + 1)/2 - 1;
-        int cycle;
-        double powerL1;
-        double powerL2;
-        double l1;
-        double l2;
-
-        void handler(double arrayVoltage, double arrayCurrent){
+        double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
             if(cycle == 0){
                 l1 = rightBound - (rightBound - leftBound) * phi;
@@ -67,5 +59,15 @@ class GoldenSearch : public LocalMPPTAlgorithm{
                     cycle = 2;
                 }
             }
+            return targetVoltage;
         }
+    private:
+        const double phi = (sqrt(5) + 1)/2 - 1;
+        int cycle;
+        double powerL1;
+        double powerL2;
+        double l1;
+        double l2;
+
+        
 };

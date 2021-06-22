@@ -21,10 +21,7 @@ class FC: public LocalMPPTAlgorithm{
         const char* get_name() const{
             return "FC";
         }
-    
-    private:
-        const double error = 0.05;
-        void handler(double arrayVoltage, double arrayCurrent){
+        void getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
             double arrPow = arrVolt*arrCurr;
@@ -44,5 +41,10 @@ class FC: public LocalMPPTAlgorithm{
             }
             arrVoltOld = arrVolt;
             arrPowOld = arrPow;
+            return targetVoltage;
         }
+    
+    private:
+        const double error = 0.05;
+        
 }

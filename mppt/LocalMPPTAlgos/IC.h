@@ -22,11 +22,7 @@ class IC: public LocalMPPTAlgorithm{
         const char* get_name() const{
             return "Incremental Conductance"
         }
-    
-    private:
-        const double error = 0.01;
-        static double arrCurrOld;
-        void handler(double arrayVoltage, double arrayCurrent){
+        double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
             double dI = arrCurr - arrCurrOld;
@@ -45,5 +41,11 @@ class IC: public LocalMPPTAlgorithm{
             arrVoltOld = arrVolt;
             arrCurrOld = arrCurr;
             arrPowOld = arrVolt * arrCurr;
+            return targetVoltage;
         }
+    
+    private:
+        const double error = 0.01;
+        static double arrCurrOld;
+        
 }
