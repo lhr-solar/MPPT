@@ -21,7 +21,7 @@ class Bisection : public LocalMPPTAlgorithm{
         }
 
         const char* get_name() const{
-            return "Golden Search";
+            return "Bisection";
         }
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;

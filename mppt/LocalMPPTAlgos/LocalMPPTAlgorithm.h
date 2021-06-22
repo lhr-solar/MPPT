@@ -49,7 +49,7 @@
 
         void setup(double vmpp, double left, double right);
 
-        virtual void getReferenceVoltage(double arrayVoltage, double arrayCurrent) = 0;
+        virtual double getReferenceVoltage(double arrayVoltage, double arrayCurrent) = 0;
 
 
     protected:

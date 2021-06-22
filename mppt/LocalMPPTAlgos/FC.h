@@ -21,7 +21,7 @@ class FC: public LocalMPPTAlgorithm{
         const char* get_name() const{
             return "FC";
         }
-        void getReferenceVoltage(double arrayVoltage, double arrayCurrent){
+        double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
             double arrPow = arrVolt*arrCurr;
