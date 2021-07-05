@@ -17,9 +17,7 @@ class Pando: public LocalMPPTAlgorithm{
     public:
         Pando(const PinName pin, StrideType type) : LocalMPPTAlgorithm(pin,type){}
 
-        const char* get_name() const{
-            return "PandO";
-        }
+        const char* get_name() const{ return "PandO"; }
 
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
