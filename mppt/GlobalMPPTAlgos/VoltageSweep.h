@@ -41,9 +41,7 @@ class VoltageSweep: public GlobalAlgo{
         runningHistoryAverage=0;
         pastHistoryAverage = 0;
     }
-    const char* getName() const{
-        return "Voltage Sweep";
-    }
+    const char* getName() const{ return "Voltage Sweep"; }
     double getLeftBound(){
         double leftBound;
         if(maxPowerIndex == 0){
@@ -65,26 +63,115 @@ class VoltageSweep: public GlobalAlgo{
     }
     
     private:
+        /** interval to increment while sweeping */
         double step;
+        /** array to keep track of voltage values of all local peaks */
         double voltagePeaks[SIZE];
+        /** array to keep track of voltage values of all local troughs */
         double voltageTroughs[SIZE];
+        /** array to keep track of power values of all local peaks */
         double powerPeaks[SIZE];
+        /** Whether or not we are currently in sweeping phase */
         bool sweeping;
+        /** While sweeping, is the curve increasing at the moment */
         bool increasing;
+        /** the maximum power detected from sweeping */
         double maxPower;
+        /** index we are at for the voltage peak array */
         int voltagePeakIndex;
+        /** index we are at for the voltage trough array */
         int voltageTroughIndex;
+        /** index we are at for the power peak array */
         int powerPeakIndex;
+        /** After sweeping one cycle must be used to setup for local algorithm */
         bool setup;
+        /** index in voltage peak array of where max power is */
         int maxPowerIndex;
+        /** left bound for local algorithm */
         double leftBound;
+        /** right bound for local algorithm */
         double rightBound;
+        /** index we are at for running history array */
         int runningHistoryIndex;
+        /** index we are at for pastHistories array */
         int pastHistoriesIndex;
+        /** whether 10 items have been entered into running history array */
         bool runHistoryFull;
+        /** whether 10 items have been entered into past histories array */
         bool pastHistoryFull;
+        /** current average of all values in running histories */
         double runningHistoryAverage;
+        /** current average of all averages of past 10 running histories */
         double pastHistoryAverage;
+
+        void addToRunning(double arrayVoltage, double arrayCurrent){
+            runningHistory[runningHistoryIndex] = arrayVoltage * arrayCurrent;
+            runningHistory = runningHistoryIndex + 1;
+            runningHistoryAverage += arrayVoltage * arrayCurrent;
+            if(runningHistoryIndex == SIZE){
+                runHistoryFull = true;
+                runningHistoryIndex = 0;
+                runningHistoryAverage /= SIZE;
+            }
+        }
+
+        void addToPastHistory(double average){
+            pastHistories[pastHistoriesIndex] = average;
+            pastHistoriesIndex++;
+            if(pastHistoriesIndex == SIZE){
+                pastHistoryFull = true;
+                pastHistoriesIndex = 0;
+                pastHistoryAverage /= SIZE;
+            }
+        }
+
+        bool checkRestart(double arrayVoltage, double arrayCurrent){
+            if(!runningHistoryFull){
+                addToRunning(arrayVoltage, arrayCurrent);
+                return false;
+            }else{
+                double pastAverage = runningHistoryAverage;
+                runningHistoryAverage -= runningHistory[runningHistoryIndex]/SIZE;
+                runningHistoryAverage += (arrCurr * arrVolt)/SIZE;
+                runningHistory[runningHistoryIndex] = arrayVoltage * arrayCurrent;
+                runningHistoryIndex = (runningHistoryIndex + 1) % SIZE;
+                if(!pastHistoryFull){
+                    addToPastHistory(runningHistoryAverage);
+                    return false;
+                }else{
+                    pastHistories[pastHistoriesIndex] = runningHistoryAverage;
+                    pastHistoriesIndex = (pastHistoriesIndex + 1) % 1;
+                    if(
+                        (pastHistories[(pastHistoriesIndex-1) % SIZE] - (pastHistories[(pastHistoriesIndex-2) % SIZE]))
+                        /pastHistories[(pastHistoriesIndex-1) % SIZE] <= -0.5
+                        ){
+                            return true;
+                        } else {
+                            return false;
+                        }
+                }
+            }
+        }
+
+        void reset(void){
+            sweeping = true;
+            setup = true;
+            targetVoltage = 0;
+            pastHistoriesIndex = 0;
+            pastHistoryAverage = 0;
+            pastHistoryFull = false;
+            runningHistoryAverage = 0;
+            runningHistoryIndex = 0;
+            runHistoryFull = false;
+            voltagePeakIndex = 0;
+            powerPeakIndex = 0;
+            increasing = true;
+            maxPower = 0;
+            maxPowerIndex = -1;
+            voltageTroughs[0] = 0;
+            voltageTroughIndex = 1;
+        }
+
         void handler(){
             if(!semaphore){
                 return;
@@ -128,56 +215,64 @@ class VoltageSweep: public GlobalAlgo{
                     localAlgo.setup(maxPower,leftBound,rightBound);
                     setup = false;
                 }
-                if(!runningHistoryFull){
-                    runningHistory[runningHistoryIndex] = arrVolt * arrCurr;
-                    runningHistoryIndex = runningHistoryIndex + 1;
-                    runningHistoryAverage += arrVolt * arrCurr;
-                    if(runningHistoryIndex == SIZE){
-                        runHistoryFull = true;
-                        runningHistoryIndex = 0;
-                        runningHistoryAverage /= SIZE;
-                    }
-                }else{
-                    double pastAverage = runningHistoryAverage;
-                    runningHistoryAverage -= runningHistory[runningHistoryIndex]/SIZE;
-                    runningHistoryAverage += (arrCurr * arrVolt)/SIZE;
-                    runningHistory[runningHistoryIndex] = arrVolt * arrCurr;
-                    runningHistoryIndex = (runningHistoryIndex + 1) % SIZE;
-                    if(!pastHistoryFull){
-                        pastHistories[pastHistoriesIndex] = runningHistoryAverage;
-                        pastHistoriesIndex++;
-                        pastHistoryAverage += runningHistoryAverage;
-                        if(pastHistoriesIndex == SIZE){
-                            pastHistoryFull = true;
-                            pastHistoriesIndex = 0;
-                            pastHistoryAverage /= SIZE;
-                        }
-                    }else{
-                        double previousPast = pastHistoryAverage;
-                        pastHistoryAverage -= pastHistories[pastHistoriesIndex]/SIZE;
-                        pastHistoryAverage += runningHistoryAverage/SIZE;
-                        pastHistories[pastHistoriesIndex] = runningHistoryAverage;
-                        pastHistoriesIndex = (pastHistoriesIndex + 1) % SIZE;
-                        if((pastHistories[(pastHistoriesIndex-1) % SIZE] - (pastHistories[(pastHistoriesIndex-2) % SIZE]))/pastHistories[(pastHistoriesIndex-1) % SIZE] <= -0.5){
-                            sweeping = true;
-                            setup = true;
-                            targetVoltage = 0;
-                            pastHistoriesIndex = 0;
-                            pastHistoryAverage = 0;
-                            pastHistoryFull = false;
-                            runningHistoryAverage = 0;
-                            runningHistoryIndex = 0;
-                            runHistoryFull = false;
-                            voltagePeakIndex = 0;
-                            powerPeakIndex = 0;
-                            increasing = true;
-                            maxPower = 0;
-                            maxPowerIndex = -1;
-                            voltageTroughs[0] = 0;
-                            voltageTroughIndex = 1;
-                        }
-                    }
+                bool needToReset = checkRestart(arrVolt, arrCurr);
+                if(needToReset){
+                    reset();
+                    return;
                 }
+                // if(!runHistoryFull){
+                //     runningHistory[runningHistoryIndex] = arrVolt * arrCurr;
+                //     runningHistoryIndex = runningHistoryIndex + 1;
+                //     runningHistoryAverage += arrVolt * arrCurr;
+                //     if(runningHistoryIndex == SIZE){
+                //         runHistoryFull = true;
+                //         runningHistoryIndex = 0;
+                //         runningHistoryAverage /= SIZE;
+                //     }
+                // }else{
+                //     double pastAverage = runningHistoryAverage;
+                //     runningHistoryAverage -= runningHistory[runningHistoryIndex]/SIZE;
+                //     runningHistoryAverage += (arrCurr * arrVolt)/SIZE;
+                //     runningHistory[runningHistoryIndex] = arrVolt * arrCurr;
+                //     runningHistoryIndex = (runningHistoryIndex + 1) % SIZE;
+                //     if(!pastHistoryFull){
+                //         pastHistories[pastHistoriesIndex] = runningHistoryAverage;
+                //         pastHistoriesIndex++;
+                //         pastHistoryAverage += runningHistoryAverage;
+                //         if(pastHistoriesIndex == SIZE){
+                //             pastHistoryFull = true;
+                //             pastHistoriesIndex = 0;
+                //             pastHistoryAverage /= SIZE;
+                //         }
+                //     }else{
+                //         double previousPast = pastHistoryAverage;
+                //         pastHistoryAverage -= pastHistories[pastHistoriesIndex]/SIZE;
+                //         pastHistoryAverage += runningHistoryAverage/SIZE;
+                //         pastHistories[pastHistoriesIndex] = runningHistoryAverage;
+                //         pastHistoriesIndex = (pastHistoriesIndex + 1) % SIZE;
+                //         if(
+                //             (pastHistories[(pastHistoriesIndex-1) % SIZE] - (pastHistories[(pastHistoriesIndex-2) % SIZE]))
+                //             /pastHistories[(pastHistoriesIndex-1) % SIZE] <= -0.5
+                //             ){
+                //             sweeping = true;
+                //             setup = true;
+                //             targetVoltage = 0;
+                //             pastHistoriesIndex = 0;
+                //             pastHistoryAverage = 0;
+                //             pastHistoryFull = false;
+                //             runningHistoryAverage = 0;
+                //             runningHistoryIndex = 0;
+                //             runHistoryFull = false;
+                //             voltagePeakIndex = 0;
+                //             powerPeakIndex = 0;
+                //             increasing = true;
+                //             maxPower = 0;
+                //             maxPowerIndex = -1;
+                //             voltageTroughs[0] = 0;
+                //             voltageTroughIndex = 1;
+                //         }
+                //     }
+                // }
                 if(arrVolt >= MAX_VOLTAGE){
                     targetVoltage = getLeftBound();
                 }else if(arrVolt == leftBound){
@@ -196,3 +291,4 @@ class VoltageSweep: public GlobalAlgo{
             }
         }
 };
+#undef size
