@@ -18,9 +18,7 @@ class FC: public LocalMPPTAlgorithm{
         FC(const PinName pin, StrideType type) : LocalMPPTAlgorithm(pin, type){
             
         }
-        const char* get_name() const{
-            return "FC";
-        }
+        const char* get_name() const{ return "FC"; }
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -45,6 +43,7 @@ class FC: public LocalMPPTAlgorithm{
         }
     
     private:
+        /** If power difference is less than this, we just use minStride*/
         const double error = 0.05;
         
 }
