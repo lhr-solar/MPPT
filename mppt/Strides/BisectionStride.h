@@ -51,12 +51,16 @@ class BisectionStride: public Stride{
                 return stride;
             }
         }
-        const char* get_name() const{return "Bisection Stride";}
+        const char* get_name() const{ return "Bisection Stride"; }
     
     private:
+        /** This variable is used to multiply by the slope to help calculate the perturb amount */
         double slopeMultiplier;
+        /** This is the difference in power needed at minimum in order to calculate the stride. If the difference is less, then use minStride*/
         double minPowDiff;
+        /** This is the difference in voltage needed at minimum in order to calculate the stride. If the difference is less, then use minStride*/
         double minVoltDiff;
+        /** function used to calculate absolute value of a double */
         double abs(double d){
             if(d < 0){
                 return d*-1;
