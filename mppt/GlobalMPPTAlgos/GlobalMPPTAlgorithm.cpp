@@ -11,7 +11,6 @@
  * is the parent class of the Global MPPT algroithms.
  */
 
-#pragma once
 #include "GlobalMPPTAlgorithm.h"
 
 GlobalMPPTAlgorithm::GlobalMPPTAlgorithm(const PinName pin, LocalType local, StrideType type) : trackingLed(pin){
@@ -23,18 +22,28 @@ GlobalMPPTAlgorithm::GlobalMPPTAlgorithm(const PinName pin, LocalType local, Str
     arrayCurrent = 0.0;
     battVoltage = 0.0;
     battCurrent = 0.0;
-    if(local == PANDO){
-        localAlgo = new Pando(pin,type);
-    }else if(local == GOLDEN){
-        localAlgo = new GoldenSearch(pin, type);
-    }else if(local == BISECTION){
-        localAlgo = new Bisection(pin,type);
-    }else if(local == TERNARY){
-        localAlgo = new Ternary(pin, type);
-    }else if(local == IC){
-        localAlgo = new IC(pin, type);
-    }else if(local == FC){
-        localAlgo = new FC(pin, type);
+    switch (local){
+        case PANDO:
+            localAlgo = new Pando(pin,type);
+            break;
+        case GOLDEN:
+            localAlgo = new GoldenSearch(pin,type);
+            break;
+        case BISECTION:
+            localAlgo = new Bisection(pin,type);
+            break;
+        case TERNARY:
+            localAlgo = new Ternary(pin,type);
+            break;
+        case IC:
+            localAlgo = new IC(pin,type);
+            break;
+        case FC:
+            localAlgo = new FC(pin,type);
+            break;
+        default:
+            localAlgo = new Pando(pin,type);
+            break;
     }
 }
 
