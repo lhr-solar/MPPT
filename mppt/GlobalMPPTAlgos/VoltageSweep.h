@@ -291,4 +291,4 @@ class VoltageSweep: public GlobalAlgo{
             }
         }
 };
-#undef size
+#undef SIZE
