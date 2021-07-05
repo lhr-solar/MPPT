@@ -23,9 +23,7 @@ class Ternary : public LocalMPPTAlgorithm{
         cycle = 0;
     }
 
-    const char* get_name() const{
-        return "Ternary Search";
-    }
+    const char* get_name() const{ return "Ternary Search"; }
 
     double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
@@ -51,11 +49,17 @@ class Ternary : public LocalMPPTAlgorithm{
         }
     
     private:
+        /** approxiamation of 1/3 */
         const double q = 0.33;
+        /** Voltage value of left goal post */
         double l1;
+        /** Voltage value of right goal post */
         double l2;
+        /** Power value of left goal post */
         double powerL1;
+        /** Power value of right goal post */
         double powerL2;
+        /** Variable to keep track of cycle number of algorithm
         int cycle;
 
         
