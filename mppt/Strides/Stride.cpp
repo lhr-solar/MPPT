@@ -39,10 +39,6 @@ Stride::Stride(double Vmpp, double error){
 
 
 
-double Stride::getStride(double arrayVoltage, double arrayCurrent){
-    return minStride;
-}
-void Stride::setup(double vmpp){
-    VMPP = vmpp;
-}
-const char*Stride::get_name() const{return "Fixed";}
+double Stride::getStride(double arrayVoltage, double arrayCurrent){return minStride;}
+void Stride::setup(double vmpp){VMPP = vmpp;}
+const char*Stride::get_name() const{ return "Fixed"; }
