@@ -19,9 +19,7 @@ class IC: public LocalMPPTAlgorithm{
             arrCurrOld = 0.0;
         }
 
-        const char* get_name() const{
-            return "Incremental Conductance"
-        }
+        const char* get_name() const{ return "Incremental Conductance"; }
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             double arrVolt = arrayVoltage;
             double arrCurr = arrayCurrent;
@@ -45,7 +43,9 @@ class IC: public LocalMPPTAlgorithm{
         }
     
     private:
+        /** If power difference less than this, use minStride */
         const double error = 0.01;
+        /** variable to keep track of old current */
         static double arrCurrOld;
         
 }
