@@ -23,9 +23,7 @@ class GoldenSearch : public LocalMPPTAlgorithm{
             l1 = leftBound;
             l2 = rightBound;
         }
-        const char* get_name() const{
-            return "Golden Search";
-        }
+        const char* get_name() const{ return "Golden Search"; }
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
             if(cycle == 0){
@@ -62,12 +60,16 @@ class GoldenSearch : public LocalMPPTAlgorithm{
             return targetVoltage;
         }
     private:
+        /** constant value used to calculate the goal posts and target voltage*/
         const double phi = (sqrt(5) + 1)/2 - 1;
+        /** variable to track the cycle number of algorithm */
         int cycle;
+        /** Power of the left goal post*/
         double powerL1;
+        /** power of right goal post*/
         double powerL2;
+        /** Voltage of left goal post */
         double l1;
+        /** Voltage of right goal post */
         double l2;
-
-        
 };
