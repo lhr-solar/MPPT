@@ -19,10 +19,7 @@ class Bisection : public LocalMPPTAlgorithm{
         Bisection(const PinName pin, StrideType type) : LocalMPPTAlgorithm(pin, type){
             cycle = 0;
         }
-
-        const char* get_name() const{
-            return "Bisection";
-        }
+        const char* get_name() const{ return "Bisection"; }
         double getReferenceVoltage(double arrayVoltage, double arrayCurrent){
             targetVoltage = 0;
             double arrVolt = arrayVoltage;
@@ -54,7 +51,9 @@ class Bisection : public LocalMPPTAlgorithm{
         }
     
     private:
+        /** variable to track the cycle number of the algorithm*/
         int cycle;
+        /** If the power difference is below this value, we just use a min stride */
         const double error = 0.01;
         
 };
