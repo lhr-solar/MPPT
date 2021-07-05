@@ -1,0 +1,23 @@
+initialization
+    local algorithm type
+    stride algorithm type
+    struct reference {extra context}
+
+outside of the mppt algorithms
+sensors process data
+- amalgamates temperature and irradiance data
+- passes it to the mppt algorithm in the following struct
+
+struct {
+    float voltageSetpoint
+    float voltage {array and battery}
+    float current {array and battery}
+    float irradiance
+    float temperature
+}
+
+global -> interruptDevice
+    local
+        stride
+pass the struct ^ down
+    return setpoint voltage
