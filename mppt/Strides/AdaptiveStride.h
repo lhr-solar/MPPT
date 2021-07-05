@@ -32,5 +32,5 @@ class AdaptiveStride: public Stride{
             arrVoltOld = arrVolt;
             return stride + minStride;
         }
-        const char* get_name() const{return "Adaptive Stride";}
+        const char* get_name() const{ return "Adaptive Stride"; }
 };
