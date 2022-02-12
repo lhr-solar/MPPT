@@ -1,3 +1,6 @@
 [submodule "Array-Shared-Components"]
 	path = Array-Shared-Components
 	url = https://github.com/lhr-solar/Array-Shared-Components.git
+[submodule "Mbed-Shared-Components"]
+	path = Mbed-Shared-Components
+	url = https://github.com/dimembermatt/Mbed-Shared-Components.git
