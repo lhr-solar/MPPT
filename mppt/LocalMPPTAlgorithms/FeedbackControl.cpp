@@ -2,9 +2,9 @@
 
 class FeedbackControl: public LocalMPPTAlgorithm{
     public:
-        FeedbackControl() : LocalMPPTAlgorithm(FC, 0){}
+        FeedbackControl(int _strideType) : LocalMPPTAlgorithm(FC, _strideType){}
 
-        float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt){
+        float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt) override{
             float arrPower = vArr * cArr;
             float dP = arrPower - pOld;
             float dV = vArr - vOld;

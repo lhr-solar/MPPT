@@ -1,9 +1,9 @@
 #include "LocalMPPTAlgorithm.h"
-
+ 
 class PandO: public LocalMPPTAlgorithm{
     public:
-        PandO() : LocalMPPTAlgorithm(PANDO, 0){};
-
+        PandO(int _strideType) : LocalMPPTAlgorithm(PANDO, _strideType){};
+ 
         float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt){
             float arrPower = vArr * cArr;
             float dV = vArr - vOld;
@@ -28,9 +28,9 @@ class PandO: public LocalMPPTAlgorithm{
             pOld = arrPower;
             return vRef;
         }
-
+ 
         const char* getLocalAlgoType(){
             return "PandO";
         }
-
+ 
 };

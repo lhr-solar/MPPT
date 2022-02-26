@@ -1,8 +1,8 @@
 #include "LocalMPPTAlgorithm.h"
-
+ 
 class IncrementalConductance: public LocalMPPTAlgorithm{
     public:
-        IncrementalConductance() : LocalMPPTAlgorithm(IC, 0){}
+        IncrementalConductance(int _strideType) : LocalMPPTAlgorithm(IC, _strideType){}
         float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt){
             float dI = cArr - iOld;
             float dV = vArr - vOld;
@@ -20,7 +20,7 @@ class IncrementalConductance: public LocalMPPTAlgorithm{
             pOld = vArr * cArr;
             return vRef;
         }
-
+ 
         const char* getLocalAlgoType(){
             return "Incremental Conductance";
         }
