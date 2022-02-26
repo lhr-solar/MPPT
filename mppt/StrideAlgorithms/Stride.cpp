@@ -1,5 +1,13 @@
 #include "Stride.h"
 
+Stride::Stride(){
+    strideType = 0;
+    vOld = 0.0;
+    iOld = 0.0;
+    pOld = 0.0;
+    VMPP = 0.621;
+}
+
 Stride::Stride(int _strideType){
     strideType = _strideType;
     vOld = 0.0;

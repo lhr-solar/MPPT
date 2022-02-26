@@ -4,6 +4,7 @@
 
 class Stride{
     public:
+        Stride();
         Stride(int _strideType);
         virtual float getStride(float vArr,float cArr,float vBatt,float cBatt);
         void setUp(float _vmpp, float _error);
