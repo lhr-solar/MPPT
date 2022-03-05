@@ -2,17 +2,17 @@
 GlobalMPPTAlgorithm::GlobalMPPTAlgorithm(int _globalAlgoType, int _strideType, int _localAlgoType){
     // model = LocalMPPTAlgorithm(-1, _strideType);
     _globalMPPTType = _globalAlgoType;
-    if(_globalMPPTType == 4){
+    if(_localAlgoType == 4){
         model = FeedbackControl(_strideType);
-    // }else if(_globalMPPTType == 2){
-    //     model = Golden(_strideType);
-    // }else if(_globalMPPTType == 3){
+    }else if(_globalMPPTType == 2){
+        model = Golden(_strideType);
+    }else if(_globalMPPTType == 3){
         model = IncrementalConductance(_strideType);
-    }else if(_globalMPPTType == 0){
+    }else if(_localAlgoType == 0){
         model = PandO(_strideType);
-    // }else if(_globalMPPTType == 5){
-    //     model = Ternary(_strideType);
-    // }else if(_globalMPPTType == 1){
+    }else if(_globalMPPTType == 5){
+        model = Ternary(_strideType);
+    }else if(_globalMPPTType == 1){
         model = Bisection(_strideType);
     }else{
         model = LocalMPPTAlgorithm(-1,_strideType);
@@ -32,8 +32,8 @@ float GlobalMPPTAlgorithm::getReferenceVoltage(float vArr, float cArr, float vBa
    } 
     float vRef = model.getReferenceVoltage(vArr, cArr, vBatt, cBatt);
     // int (left,right) = _getBounds();
-    float left = 0;
-    float right = 100;
+    float left = getLeftBound();
+    float right = getRightBound();
  
     if (vRef < left){
        vRef = left;
@@ -48,12 +48,18 @@ int GlobalMPPTAlgorithm::getGlobalAlgoType(){
 int GlobalMPPTAlgorithm::getLocalAlgoType(){
     return model.getLocalAlgorithm();
 }
+
+const char* GlobalMPPTAlgorithm::getLocalAlgoString(){
+    return model.getLocalAlgoType();
+}
 const char* GlobalMPPTAlgorithm::getStrideType(){
     return model.getStrideType();
 }
-float* GlobalMPPTAlgorithm::getBounds(){
-    float ret[2]= {0.0,100};
-    return ret;
+float GlobalMPPTAlgorithm::getLeftBound(){
+    return 0.0;
+}
+float getRightBound(){
+    return 100.0;
 }
 // bool GlobalMPPTAlgorithm::checkEnvironmentChanges(float irradiance){
 //     if (runningHistory < 10){
