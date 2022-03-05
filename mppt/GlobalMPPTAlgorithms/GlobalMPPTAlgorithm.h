@@ -5,6 +5,7 @@
 #include "LocalMPPTAlgorithms/IncrementalConductance.cpp"
 #include "LocalMPPTAlgorithms/FeedbackControl.cpp"
 #include "LocalMPPTAlgorithms/Bisection.cpp"
+
 #include "LocalMPPTAlgorithms/Golden.cpp"
 #include "LocalMPPTAlgorithms/Ternary.cpp"
 #define VOLTAGE_SWEEP 0
