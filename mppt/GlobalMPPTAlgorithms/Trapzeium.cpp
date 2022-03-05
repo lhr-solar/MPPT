@@ -1,4 +1,22 @@
 #include "GlobalMPPTAlgorithm.h"
+/** Using the composite trapezoidal rule,
+* the algorithm divides the region under the 
+*  Power-Voltage function into trapezoids.
+* Comparing the areas of the different trapezoids and power output, 
+* the algorithm determines
+* the new voltage output reference point.
+* If the trapezoid area and power output increases, 
+* the algorithm determines that the power and 
+* voltage output reference point should increase and 
+* vice versa as the trapezoid area decreases. 
+* If the trapezoid area increases, but the power output decreases, 
+* the reference points stay the same. 
+* At points where the area doesn’t increase or decrease and 
+* the power output increases or decreases, the reference points change.
+* At the voltage intervals where the trapezoid area decreases or 
+* stays constant, the local algorithm can then be used to determine 
+* a more efficient voltage around the maximum.
+*/
 class Trapezium : public GlobalMPPTAlgorithm{
     public:
         Trapezium(int _localType, int _strideType) : GlobalMPPTAlgorithm(3, _localType, _strideType){
@@ -15,6 +33,14 @@ class Trapezium : public GlobalMPPTAlgorithm{
             pOld = 0;
             vOld = 0;
         }
+        /**
+        * Returns the new output voltage value
+        * @param vArr the last array input voltage. 
+        * @param cARR the last array current input. 
+        * @param vBatt the last battery voltage input. 
+        * @param cBatt the last battery current input.
+        * @return vRef, the new voltage output reference point.
+        */
         float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt){
             float vRef = vArr;
             float arrPower = vArr * cArr;
