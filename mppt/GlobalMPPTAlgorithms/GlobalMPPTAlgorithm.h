@@ -5,6 +5,8 @@
 #include "LocalMPPTAlgorithms/IncrementalConductance.cpp"
 #include "LocalMPPTAlgorithms/FeedbackControl.cpp"
 #include "LocalMPPTAlgorithms/Bisection.cpp"
+
+#define MAX_VOLTAGE 100
 class GlobalMPPTAlgorithm{
     public:
         GlobalMPPTAlgorithm(int _globalAlgoType, int _strideType, int _localAlgoType);
@@ -15,7 +17,7 @@ class GlobalMPPTAlgorithm{
         float* getBounds();
         bool checkEnvironmentChanges(float irradiance);
     
-    private:
+    protected:
         float vOld;
         float iOld;
         float pOld;
