@@ -38,14 +38,14 @@ This is our basic feedback loop.
 
 #include <chrono>
 #include "mbed.h"
-#include "Array-Shared-Components/src/CANDevice/CANDevice.h"
-#include "Array-Shared-Components/src/Sensor/CurrentSensor.h"
-#include "Array-Shared-Components/src/Sensor/VoltageSensor.h"
+#include "Mbed-Shared-Components/src/CANDevice/CANDevice.h"
+#include "Mbed-Shared-Components/src/Sensor/CurrentSensor.h"
+#include "Mbed-Shared-Components/src/Sensor/VoltageSensor.h"
 #include "dcdcconverter/DcDcConverter.h"
 #include "mppt/mppt.h"
-#include "mppt/PandO.h"
-#include "mppt/IC.h"
-#include "mppt/FC.h"
+// #include "mppt/PandO.h"
+// #include "mppt/IC.h"
+// #include "mppt/FC.h"
 
 /** Period between CAN getting messages */
 #define CAN_INT_PERIOD 50000    // 50 ms
@@ -73,10 +73,10 @@ VoltageSensor sensorBattVoltage(PA_0);
 CurrentSensor sensorArrayCurrent(PA_0);
 CurrentSensor sensorBattCurrent(PA_0);
 // initialize MPPT
-PandO pando(PA_0);
-IC ic(PA_0);
-FC fc(PA_0);
-Mppt* mppt;
+// PandO pando(PA_0);
+// IC ic(PA_0);
+// FC fc(PA_0);
+Mppt mppt(PA_0);
 // initialize DC-DC converter
 Dcdcconverter converter(PA_0);
 
@@ -92,53 +92,52 @@ int main(void) {
     sensorArrayCurrent.start(SENSOR_INT_PERIOD);
     sensorBattCurrent.start(SENSOR_INT_PERIOD);
     // startup MPPT - we assign the reference to the derived class to avoid possible object slicing
-    mppt = &pando;
-    mppt->enable_tracking(MPPT_INT_PERIOD);
+    mppt.enable_tracking(MPPT_INT_PERIOD);
     // startup DC-DC converter
     converter.start(DC_DC_INT_PERIOD);
 
     // main process loop
     while (running) {
         // read in CAN bus buffer to see if we have any messages
-        char* msg = can.getMessage();
-        if (strcmp(msg, "") != 0) {
-            // check for start and stop commands
-            if (strcmp(msg, "MPPT_START") == 0) {
-                mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_STOP") == 0) {
-                mppt->disable_tracking();
-            }
+        // char* msg = can.getMessage();
+        // if (strcmp(msg, "") != 0) {
+        //     // check for start and stop commands
+        //     if (strcmp(msg, "MPPT_START") == 0) {
+        //         mppt.enable_tracking(MPPT_INT_PERIOD);
+        //     } else if (strcmp(msg, "MPPT_STOP") == 0) {
+        //         mppt.disable_tracking();
+        //     }
 
-            // TESTING
-            // check for algorithm change 
-            else if (strcmp(msg, "MPPT_PANDO") == 0) {
-                // shut down current algorithm
-                mppt->disable_tracking();
-                // swap reference
-                mppt = &pando;
-                // start up new algorithm
-                mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_IC") == 0) {
-                // shut down current algorithm
-                mppt->disable_tracking();
-                // swap reference
-                mppt = &ic;
-                // start up new algorithm
-                mppt->enable_tracking(MPPT_INT_PERIOD);
-            } else if (strcmp(msg, "MPPT_FC") == 0) {
-                // shut down current algorithm
-                mppt->disable_tracking();
-                // swap reference
-                mppt = &fc;
-                // start up new algorithm
-                mppt->enable_tracking(MPPT_INT_PERIOD);
-            }
-        }
-        // TODO: send out CAN bus messages if needed
-        // TODO: look for conditions that may cause failure
+        //     // TESTING
+        //     // check for algorithm change 
+        //     else if (strcmp(msg, "MPPT_PANDO") == 0) {
+        //         // shut down current algorithm
+        //         mppt.disable_tracking();
+        //         // swap reference
+        //         // mppt = &pando;
+        //         // start up new algorithm
+        //         mppt.enable_tracking(MPPT_INT_PERIOD);
+        //     } else if (strcmp(msg, "MPPT_IC") == 0) {
+        //         // shut down current algorithm
+        //         mppt.disable_tracking();
+        //         // swap reference
+        //         // mppt = &ic;
+        //         // start up new algorithm
+        //         mppt.enable_tracking(MPPT_INT_PERIOD);
+        //     } else if (strcmp(msg, "MPPT_FC") == 0) {
+        //         // shut down current algorithm
+        //         mppt.disable_tracking();
+        //         // swap reference
+        //         // mppt = &fc;
+        //         // start up new algorithm
+        //         mppt.enable_tracking(MPPT_INT_PERIOD);
+        //     }
+        // }
+        // // TODO: send out CAN bus messages if needed
+        // // TODO: look for conditions that may cause failure
 
-        // free the allocated CAN message.
-        delete[] msg;
+        // // free the allocated CAN message.
+        // delete[] msg;
 
         // run the pipeline
         manage_pipeline();
@@ -152,7 +151,7 @@ int main(void) {
     // shutdown DC-DC converter
     converter.stop();
     // shutdown MPPT
-    mppt->disable_tracking();
+    mppt.disable_tracking();
     // shutdown CAN
     can.stop();
 }
@@ -168,8 +167,8 @@ void manage_pipeline() {
     float cArr = sensorArrayCurrent.get_value();
     float cBatt = sensorBattCurrent.get_value();
     // pipe it into the MPPT
-    mppt->set_inputs(vArr, cArr, vBatt, cBatt);
+    mppt.set_inputs(vArr, cArr, vBatt, cBatt);
     // pipe MPPT output into the DC-DC converter
-    double targetVoltage = mppt->get_target_voltage();
+    double targetVoltage = mppt.get_target_voltage();
     converter.set_pulse_width(targetVoltage);
 }

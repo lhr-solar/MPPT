@@ -29,6 +29,7 @@ Mppt::Mppt(const PinName pin) : trackingLED(pin) {
     arrayCurrent = 0.0;
     battVoltage = 0.0;
     battCurrent = 0.0;
+    algorithm = GlobalMPPTAlgorithm(0,0,0);
 }
 
 void Mppt::set_inputs(
@@ -63,6 +64,10 @@ void Mppt::disable_tracking() {
 double Mppt::get_target_voltage() const {
     while (PWLock);
     return targetVoltage;
+}
+
+void Mppt::handler(){
+   targetVoltage = algorithm.getReferenceVoltage(arrayVoltage, arrayCurrent, battVoltage, battCurrent);
 }
 
 /** Private Methods. */

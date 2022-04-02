@@ -1,18 +1,26 @@
 #include "GlobalMPPTAlgorithm.h"
+GlobalMPPTAlgorithm::GlobalMPPTAlgorithm(){
+    vOld = 0.0;
+    iOld = 0.0;
+    pOld = 0.0;
+    _globalMPPTType = 0;
+    model = PandO(0);
+}
+
 GlobalMPPTAlgorithm::GlobalMPPTAlgorithm(int _globalAlgoType, int _strideType, int _localAlgoType){
     // model = LocalMPPTAlgorithm(-1, _strideType);
     _globalMPPTType = _globalAlgoType;
     if(_localAlgoType == 4){
         model = FeedbackControl(_strideType);
-    }else if(_globalMPPTType == 2){
+    }else if(_localAlgoType == 2){
         model = Golden(_strideType);
-    }else if(_globalMPPTType == 3){
+    }else if(_localAlgoType == 3){
         model = IncrementalConductance(_strideType);
     }else if(_localAlgoType == 0){
         model = PandO(_strideType);
-    }else if(_globalMPPTType == 5){
+    }else if(_localAlgoType == 5){
         model = Ternary(_strideType);
-    }else if(_globalMPPTType == 1){
+    }else if(_localAlgoType == 1){
         model = Bisection(_strideType);
     }else{
         model = LocalMPPTAlgorithm(-1,_strideType);

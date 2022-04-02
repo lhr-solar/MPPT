@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include "mbed.h"
+#include "LocalMPPTAlgorithms/LocalMPPTAlgorithm.h"
 #include "LocalMPPTAlgorithms/PandO.cpp"
 #include "LocalMPPTAlgorithms/IncrementalConductance.cpp"
 #include "LocalMPPTAlgorithms/FeedbackControl.cpp"
@@ -18,7 +19,8 @@
 
 class GlobalMPPTAlgorithm{
     public:
-        GlobalMPPTAlgorithm(int _globalAlgoType, int _strideType, int _localAlgoType);
+        GlobalMPPTAlgorithm();
+        GlobalMPPTAlgorithm(int _globalAlgoType, int _localAlgoType, int _strideType);
         float getReferenceVoltage(float vArr, float cArr, float vBatt, float cBatt);
         int getGlobalAlgoType();
         int getLocalAlgoType();

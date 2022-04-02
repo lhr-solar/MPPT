@@ -14,6 +14,7 @@
 #pragma once
 #include <chrono>
 #include "mbed.h"
+#include "GlobalMPPTAlgorithms/GlobalMPPTAlgorithm.h"
 
 
 enum Mode {
@@ -90,7 +91,7 @@ class Mppt {
          * Processes internal inputs and determines an optimal target voltage
          * for the DC-DC converter to run at. Inherited and implemented by its children.
          */
-        virtual void handler() = 0;
+        void handler();
 
         /**
          * Toggles the tracking LED if we're currently running the MPPT.
@@ -137,4 +138,5 @@ class Mppt {
         double arrayCurrent; 
         double battVoltage;
         double battCurrent;
+        GlobalMPPTAlgorithm algorithm;
 };
